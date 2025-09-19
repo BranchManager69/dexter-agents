@@ -9,6 +9,7 @@ import { audioFormatForCodec, applyCodecPreferences } from '../lib/codecUtils';
 import { useEvent } from '../contexts/EventContext';
 import { useHandleSessionHistory } from './useHandleSessionHistory';
 import { SessionStatus } from '../types';
+import { MODEL_IDS } from '../config/models';
 
 export interface RealtimeSessionCallbacks {
   onConnectionChange?: (status: SessionStatus) => void;
@@ -137,12 +138,12 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
             return pc;
           },
         }),
-        model: 'gpt-4o-realtime-preview-2025-06-03',
+        model: MODEL_IDS.realtime,
         config: {
           inputAudioFormat: audioFormat,
           outputAudioFormat: audioFormat,
           inputAudioTranscription: {
-            model: 'gpt-4o-mini-transcribe',
+            model: MODEL_IDS.transcription,
           },
         },
         outputGuardrails: outputGuardrails ?? [],

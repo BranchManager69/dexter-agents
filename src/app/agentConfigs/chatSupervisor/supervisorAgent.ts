@@ -1,5 +1,5 @@
 import { RealtimeItem, tool } from '@openai/agents/realtime';
-
+import { MODEL_IDS } from '@/app/config/models';
 
 import {
   exampleAccountInfo,
@@ -282,7 +282,7 @@ export const getNextResponseFromSupervisor = tool({
     const filteredLogs = history.filter((log) => log.type === 'message');
 
     const body: any = {
-      model: 'gpt-4.1',
+      model: MODEL_IDS.supervisor,
       input: [
         {
           type: 'message',

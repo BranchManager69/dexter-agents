@@ -1,5 +1,6 @@
 import { zodTextFormat } from 'openai/helpers/zod';
 import { GuardrailOutputZod, GuardrailOutput } from '@/app/types';
+import { MODEL_IDS } from '@/app/config/models';
 
 // Validator that calls the /api/responses endpoint to
 // validates the realtime output according to moderation policies. 
@@ -38,7 +39,7 @@ export async function runGuardrailClassifier(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o-mini',
+      model: MODEL_IDS.guardrail,
       input: messages,
       text: {
         format: zodTextFormat(GuardrailOutputZod, 'output_format'),
