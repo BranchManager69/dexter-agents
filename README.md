@@ -23,6 +23,7 @@ There are two main patterns demonstrated:
 
 - This is a Next.js typescript app. Install dependencies with `npm i`.
 - Add your `OPENAI_API_KEY` to your env. Either add it to your `.bash_profile` or equivalent, or copy `.env.sample` to `.env` and add it there. You can also override the default model IDs via the `NEXT_PUBLIC_OPENAI_*_MODEL` variables listed in `.env.sample`.
+- When running via pm2/production, set `TOKEN_AI_MCP_TOKEN` in the process environment (as configured in `dexter-ops/ops/ecosystem.config.cjs`) so the `/api/tools` proxy can attach the Dexter MCP bearer automatically. Locally you can use `NEXT_PUBLIC_TOKEN_AI_MCP_TOKEN` instead.
 - Start the server with `npm run dev`
 - Open your browser to [http://localhost:3000](http://localhost:3000). It should default to the `chatSupervisor` Agent Config.
 - You can change examples via the "Scenario" dropdown in the top right.
