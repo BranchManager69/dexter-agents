@@ -22,12 +22,12 @@ import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 
 // Agent configs
 import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
-import { customerServiceRetailScenario } from "@/app/agentConfigs/customerServiceRetail";
-import { customerServiceRetailCompanyName } from "@/app/agentConfigs/customerServiceRetail";
+import { dexterTradingScenario } from "@/app/agentConfigs/customerServiceRetail";
+import { dexterTradingCompanyName } from "@/app/agentConfigs/customerServiceRetail";
 
 // Map used by connect logic for scenarios defined via the SDK.
 const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
-  customerServiceRetail: customerServiceRetailScenario,
+  dexterTrading: dexterTradingScenario,
 };
 
 import useAudioDownload from "./hooks/useAudioDownload";
@@ -190,7 +190,7 @@ function App() {
       }
 
       const guardrail = createModerationGuardrail(
-        customerServiceRetailCompanyName,
+        dexterTradingCompanyName,
       );
 
       await connect({
@@ -422,7 +422,7 @@ function App() {
             Scenario
           </span>
           <span className="border border-gray-300 rounded-lg px-3 py-1 text-base bg-white">
-            Customer Service Retail
+            Dexter Trading Desk
           </span>
 
           <div className="flex items-center ml-6">

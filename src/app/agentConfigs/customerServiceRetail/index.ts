@@ -1,22 +1,30 @@
-import { authenticationAgent } from './authentication';
-import { returnsAgent } from './returns';
-import { salesAgent } from './sales';
-import { simulatedHumanAgent } from './simulatedHuman';
+import type { RealtimeAgent } from '@openai/agents/realtime';
 
-// Cast to `any` to satisfy TypeScript until the core types make RealtimeAgent
-// assignable to `Agent<unknown>` (current library versions are invariant on
-// the context type).
-(authenticationAgent.handoffs as any).push(returnsAgent, salesAgent, simulatedHumanAgent);
-(returnsAgent.handoffs as any).push(authenticationAgent, salesAgent, simulatedHumanAgent);
-(salesAgent.handoffs as any).push(authenticationAgent, returnsAgent, simulatedHumanAgent);
-(simulatedHumanAgent.handoffs as any).push(authenticationAgent, returnsAgent, salesAgent);
+import portfolioAgent from './portfolio';
+import tradeExecutionAgent from './trading';
+import marketIntelAgent from './intel';
+import humanDeskAgent from './human';
 
-export const customerServiceRetailScenario = [
-  authenticationAgent,
-  returnsAgent,
-  salesAgent,
-  simulatedHumanAgent,
+// Wire mutual handoffs so each specialist can escalate or bounce back when needed.
+(portfolioAgent.handoffs as any).push(tradeExecutionAgent, marketIntelAgent, humanDeskAgent);
+(tradeExecutionAgent.handoffs as any).push(portfolioAgent, marketIntelAgent, humanDeskAgent);
+(marketIntelAgent.handoffs as any).push(portfolioAgent, tradeExecutionAgent, humanDeskAgent);
+(humanDeskAgent.handoffs as any).push(portfolioAgent, tradeExecutionAgent, marketIntelAgent);
+
+export const dexterTradingScenario: RealtimeAgent[] = [
+  portfolioAgent,
+  tradeExecutionAgent,
+  marketIntelAgent,
+  humanDeskAgent,
 ];
 
 // Name of the company represented by this agent set. Used by guardrails
-export const customerServiceRetailCompanyName = 'Snowy Peak Boards';
+export const dexterTradingCompanyName = 'Dexter Trading Desk';
+
+export const allAgentSets: Record<string, RealtimeAgent[]> = {
+  dexterTrading: dexterTradingScenario,
+};
+
+export const defaultAgentSetKey = 'dexterTrading';
+
+export default dexterTradingScenario;

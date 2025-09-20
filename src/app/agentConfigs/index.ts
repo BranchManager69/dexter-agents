@@ -1,10 +1,10 @@
-import { customerServiceRetailScenario } from './customerServiceRetail';
+import { dexterTradingScenario } from './customerServiceRetail';
 
 import type { RealtimeAgent } from '@openai/agents/realtime';
 
 // Map of scenario key -> array of RealtimeAgent objects
 export const allAgentSets: Record<string, RealtimeAgent[]> = {
-  customerServiceRetail: customerServiceRetailScenario,
+  dexterTrading: dexterTradingScenario,
 };
 
-export const defaultAgentSetKey = 'customerServiceRetail';
+export const defaultAgentSetKey = 'dexterTrading';

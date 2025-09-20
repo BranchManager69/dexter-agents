@@ -132,6 +132,10 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       sessionRef.current = new RealtimeSession(rootAgent, {
         transport: new OpenAIRealtimeWebRTC({
           audioElement,
+          baseUrl:
+            typeof window === 'undefined'
+              ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://beta.dexter.cash'}/api/realtime/calls`
+              : `${window.location.origin}/api/realtime/calls`,
           // Set preferred codec before offer creation
           changePeerConnection: async (pc: RTCPeerConnection) => {
             applyCodec(pc);
