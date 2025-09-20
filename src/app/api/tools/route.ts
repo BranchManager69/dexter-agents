@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { CONFIG, getDexterApiRoute } from "../../../app/config/env";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const url = new URL(getDexterApiRoute("/tools"));
     const fetchOptions: RequestInit = {

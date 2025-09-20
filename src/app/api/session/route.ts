@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { MODEL_IDS } from "../../config/models";
-import { CONFIG, getDexterApiRoute } from "../../config/env";
+import { getDexterApiRoute } from "../../config/env";
 
 export async function GET() {
   try {

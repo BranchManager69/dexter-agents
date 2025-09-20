@@ -143,7 +143,7 @@ function SchemaBlock({ title, value }: { title: string; value: unknown }) {
 function safeStringify(value: unknown) {
   try {
     return JSON.stringify(value, null, 2);
-  } catch (error) {
+  } catch {
     return String(value);
   }
 }

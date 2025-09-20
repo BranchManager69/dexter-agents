@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deploy": "npm run build && NODE_ENV=production NODE_OPTIONS=--enable-source-maps pm2 restart dexter-agents --update-env -- run start -- --hostname 0.0.0.0 --port 3210",
+    "pm2:prod": "NODE_ENV=production NODE_OPTIONS=--enable-source-maps pm2 restart dexter-agents --update-env -- run start -- --hostname 0.0.0.0 --port 3210",
+    "pm2:dev": "pm2 restart dexter-agents --update-env -- run dev -- --hostname 0.0.0.0 --port 3210"
   },
   "dependencies": {
     "@openai/agents": "^0.0.5",

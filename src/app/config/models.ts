@@ -24,11 +24,11 @@ export const MODEL_IDS = {
   ),
   supervisor: pickEnv(
     ['NEXT_PUBLIC_OPENAI_SUPERVISOR_MODEL', 'OPENAI_SUPERVISOR_MODEL'],
-    'gpt-5.1',
+    'gpt-5',
   ),
   guardrail: pickEnv(
     ['NEXT_PUBLIC_OPENAI_GUARDRAIL_MODEL', 'OPENAI_GUARDRAIL_MODEL'],
-    'gpt-5.1-mini',
+    'gpt-5-mini',
   ),
   reasoningFast: pickEnv(
     ['NEXT_PUBLIC_OPENAI_REASONING_FAST_MODEL', 'OPENAI_REASONING_FAST_MODEL'],
