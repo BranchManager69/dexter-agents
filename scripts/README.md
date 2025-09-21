@@ -34,7 +34,7 @@ anywhere inside the repo or exported as a global command.
 ## Location
 
 ```
-examples/openai-realtime-agents/
+dexter-agents/
 ├── scripts/
 │   ├── dexchat.js        # CLI entrypoint (also exposed via npm bin)
 │   ├── runHarness.js     # Shared Playwright harness logic
