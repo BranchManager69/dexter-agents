@@ -129,7 +129,7 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       const codecParam = codecParamRef.current;
       const audioFormat = audioFormatForCodec(codecParam);
 
-      sessionRef.current = new RealtimeSession(rootAgent, {
+     sessionRef.current = new RealtimeSession(rootAgent, {
         transport: new OpenAIRealtimeWebRTC({
           audioElement,
           baseUrl:
@@ -152,6 +152,7 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         },
         outputGuardrails: outputGuardrails ?? [],
         context: extraContext ?? {},
+        automaticallyTriggerResponseForMcpToolCalls: true,
       });
 
       await sessionRef.current.connect({ apiKey: ek });

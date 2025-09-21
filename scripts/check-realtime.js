@@ -21,29 +21,27 @@ const { chromium } = require('playwright');
     logs.push({ type: 'pageerror', text: err.message });
     console.error(`[pageerror] ${err.message}`);
   });
-  page.on('request', async (request) => {
-    if (request.url().includes('/v1/realtime/calls')) {
-      const postData = request.postData();
-      const headers = request.headers();
-      console.log('Realtime call headers:', headers);
-      console.log('Realtime call payload:', postData);
-    }
-  });
-  page.on('response', async (response) => {
-    if (response.status() >= 400) {
-      const url = response.url();
-      let body = '';
-      try {
-        body = await response.text();
-      } catch (err) {
-        body = `<unable to read body: ${err}>`;
-      }
-      console.error(`HTTP ${response.status()} ${url}\n${body.slice(0, 500)}`);
-    }
-  });
 
   await page.goto('https://beta.dexter.cash/', { waitUntil: 'domcontentloaded' });
-  await page.waitForTimeout(15000);
+  await page.waitForSelector('button:has-text("Disconnect")', { timeout: 60000 });
+
+  // The chat input is currently an <input placeholder="Type a message...">.
+  const chatInput = await page.waitForSelector('input[placeholder="Type a message..."]', { timeout: 30000 });
+  await chatInput.fill('What wallet am I currently using?');
+  await page.locator('button:has(img[alt="Send"])').click();
+
+  await page.waitForTimeout(40000);
+
+  const transcriptBubbles = await page.evaluate(() =>
+    Array.from(document.querySelectorAll('.whitespace-pre-wrap'))
+      .map((el) => ({
+        text: el.innerText,
+        classes: el.className,
+      }))
+      .filter((item) => item.text && item.text.trim().length > 0),
+  );
+
   console.log('Captured logs:', JSON.stringify(logs, null, 2));
+  console.log('Transcript bubbles:', JSON.stringify(transcriptBubbles, null, 2));
   await browser.close();
 })();
