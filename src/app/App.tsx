@@ -3,12 +3,15 @@ import React, { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
-import Image from "next/image";
-
 // UI components
 import Transcript from "./components/Transcript";
 import Events from "./components/Events";
-import BottomToolbar from "./components/BottomToolbar";
+import DexterShell from "./components/shell/DexterShell";
+import TopRibbon from "./components/shell/TopRibbon";
+import VoiceDock from "./components/shell/VoiceDock";
+import BottomStatusRail from "./components/shell/BottomStatusRail";
+import SignalStack from "./components/signals/SignalStack";
+import SignalsDrawer from "./components/signals/SignalsDrawer";
 
 // Types
 import { SessionStatus } from "@/app/types";
@@ -19,6 +22,7 @@ import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
 import { useRealtimeSession } from "./hooks/useRealtimeSession";
 import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
+import { useSignalData } from "./hooks/useSignalData";
 
 // Agent configs
 import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
@@ -105,6 +109,7 @@ function App() {
   const [userText, setUserText] = useState<string>("");
   const [isPTTActive, setIsPTTActive] = useState<boolean>(false);
   const [isPTTUserSpeaking, setIsPTTUserSpeaking] = useState<boolean>(false);
+  const [isMobileSignalsOpen, setIsMobileSignalsOpen] = useState<boolean>(false);
   const [isAudioPlaybackEnabled, setIsAudioPlaybackEnabled] = useState<boolean>(
     () => {
       if (typeof window === 'undefined') return true;
@@ -116,6 +121,8 @@ function App() {
   // Initialize the recording hook.
   const { startRecording, stopRecording, downloadRecording } =
     useAudioDownload();
+
+  const signalData = useSignalData();
 
   const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {
     try {
@@ -299,10 +306,7 @@ function App() {
     }
   };
 
-  const handleSelectedAgentChange = (
-    e: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const newAgentName = e.target.value;
+  const handleSelectedAgentChange = (newAgentName: string) => {
     // Reconnect session with the newly selected agent as root so that tool
     // execution works correctly.
     disconnectFromRealtime();
@@ -397,98 +401,108 @@ function App() {
     };
   }, [sessionStatus]);
 
-  return (
-    <div className="text-base flex flex-col h-screen bg-gray-100 text-gray-800 relative">
-      <div className="p-5 text-lg font-semibold flex justify-between items-center">
-        <div
-          className="flex items-center cursor-pointer"
-          onClick={() => window.location.reload()}
-        >
-          <div>
-            <Image
-              src="/openai-logomark.svg"
-              alt="OpenAI Logo"
-              width={20}
-              height={20}
-              className="mr-2"
-            />
-          </div>
-          <div>
-            Realtime API <span className="text-gray-500">Agents</span>
-          </div>
+  const conversationContent = (
+    <div className="flex h-full flex-1 flex-col">
+      <div className="border-b border-neutral-800/60 px-7 py-7">
+        <div className="font-display text-3xl tracking-tight text-neutral-100">
+          Command the Solana edge.
         </div>
-        <div className="flex items-center">
-          <span className="flex items-center text-base gap-1 mr-2 font-medium">
-            Scenario
-          </span>
-          <span className="border border-gray-300 rounded-lg px-3 py-1 text-base bg-white">
-            Dexter Trading Desk
-          </span>
+        <p className="mt-2 max-w-2xl text-sm text-neutral-400">
+          Dexter synchronises research, live pump streams, and trade execution through a single multimodal agent. Speak or type—every insight rolls in with receipts.
+        </p>
+        <div className="mt-5 flex flex-wrap items-center gap-2">
+          {["Research tokens", "Monitor streams", "Execute swaps"].map((chip) => (
+            <span
+              key={chip}
+              className="rounded-pill border border-neutral-800/60 bg-surface-glass/60 px-4 py-1 text-xs uppercase tracking-[0.28em] text-neutral-400"
+            >
+              {chip}
+            </span>
+          ))}
 
-          <div className="flex items-center ml-6">
-            <label className="flex items-center text-base gap-1 mr-2 font-medium">
-              Agent
-            </label>
-            <div className="relative inline-block">
-              <select
-                value={selectedAgentName}
-                onChange={handleSelectedAgentChange}
-                className="appearance-none border border-gray-300 rounded-lg text-base px-2 py-1 pr-8 cursor-pointer font-normal focus:outline-none"
-              >
-                {scenarioAgents.map((agent) => (
-                  <option key={agent.name} value={agent.name}>
-                    {agent.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-gray-600">
-                <svg
-                  className="h-4 w-4"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={() => setIsMobileSignalsOpen(true)}
+            className="ml-auto inline-flex items-center gap-2 rounded-pill border border-neutral-800/60 bg-surface-glass/70 px-4 py-1 text-xs uppercase tracking-[0.28em] text-neutral-300 transition hover:border-flux/50 hover:text-flux lg:hidden"
+          >
+            <span className="h-2 w-2 rounded-full bg-flux shadow-glow-flux" />
+            Signals
+          </button>
         </div>
       </div>
 
-      <div className="flex flex-1 gap-2 px-2 overflow-hidden relative">
+      <div className="flex flex-1 flex-col">
         <Transcript
           userText={userText}
           setUserText={setUserText}
           onSendMessage={handleSendTextMessage}
           downloadRecording={downloadRecording}
-          canSend={
-            sessionStatus === "CONNECTED"
-          }
+          canSend={sessionStatus === "CONNECTED"}
         />
-
-        <Events isExpanded={isEventsPaneExpanded} />
       </div>
-
-      <BottomToolbar
-        sessionStatus={sessionStatus}
-        onToggleConnection={onToggleConnection}
-        isPTTActive={isPTTActive}
-        setIsPTTActive={setIsPTTActive}
-        isPTTUserSpeaking={isPTTUserSpeaking}
-        handleTalkButtonDown={handleTalkButtonDown}
-        handleTalkButtonUp={handleTalkButtonUp}
-        isEventsPaneExpanded={isEventsPaneExpanded}
-        setIsEventsPaneExpanded={setIsEventsPaneExpanded}
-        isAudioPlaybackEnabled={isAudioPlaybackEnabled}
-        setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
-        codec={urlCodec}
-        onCodecChange={handleCodecChange}
-      />
     </div>
+  );
+
+  const renderSignalStack = () => (
+    <SignalStack
+      showLogs={isEventsPaneExpanded}
+      logs={<Events isExpanded={isEventsPaneExpanded} />}
+      marketPulse={signalData.marketPulse}
+      pumpStreams={signalData.pumpStreams}
+      wallet={signalData.wallet}
+    />
+  );
+
+  const voiceDock = (
+    <VoiceDock
+      sessionStatus={sessionStatus}
+      isPTTActive={isPTTActive}
+      isPTTUserSpeaking={isPTTUserSpeaking}
+      onTogglePTT={setIsPTTActive}
+      onTalkStart={handleTalkButtonDown}
+      onTalkEnd={handleTalkButtonUp}
+    />
+  );
+
+  const statusRail = (
+    <BottomStatusRail
+      sessionStatus={sessionStatus}
+      onToggleConnection={onToggleConnection}
+      isAudioPlaybackEnabled={isAudioPlaybackEnabled}
+      setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
+      isEventsPaneExpanded={isEventsPaneExpanded}
+      setIsEventsPaneExpanded={setIsEventsPaneExpanded}
+      codec={urlCodec}
+      onCodecChange={handleCodecChange}
+    />
+  );
+
+  const mobileSignalsOverlay = (
+    <SignalsDrawer
+      open={isMobileSignalsOpen}
+      onClose={() => setIsMobileSignalsOpen(false)}
+    >
+      {renderSignalStack()}
+    </SignalsDrawer>
+  );
+
+  return (
+    <DexterShell
+      topBar={
+        <TopRibbon
+          sessionStatus={sessionStatus}
+          selectedAgentName={selectedAgentName}
+          agents={scenarioAgents}
+          onAgentChange={handleSelectedAgentChange}
+          onReloadBrand={() => window.location.reload()}
+        />
+      }
+      conversation={conversationContent}
+      signals={renderSignalStack()}
+      statusBar={statusRail}
+      voiceDock={voiceDock}
+      mobileOverlay={mobileSignalsOverlay}
+    />
   );
 }
 

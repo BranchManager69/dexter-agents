@@ -1,8 +1,14 @@
 "use client";
 
-import React, { createContext, useContext, useState, FC, PropsWithChildren } from "react";
+import React, { createContext, useContext, useState, useEffect, FC, PropsWithChildren } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { LoggedEvent } from "@/app/types";
+
+declare global {
+  interface Window {
+    __DEXTER_EVENT_LOGS__?: LoggedEvent[];
+  }
+}
 
 type EventContextValue = {
   loggedEvents: LoggedEvent[];
@@ -15,7 +21,17 @@ type EventContextValue = {
 const EventContext = createContext<EventContextValue | undefined>(undefined);
 
 export const EventProvider: FC<PropsWithChildren> = ({ children }) => {
+  if (typeof window !== "undefined" && !window.__DEXTER_EVENT_LOGS__) {
+    window.__DEXTER_EVENT_LOGS__ = [];
+  }
+
   const [loggedEvents, setLoggedEvents] = useState<LoggedEvent[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__DEXTER_EVENT_LOGS__ = loggedEvents;
+    }
+  }, [loggedEvents]);
 
   function addLoggedEvent(direction: "client" | "server", eventName: string, eventData: Record<string, any>) {
     const id = eventData.event_id || uuidv4();

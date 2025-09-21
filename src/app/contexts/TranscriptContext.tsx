@@ -4,11 +4,18 @@ import React, {
   createContext,
   useContext,
   useState,
+  useEffect,
   FC,
   PropsWithChildren,
 } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { TranscriptItem } from "@/app/types";
+
+declare global {
+  interface Window {
+    __DEXTER_TRANSCRIPT_ITEMS__?: TranscriptItem[];
+  }
+}
 
 type TranscriptContextValue = {
   transcriptItems: TranscriptItem[];
@@ -27,7 +34,17 @@ type TranscriptContextValue = {
 const TranscriptContext = createContext<TranscriptContextValue | undefined>(undefined);
 
 export const TranscriptProvider: FC<PropsWithChildren> = ({ children }) => {
+  if (typeof window !== "undefined" && !window.__DEXTER_TRANSCRIPT_ITEMS__) {
+    window.__DEXTER_TRANSCRIPT_ITEMS__ = [];
+  }
+
   const [transcriptItems, setTranscriptItems] = useState<TranscriptItem[]>([]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.__DEXTER_TRANSCRIPT_ITEMS__ = transcriptItems;
+    }
+  }, [transcriptItems]);
 
   function newTimestampPretty(): string {
     const now = new Date();
