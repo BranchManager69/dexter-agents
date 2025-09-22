@@ -9,7 +9,7 @@ type Database = any;
 const ALLOW_GUEST_SESSIONS =
   process.env.NEXT_PUBLIC_ALLOW_GUEST_SESSIONS === "false" ? false : true;
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore });
@@ -24,6 +24,11 @@ export async function GET() {
 
     const isAuthenticated = Boolean(session?.user);
 
+    const authHeader = request.headers.get("authorization") || "";
+    const bearerToken = authHeader.toLowerCase().startsWith("bearer ")
+      ? authHeader.slice(7).trim()
+      : null;
+
     if (!isAuthenticated && !ALLOW_GUEST_SESSIONS) {
       return NextResponse.json({ error: "Sign-in required" }, { status: 401 });
     }
@@ -32,6 +37,8 @@ export async function GET() {
 
     if (isAuthenticated && session?.access_token) {
       payload.supabaseAccessToken = session.access_token;
+    } else if (bearerToken) {
+      payload.supabaseAccessToken = bearerToken;
     } else {
       payload.guestProfile = {
         label: "Dexter Demo Wallet",

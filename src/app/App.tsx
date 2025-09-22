@@ -12,6 +12,7 @@ import VoiceDock from "./components/shell/VoiceDock";
 import BottomStatusRail from "./components/shell/BottomStatusRail";
 import SignalStack from "./components/signals/SignalStack";
 import SignalsDrawer from "./components/signals/SignalsDrawer";
+import { TurnstileWidget } from "./components/TurnstileWidget";
 
 // Types
 import { SessionStatus } from "@/app/types";
@@ -55,7 +56,17 @@ import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
 
 function App() {
   const searchParams = useSearchParams()!;
-  const { session: authSession, loading: authLoading, signOut: authSignOut, signInWithTwitter } = useAuth();
+  const {
+    session: authSession,
+    loading: authLoading,
+    signOut: authSignOut,
+    sendMagicLink,
+    turnstileToken,
+    setTurnstileToken,
+  } = useAuth();
+
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
+  const [turnstileRefreshKey, setTurnstileRefreshKey] = useState(0);
 
   const [sessionIdentity, setSessionIdentity] = useState<DexterSessionSummary>(createGuestIdentity);
 
@@ -158,15 +169,36 @@ function App() {
 
   const handleSignIn = useCallback(async () => {
     if (typeof window === "undefined") return;
+
+    const email = window.prompt("Enter your email to receive a Dexter magic link:")?.trim();
+    if (!email) {
+      console.info("Magic-link sign-in cancelled or no email provided.");
+      return;
+    }
+
+    if (turnstileSiteKey && !turnstileToken) {
+      alert("Please complete the security check first.");
+      return;
+    }
+
     try {
-      const result = await signInWithTwitter({ redirectTo: window.location.href });
-      if (!result.success && result.message) {
-        console.error("Sign-in failed:", result.message);
+      const result = await sendMagicLink(email, {
+        redirectTo: window.location.href,
+        captchaToken: turnstileToken ?? undefined,
+      });
+      if (!result.success) {
+        alert(result.message || "Unable to send magic link. Please try again.");
+      } else {
+        alert("Magic link sent! Check your email and open the link on this device.");
       }
     } catch (err) {
       console.error("Sign-in error:", err);
+      alert("Something went wrong sending the magic link.");
+    } finally {
+      setTurnstileToken(null);
+      setTurnstileRefreshKey((key) => key + 1);
     }
-  }, [signInWithTwitter]);
+  }, [sendMagicLink, turnstileToken, setTurnstileToken, turnstileSiteKey]);
 
   const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {
     try {
@@ -208,7 +240,15 @@ function App() {
 
   const fetchEphemeralKey = async (): Promise<string | null> => {
     logClientEvent({ url: "/session" }, "fetch_session_token_request");
-    const tokenResponse = await fetch("/api/session");
+    const tokenResponse = await fetch("/api/session", {
+      method: "GET",
+      credentials: "include",
+      headers: authSession?.access_token
+        ? {
+            Authorization: `Bearer ${authSession.access_token}`,
+          }
+        : undefined,
+    });
     if (!tokenResponse.ok) {
       const errorBody = await tokenResponse.text().catch(() => "");
       console.error("Failed to fetch session token:", tokenResponse.status, errorBody);
@@ -591,6 +631,17 @@ function App() {
           sessionIdentity={sessionIdentity}
           onSignIn={handleSignIn}
           onSignOut={handleSignOut}
+          turnstileSlot={
+            turnstileSiteKey ? (
+              <TurnstileWidget
+                siteKey={turnstileSiteKey}
+                action="magic_link"
+                refreshKey={turnstileRefreshKey}
+                className="mt-1"
+                onToken={setTurnstileToken}
+              />
+            ) : null
+          }
         />
       }
       conversation={conversationContent}

@@ -25,6 +25,7 @@ interface TopRibbonProps {
   sessionIdentity: SessionIdentitySummary;
   onSignIn?: () => void;
   onSignOut?: () => void;
+  turnstileSlot?: React.ReactNode;
 }
 
 function getStatusAccent(sessionStatus: SessionStatus) {
@@ -50,6 +51,7 @@ export function TopRibbon({
   sessionIdentity,
   onSignIn,
   onSignOut,
+  turnstileSlot,
 }: TopRibbonProps) {
   const statusChip = getStatusAccent(sessionStatus);
 
@@ -157,13 +159,21 @@ export function TopRibbon({
               </button>
             )}
             {showSignIn && (
-              <button
-                type="button"
-                onClick={onSignIn}
-                className="rounded-md border border-flux/40 bg-flux/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-flux transition hover:bg-flux/20"
-              >
-                Sign in
-              </button>
+              <div className="flex items-center gap-2">
+                {turnstileSlot && (
+                  <div className="flex flex-col items-start text-[10px] uppercase tracking-[0.2em] text-neutral-500">
+                    <span>Security Check</span>
+                    <div className="mt-1">{turnstileSlot}</div>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={onSignIn}
+                  className="rounded-md border border-flux/40 bg-flux/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-flux transition hover:bg-flux/20"
+                >
+                  Send magic link
+                </button>
+              </div>
             )}
           </div>
 

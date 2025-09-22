@@ -17,6 +17,8 @@ interface AuthContextType {
   sendMagicLink: (email: string, options?: { redirectTo?: string; captchaToken?: string }) => Promise<{ success: boolean; message: string }>;
   signInWithTwitter: (options?: { redirectTo?: string; captchaToken?: string }) => Promise<{ success: boolean; message: string }>;
   signInWithSolanaWallet: (options?: { redirectTo?: string; captchaToken?: string }) => Promise<{ success: boolean; message: string }>;
+  turnstileToken: string | null;
+  setTurnstileToken: (token: string | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -28,6 +30,8 @@ const AuthContext = createContext<AuthContextType>({
   sendMagicLink: async () => ({ success: false, message: "Not initialized" }),
   signInWithTwitter: async () => ({ success: false, message: "Not initialized" }),
   signInWithSolanaWallet: async () => ({ success: false, message: "Not initialized" }),
+  turnstileToken: null,
+  setTurnstileToken: () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -35,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -120,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         options: {
           emailRedirectTo: redirectTo,
           shouldCreateUser: true,
-          captchaToken: options?.captchaToken,
+          captchaToken: options?.captchaToken ?? turnstileToken ?? undefined,
         },
       } as any);
       if (error) throw error;
@@ -194,6 +199,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sendMagicLink,
         signInWithTwitter,
         signInWithSolanaWallet,
+        turnstileToken,
+        setTurnstileToken,
       }}
     >
       {children}
