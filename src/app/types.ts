@@ -14,7 +14,7 @@ export type ModerationCategory = (typeof MODERATION_CATEGORIES)[number];
 // Create a Zod enum based on the same array
 export const ModerationCategoryZod = z.enum([...MODERATION_CATEGORIES]);
 
-export type SessionStatus = "DISCONNECTED" | "CONNECTING" | "CONNECTED";
+export type SessionStatus = "DISCONNECTED" | "CONNECTING" | "CONNECTED" | "ERROR";
 
 export interface ToolParameterProperty {
   type: string;

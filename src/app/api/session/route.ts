@@ -12,8 +12,24 @@ export async function GET() {
       credentials: "include",
       body: JSON.stringify({ model: MODEL_IDS.realtime }),
     });
+    if (!response.ok) {
+      const body = await response.text();
+      console.error("/api/session upstream", {
+        status: response.status,
+        body,
+      });
+      return NextResponse.json(
+        { error: "Upstream session service failure", status: response.status },
+        { status: 502 }
+      );
+    }
+
     const data = await response.json();
-    console.log('raw_session_payload', JSON.stringify(data));
+    console.log("/api/session ok", {
+      id: data?.id,
+      model: data?.model,
+      hasTools: Array.isArray(data?.tools) ? data.tools.length : 0,
+    });
     const { tools: _ignoredTools, ...sanitized } = data ?? {};
     void _ignoredTools;
     sanitized.tools = [];

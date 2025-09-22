@@ -17,6 +17,8 @@ function getStatusAccent(sessionStatus: SessionStatus) {
       return { label: "Live", tone: "bg-flux/20 text-flux" };
     case "CONNECTING":
       return { label: "Linking", tone: "bg-accent-info/10 text-accent-info" };
+    case "ERROR":
+      return { label: "Fault", tone: "bg-accent-critical/20 text-accent-critical" };
     default:
       return { label: "Offline", tone: "bg-neutral-800 text-neutral-300" };
   }
