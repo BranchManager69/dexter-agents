@@ -1,16 +1,52 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { MODEL_IDS } from "../../config/models";
 import { getDexterApiRoute } from "../../config/env";
 
+type Database = any;
+
+const ALLOW_GUEST_SESSIONS =
+  process.env.NEXT_PUBLIC_ALLOW_GUEST_SESSIONS === "false" ? false : true;
+
 export async function GET() {
   try {
+    const cookieStore = cookies();
+    const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore });
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      console.warn("/api/session supabase session error", sessionError.message);
+    }
+
+    const isAuthenticated = Boolean(session?.user);
+
+    if (!isAuthenticated && !ALLOW_GUEST_SESSIONS) {
+      return NextResponse.json({ error: "Sign-in required" }, { status: 401 });
+    }
+
+    const payload: Record<string, any> = { model: MODEL_IDS.realtime };
+
+    if (isAuthenticated && session?.access_token) {
+      payload.supabaseAccessToken = session.access_token;
+    } else {
+      payload.guestProfile = {
+        label: "Dexter Demo Wallet",
+        instructions:
+          "Operate only in read-only or low-risk flows and encourage the user to sign in for persistent, personalized sessions.",
+      };
+    }
+
     const response = await fetch(getDexterApiRoute(`/realtime/sessions`), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ model: MODEL_IDS.realtime }),
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
       const body = await response.text();
@@ -25,10 +61,13 @@ export async function GET() {
     }
 
     const data = await response.json();
+    const sessionType = data?.dexter_session?.type || (isAuthenticated ? "user" : "guest");
     console.log("/api/session ok", {
       id: data?.id,
       model: data?.model,
       hasTools: Array.isArray(data?.tools) ? data.tools.length : 0,
+      sessionType,
+      supabaseUserId: data?.dexter_session?.user?.id ?? null,
     });
     const { tools: _ignoredTools, ...sanitized } = data ?? {};
     void _ignoredTools;

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
@@ -23,6 +23,22 @@ import { useEvent } from "@/app/contexts/EventContext";
 import { useRealtimeSession } from "./hooks/useRealtimeSession";
 import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 import { useSignalData } from "./hooks/useSignalData";
+import { useAuth } from "./auth-context";
+
+export type DexterSessionSummary = {
+  type: "guest" | "user";
+  user: { id?: string | null; email?: string | null } | null;
+  guestProfile?: { label?: string; instructions?: string } | null;
+};
+
+const GUEST_SESSION_INSTRUCTIONS =
+  "Operate using the shared Dexter demo wallet with limited funds. Avoid destructive actions and encourage the user to sign in for persistent access.";
+
+const createGuestIdentity = (): DexterSessionSummary => ({
+  type: "guest",
+  user: null,
+  guestProfile: { label: "Dexter Demo Wallet", instructions: GUEST_SESSION_INSTRUCTIONS },
+});
 
 // Agent configs
 import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
@@ -39,6 +55,22 @@ import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
 
 function App() {
   const searchParams = useSearchParams()!;
+  const { session: authSession, loading: authLoading, signOut: authSignOut, signInWithTwitter } = useAuth();
+
+  const [sessionIdentity, setSessionIdentity] = useState<DexterSessionSummary>(createGuestIdentity);
+
+  const authEmail = useMemo(() => {
+    if (!authSession) return null;
+    return (
+      (authSession.user.email as string | null | undefined) ??
+      (authSession.user.user_metadata?.email as string | null | undefined) ??
+      null
+    );
+  }, [authSession]);
+
+  const resetSessionIdentity = useCallback(() => {
+    setSessionIdentity(createGuestIdentity());
+  }, []);
 
   // ---------------------------------------------------------------------
   // Codec selector – lets you toggle between wide-band Opus (48 kHz)
@@ -70,7 +102,7 @@ function App() {
   // Ref to identify whether the latest agent switch came from an automatic handoff
   const handoffTriggeredRef = useRef(false);
 
-  const sdkAudioElement = React.useMemo(() => {
+  const sdkAudioElement = useMemo(() => {
     if (typeof window === 'undefined') return undefined;
     const el = document.createElement('audio');
     el.autoplay = true;
@@ -124,6 +156,18 @@ function App() {
 
   const signalData = useSignalData();
 
+  const handleSignIn = useCallback(async () => {
+    if (typeof window === "undefined") return;
+    try {
+      const result = await signInWithTwitter({ redirectTo: window.location.href });
+      if (!result.success && result.message) {
+        console.error("Sign-in failed:", result.message);
+      }
+    } catch (err) {
+      console.error("Sign-in error:", err);
+    }
+  }, [signInWithTwitter]);
+
   const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {
     try {
       sendEvent(eventObj);
@@ -165,8 +209,41 @@ function App() {
   const fetchEphemeralKey = async (): Promise<string | null> => {
     logClientEvent({ url: "/session" }, "fetch_session_token_request");
     const tokenResponse = await fetch("/api/session");
+    if (!tokenResponse.ok) {
+      const errorBody = await tokenResponse.text().catch(() => "");
+      console.error("Failed to fetch session token:", tokenResponse.status, errorBody);
+      resetSessionIdentity();
+      setSessionStatus("DISCONNECTED");
+      return null;
+    }
+
     const data = await tokenResponse.json();
     logServerEvent(data, "fetch_session_token_response");
+
+    const dexterSession = data?.dexter_session;
+    if (dexterSession) {
+      if (dexterSession.type === "user") {
+        setSessionIdentity({
+          type: "user",
+          user: {
+            id: dexterSession.user?.id ?? null,
+            email: dexterSession.user?.email ?? null,
+          },
+          guestProfile: null,
+        });
+      } else {
+        setSessionIdentity({
+          type: "guest",
+          user: null,
+          guestProfile: dexterSession.guest_profile ?? {
+            label: "Dexter Demo Wallet",
+            instructions: GUEST_SESSION_INSTRUCTIONS,
+          },
+        });
+      }
+    } else {
+      resetSessionIdentity();
+    }
 
     if (!data.client_secret?.value) {
       logClientEvent(data, "error.no_ephemeral_key");
@@ -219,7 +296,18 @@ function App() {
     disconnect();
     setSessionStatus("DISCONNECTED");
     setIsPTTUserSpeaking(false);
+    resetSessionIdentity();
   };
+
+  const handleSignOut = useCallback(async () => {
+    try {
+      await authSignOut();
+    } catch (err) {
+      console.error("Sign-out error:", err);
+    } finally {
+      disconnectFromRealtime();
+    }
+  }, [authSignOut, disconnectFromRealtime]);
 
   const sendSimulatedUserMessage = (text: string) => {
     const id = uuidv4().slice(0, 32);
@@ -495,6 +583,14 @@ function App() {
           agents={scenarioAgents}
           onAgentChange={handleSelectedAgentChange}
           onReloadBrand={() => window.location.reload()}
+          authState={{
+            loading: authLoading,
+            isAuthenticated: Boolean(authSession),
+            email: authEmail,
+          }}
+          sessionIdentity={sessionIdentity}
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
         />
       }
       conversation={conversationContent}

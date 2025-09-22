@@ -4,26 +4,29 @@
 - **Frontend trigger:** `useRealtimeSession.fetchEphemeralKey()` → `GET /api/session`
 - **Server proxy:** `src/app/api/session/route.ts` → `POST https://api.dexter.cash/realtime/sessions`
 - **Realtime model:** `MODEL_IDS.realtime` (default `gpt-realtime` unless overridden via env)
-- **Return payload:** ephemeral `client_secret`, voice + model settings, MCP tool wiring (sanitized)
+- **Return payload:** ephemeral `client_secret`, voice + model settings, MCP tool wiring (sanitized) + `dexter_session` metadata (type + user/guest info)
 
 ## Current Flow (Unauthenticated)
 1. **Connect click**
    - `App.tsx` hooks call `fetchEphemeralKey`, hitting `GET /api/session` from the browser.
 2. **Next.js API route**
-   - `route.ts` forwards the request to `getDexterApiRoute('/realtime/sessions')` with `model: MODEL_IDS.realtime`.
+   - `route.ts` fetches the Supabase session (via `createRouteHandlerClient`).
+   - Authenticated users forward their Supabase access token to Dexter API; guests attach a demo profile descriptor.
    - On non-200 responses, we log `/api/session upstream` and bubble back a `502`.
 3. **Sanitization**
    - Strip `tools` from the upstream payload; default the client to local MCP tooling.
    - Append an MCP reminder to the instructions.
-   - Return JSON containing the ephemeral `client_secret` plus UI metadata.
+   - Preserve the `dexter_session` block so the UI can display `guest` vs `user` state alongside Supabase auth status.
 4. **Client bootstrap**
    - `useRealtimeSession` hands `client_secret` to the OpenAI WebRTC SDK.
    - SDK creates the peer connection, pulls audio, and starts the event stream.
 
 ```
 Browser ──GET /api/session──▶ Next.js ──POST /realtime/sessions──▶ Dexter API ──▶ OpenAI
-   │                                                                             │
-   └─────────────── ephemeral client_secret ◀────────────────────────────────────┘
+   │             │                     │
+   │             │                     └─ verifies Supabase token (if provided) and tags session (guest/user)
+   │             └─ forwards `{ model, supabaseAccessToken? }`
+   └─────────────── ephemeral client_secret + dexter_session ◀────────────────────────────────┘
 ```
 
 ## Logging & Troubleshooting
@@ -31,22 +34,22 @@ Browser ──GET /api/session──▶ Next.js ──POST /realtime/sessions─
 - Failure log: `/api/session upstream { status, body }` when the Dexter API rejects the request.
 - Quick health check: `curl -s http://localhost:3210/api/session` while tailing `npm run logs -- --nostream`.
 
-## Upcoming Auth Integration
-| Step | Focus | Notes |
-| --- | --- | --- |
-| 1 | **Accept logged-in identity** | Ensure `/api/session` validates the Supabase session (cookie/JWT). Reject anonymous calls once auth is live. |
-| 2 | **Forward user context upstream** | Include user identifiers in the POST (headers or JSON metadata) so Dexter API can personalize rate limits, audit, etc. |
-| 3 | **Propagate tool entitlements** | Optionally allow the backend to return user-specific MCP tools. Merge them rather than stripping. |
-| 4 | **Persist session telemetry** | Tag OpenAI session IDs with the authenticated user for later analytics / billing. |
+## Identity Modes
+| Mode | Trigger | Server Behaviour | UI Treatment |
+| --- | --- | --- | --- |
+| `user` | Supabase session + access token | Dexter API verifies the token, tags the session with user id/email, and keeps full tooling enabled. | Header shows account email; session chip shows the realtime user identity. |
+| `guest` | No Supabase session or verification failure | Dexter API issues demo instructions, limits tooling, and returns `guest_profile` metadata. | Header still shows “Guest”; session chip displays the demo label with a prompt to sign in. |
+
+> **Rate limiting:** guest mode is currently open but will be backed by a short-lived quota (Redis bucket) before launch so anonymous usage can’t drain credits.
 
 ## Reusing the Existing Supabase Auth
-- The primary site already issues Supabase auth cookies. As long as they are set for `.dexter.cash`, `beta.dexter.cash` can read them without extra work.
-- Next.js API routes can access the Supabase session via the cookie or by instantiating the Supabase client with the shared service key.
-- Plan: reuse the shared middleware (e.g., `withAuth`) so `/api/session` gets both the user ID and access token.
-- Once active, add auth-aware tests/documentation updates here.
+- Supabase cookies scoped to `.dexter.cash` automatically flow to `beta.dexter.cash`; no extra OAuth handshake is needed.
+- The agents app now uses `createRouteHandlerClient` to read those cookies inside `/api/session` and forward the access token to Dexter API. The `/auth/callback` route keeps the cookies in sync with client-side auth state via `supabase.auth.onAuthStateChange`.
+- Dexter API re-validates the token with Supabase (service role key) before tagging the realtime session as `user` and including email/id metadata.
+- Guests skip the token and receive a shared demo profile; both paths coexist so anonymous demos work while logged-in users get full access.
 
 ## Checklist for Future Updates
-- [ ] Authenticated flow diagram (add once login is wired up).
-- [ ] Document headers/body fields we forward to Dexter API for user context.
-- [ ] Note any rate limiting or quota enforcement once implemented.
-- [ ] Add reference to Supabase middleware helpers when the code lands.
+- [x] Authenticated flow diagram (documented above with metadata callouts).
+- [x] Document body fields forwarded to Dexter API (`supabaseAccessToken`, optional `guestProfile`).
+- [ ] Wire guest session rate limiting (bucket + alerting) once Redis quota is finalised.
+- [ ] Add reference to the eventual UI sign-in modal when it lands (currently using Twitter OAuth shortcut).

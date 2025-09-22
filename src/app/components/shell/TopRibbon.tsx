@@ -3,12 +3,28 @@ import Image from "next/image";
 import type { RealtimeAgent } from "@openai/agents/realtime";
 import { SessionStatus } from "@/app/types";
 
+interface SessionIdentitySummary {
+  type: "guest" | "user";
+  user?: { id?: string | null; email?: string | null } | null;
+  guestProfile?: { label?: string; instructions?: string } | null;
+}
+
+interface AuthStateSummary {
+  loading: boolean;
+  isAuthenticated: boolean;
+  email: string | null;
+}
+
 interface TopRibbonProps {
   sessionStatus: SessionStatus;
   selectedAgentName: string;
   agents: RealtimeAgent[];
   onAgentChange: (agentName: string) => void;
   onReloadBrand?: () => void;
+  authState: AuthStateSummary;
+  sessionIdentity: SessionIdentitySummary;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
 }
 
 function getStatusAccent(sessionStatus: SessionStatus) {
@@ -30,30 +46,49 @@ export function TopRibbon({
   agents,
   onAgentChange,
   onReloadBrand,
+  authState,
+  sessionIdentity,
+  onSignIn,
+  onSignOut,
 }: TopRibbonProps) {
   const statusChip = getStatusAccent(sessionStatus);
 
-  return (
-    <div className="flex w-full items-center justify-between px-9 py-5">
-      <button
-        type="button"
-        onClick={onReloadBrand}
-        className="group flex items-center gap-3 text-left"
-      >
-        <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-surface-glass/70 ring-1 ring-neutral-800/60 transition group-hover:ring-flux/40">
-          <Image src="/openai-logomark.svg" alt="Dexter" fill />
-        </div>
-        <div>
-          <div className="font-display text-lg font-semibold tracking-wide uppercase text-foreground/90">
-            Dexter
-          </div>
-          <div className="text-xs uppercase tracking-[0.2em] text-neutral-500">
-            Situation Room
-          </div>
-        </div>
-      </button>
+  const sessionLabel = sessionIdentity.type === "user"
+    ? sessionIdentity.user?.email || sessionIdentity.user?.id || "Authenticated"
+    : sessionIdentity.guestProfile?.label || "Demo Session";
 
-      <div className="flex items-center gap-7">
+  const accountLabel = authState.loading
+    ? "Checking..."
+    : authState.isAuthenticated
+      ? authState.email || "Signed in"
+      : "Guest";
+
+  const showSignOut = authState.isAuthenticated && !authState.loading && Boolean(onSignOut);
+  const showSignIn = !authState.isAuthenticated && !authState.loading && Boolean(onSignIn);
+
+  return (
+    <div className="flex w-full flex-col gap-4 px-9 py-5 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex items-center justify-between gap-4 lg:justify-start">
+        <button
+          type="button"
+          onClick={onReloadBrand}
+          className="group flex items-center gap-3 text-left"
+        >
+          <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-surface-glass/70 ring-1 ring-neutral-800/60 transition group-hover:ring-flux/40">
+            <Image src="/openai-logomark.svg" alt="Dexter" fill />
+          </div>
+          <div>
+            <div className="font-display text-lg font-semibold tracking-wide uppercase text-foreground/90">
+              Dexter
+            </div>
+            <div className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+              Situation Room
+            </div>
+          </div>
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-7">
         <div className="flex items-center gap-3 rounded-md bg-surface-glass/60 px-4 py-2 text-sm text-neutral-200 ring-1 ring-neutral-800/60">
           <span className="font-mono uppercase tracking-[0.24em] text-neutral-400">
             Link
@@ -63,7 +98,7 @@ export function TopRibbon({
           </span>
         </div>
 
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-3 xl:flex">
           <div className="text-xs uppercase tracking-[0.3em] text-neutral-500">
             Scenario
           </div>
@@ -101,6 +136,50 @@ export function TopRibbon({
                 />
               </svg>
             </span>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+          <div className="flex items-center gap-2">
+            <div className="text-xs uppercase tracking-[0.3em] text-neutral-500">
+              Account
+            </div>
+            <div className="rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 text-xs font-medium text-neutral-200">
+              {accountLabel}
+            </div>
+            {showSignOut && (
+              <button
+                type="button"
+                onClick={onSignOut}
+                className="rounded-md border border-neutral-800/60 px-3 py-1 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-flux/40 hover:text-flux"
+              >
+                Sign out
+              </button>
+            )}
+            {showSignIn && (
+              <button
+                type="button"
+                onClick={onSignIn}
+                className="rounded-md border border-flux/40 bg-flux/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-flux transition hover:bg-flux/20"
+              >
+                Sign in
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="text-xs uppercase tracking-[0.3em] text-neutral-500">
+              Session
+            </div>
+            <div
+              className={`rounded-md border px-3 py-2 text-xs font-medium ${
+                sessionIdentity.type === 'user'
+                  ? 'border-flux/40 bg-flux/10 text-flux'
+                  : 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300'
+              }`}
+            >
+              {sessionLabel}
+            </div>
           </div>
         </div>
       </div>
