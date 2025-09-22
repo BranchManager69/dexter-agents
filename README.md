@@ -46,16 +46,26 @@ Keep the repos cloned as siblings (for example under `/home/branchmanager/websit
 git clone https://github.com/BranchManager69/dexter-agents.git
 cd dexter-agents
 npm ci
-cp .env.sample .env   # populate OPENAI_API_KEY, NEXT_PUBLIC_SITE_URL, model overrides
-npm run dev           # http://localhost:3000
+cp .env.sample .env   # populate keys described below
+npm run dev           # http://localhost:3211 by default (0.0.0.0:3211)
 ```
 
-The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdown to swap between demo flows.
+The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdown to swap between demo flows. Pass `-- --port <port>` if you prefer the classic `3000`.
 
 ## Environment
 - `.env.sample` documents required variables (`OPENAI_API_KEY`, `NEXT_PUBLIC_OPENAI_*_MODEL`, `NEXT_PUBLIC_SITE_URL`).
+- **Supabase** – set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` so the browser can sync auth state via `/auth/callback`.
+- **Cloudflare Turnstile** – set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (same value the main site uses) to render the security challenge before sending a magic link.
 - Set `NEXT_PUBLIC_TOKEN_AI_MCP_TOKEN` for local MCP tool runs; production uses `TOKEN_AI_MCP_TOKEN` via PM2.
 - When deployed through `dexter-ops/ops/ecosystem.config.cjs`, `npm run deploy` builds the app and restarts the PM2 process with updated env.
+
+### Supabase Redirect Allowlist
+Add the beta surface to the Supabase project so magic links return to the correct domain:
+
+1. Supabase Dashboard → **Authentication → URL Configuration**
+2. Set **Site URL** to `https://dexter.cash`
+3. Under **Redirect URLs** include each surface you care about (e.g. `https://beta.dexter.cash`, `https://dexter.cash`, optionally `https://*.dexter.cash`)
+4. Save, then request a fresh magic link so the new redirect is used
 
 ## Project Layout
 - `src/app/App.tsx` – realtime UI state machine (transcript, guardrails, tool results).
@@ -64,6 +74,7 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 - `src/app/components/`, `hooks/`, `contexts/` – reusable UI/state primitives.
 - `scripts/` – `dexchat.js` CLI and `runHarness.js` Playwright runner; artifacts land in `harness-results/` (git-ignored).
 - `AGENTS.md` – contributor guidelines covering style, testing, and PR expectations.
+- `docs/realtime-session-flow.md` – detailed handshake diagram and guest/user session notes.
 
 ## Agent Scenarios
 - **chatSupervisor** – realtime agent greets and triages while a supervisor model executes complex tool calls.
@@ -89,6 +100,11 @@ Create new scenarios by copying an existing folder, wiring it into `agentConfigs
 - Follow the PM2 definitions in `dexter-ops/ops/ecosystem.config.cjs`; the app expects `NODE_OPTIONS=--enable-source-maps` for readable logs.
 - Set `NEXT_PUBLIC_SITE_URL` before deploying so share links and realtime callbacks point at the correct domain (currently `https://beta.dexter.cash`).
 - nginx templates and TLS automation live in `dexter-ops/ops/nginx-sites/`; reuse them when adding new surfaces.
+
+## Authentication & Sessions
+- **Guest mode** is always available: the realtime backend receives a `guest_profile` and runs with demo wallet restrictions.
+- **Signed-in mode** – pass the Cloudflare Turnstile check, request a magic link, and open it in the same browser profile. Supabase emits `dexter_session` metadata so the UI badge and realtime logs both reflect the user.
+- `/auth/callback` keeps Supabase cookies in sync with auth state changes (`supabase.auth.onAuthStateChange`). If cookies go missing, double-check the Supabase redirect allow list and the Turnstile token.
 
 ## Docs & References
 - `AGENTS.md` – contributor guide (style, testing, PR checklists).
