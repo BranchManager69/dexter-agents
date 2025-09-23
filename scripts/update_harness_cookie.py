@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Update HARNESS_COOKIE values (and optionally Playwright storage state)."""
+'''Update HARNESS_COOKIE values (and optionally Playwright storage state).'''
 
 import argparse
 import subprocess
@@ -14,7 +14,7 @@ STATE_FILE = HOME / 'websites' / 'dexter-mcp' / 'state.json'
 
 def update_env_file(path: Path, value: str) -> None:
     if not path.exists():
-        raise FileNotFoundError(f"Env file not found: {path}")
+        raise FileNotFoundError(f'Env file not found: {path}')
     lines = path.read_text().splitlines()
     replaced = False
     for i, line in enumerate(lines):

@@ -25,3 +25,6 @@
 - `OPERATIONS.md` contains the condensed runbook (PM2, nginx, smoke tests, troubleshooting).
 - `ops/previews/` houses the local copies of README media; synced to `https://docs.dexter.cash/previews/` on every `dxsnap` run.
 - For long-form architecture notes, use the GitBook instance on `docs.dexter.cash` and link from this repo when relevant.
+### Supabase Session Refresh
+
+- Use the desktop helper `refresh-supabase-session.ps1` when the Turnstile/Supabase session expires. It launches the SOCKS proxy + Chrome, prints the DevTools snippet, and sends the encoded cookie to `scripts/update_harness_cookie.py` to rewrite HARNESS_COOKIE in both `.env` files. Choose the storage-refresh option to regenerate Playwright `state.json` after logging in.
