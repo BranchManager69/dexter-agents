@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 const path = require('path');
-const { runHarness } = require('./runHarness');
+const { runHarness, resolveOutputDir } = require('./runHarness');
 
 (async () => {
   try {
@@ -8,9 +8,10 @@ const { runHarness } = require('./runHarness');
     const prompt = argPrompt || process.env.HARNESS_PROMPT || 'Hello from dexchat';
     const targetUrl = process.env.HARNESS_TARGET_URL || 'https://beta.dexter.cash/';
     const waitMs = Number(process.env.HARNESS_WAIT_MS || '45000');
-    const outputDir = process.env.HARNESS_OUTPUT_DIR
-      ? path.resolve(process.env.HARNESS_OUTPUT_DIR)
-      : path.join(__dirname, '..', 'harness-results');
+    const outputDir = resolveOutputDir(process.env.HARNESS_OUTPUT_DIR);
+    const storageState = process.env.HARNESS_STORAGE_STATE
+      ? process.env.HARNESS_STORAGE_STATE.trim()
+      : undefined;
 
     const { artifactPath } = await runHarness({
       prompt,
@@ -19,6 +20,7 @@ const { runHarness } = require('./runHarness');
       outputDir,
       headless: process.env.HARNESS_HEADLESS !== 'false',
       saveArtifact: process.env.HARNESS_SAVE_ARTIFACT !== 'false',
+      storageState,
     });
 
     if (!artifactPath) {

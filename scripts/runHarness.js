@@ -105,7 +105,7 @@ async function runHarness({
       await beforeSend({ browser, context, page });
     }
 
-    const chatInput = await page.waitForSelector('input[placeholder="Type a message..."]', { timeout: 30000 });
+    const chatInput = await page.waitForSelector('input[placeholder="Enter directive or question"], input[placeholder="Type a message..."]', { timeout: 30000 });
     await chatInput.fill(prompt);
     await page.locator('button:has(img[alt="Send"])').click();
 

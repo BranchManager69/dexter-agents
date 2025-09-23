@@ -4,9 +4,21 @@
 const fs = require('fs');
 const path = require('path');
 const dotenv = require('dotenv');
-const { Client: McpClient } = require('@modelcontextprotocol/sdk/client/index.js');
-const { StreamableHTTPClientTransport } = require('@modelcontextprotocol/sdk/client/streamableHttp.js');
 const { runHarness, resolveOutputDir } = require('./runHarness');
+
+let mcpModulesPromise;
+async function loadMcpModules() {
+  if (!mcpModulesPromise) {
+    mcpModulesPromise = Promise.all([
+      import('@modelcontextprotocol/sdk/client/index.js'),
+      import('@modelcontextprotocol/sdk/client/streamableHttp.js'),
+    ]).then(([clientMod, transportMod]) => ({
+      McpClient: clientMod.Client,
+      StreamableHTTPClientTransport: transportMod.StreamableHTTPClientTransport,
+    }));
+  }
+  return mcpModulesPromise;
+}
 
 // Auto-load repo .env so HARNESS_* values can be defined once.
 dotenv.config({ path: path.resolve(__dirname, '..', '.env') });
@@ -20,6 +32,7 @@ function parseArgs(argv) {
     json: false,
     mode: 'api',
     pageSize: null,
+    output: null,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -48,6 +61,11 @@ function parseArgs(argv) {
     }
     if (arg === '--json') {
       args.json = true;
+      continue;
+    }
+    if (arg === '--output' || arg === '-o') {
+      args.output = argv[i + 1];
+      i += 1;
       continue;
     }
     if (arg === '--mode') {
@@ -118,8 +136,129 @@ function parseAuthorizationHeader() {
   return value || null;
 }
 
+function parsePlaywrightCookies() {
+  const value = typeof process.env.HARNESS_PLAYWRIGHT_COOKIES === 'string'
+    ? process.env.HARNESS_PLAYWRIGHT_COOKIES.trim()
+    : '';
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    console.warn('HARNESS_PLAYWRIGHT_COOKIES must be a JSON array; ignoring value.');
+  } catch (error) {
+    console.warn('Failed to parse HARNESS_PLAYWRIGHT_COOKIES:', error?.message || error);
+  }
+  return [];
+}
+
+function ensureBearerPrefix(raw) {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  if (/^bearer\s+/i.test(trimmed)) {
+    const token = trimmed.replace(/^bearer\s+/i, '').trim();
+    return token ? `Bearer ${token}` : null;
+  }
+  return `Bearer ${trimmed}`;
+}
+
+function extractRefreshTokenFromCookie(cookieHeader) {
+  if (!cookieHeader) return null;
+  const segments = cookieHeader.split(';');
+  for (const segment of segments) {
+    const trimmed = segment.trim();
+    if (!trimmed) continue;
+    const eqIndex = trimmed.indexOf('=');
+    if (eqIndex <= 0) continue;
+    const name = trimmed.slice(0, eqIndex).trim();
+    const value = trimmed.slice(eqIndex + 1).trim();
+    if (!name || !value) continue;
+    if (!/sb-.*-refresh-token$/.test(name)) continue;
+    let decoded = value;
+    try { decoded = decodeURIComponent(value); } catch {}
+    try {
+      const parsed = JSON.parse(decoded);
+      if (Array.isArray(parsed) && typeof parsed[0] === 'string' && parsed[0]) {
+        return parsed[0];
+      }
+    } catch {}
+  }
+  return null;
+}
+
+function resolveApiBase() {
+  const raw = (process.env.HARNESS_API_BASE || process.env.DEXTER_API_BASE_URL || 'https://api.dexter.cash').trim();
+  if (!raw) return 'https://api.dexter.cash';
+  return raw.endsWith('/') ? raw.slice(0, -1) : raw;
+}
+
+async function mintMcpBearerFromCookie(cookieHeader) {
+  const refreshToken = extractRefreshTokenFromCookie(cookieHeader);
+  if (!refreshToken) return null;
+  const apiBase = resolveApiBase();
+  const url = `${apiBase}/api/connector/oauth/token`;
+  const form = new URLSearchParams();
+  form.set('grant_type', 'refresh_token');
+  form.set('refresh_token', refreshToken);
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form.toString(),
+    });
+    if (!response.ok) {
+      if (process.env.HARNESS_DEBUG_SESSION === '1') {
+        console.warn(`[pumpstream] MCP JWT mint failed (${response.status} ${response.statusText})`);
+      }
+      return null;
+    }
+    const data = await response.json().catch(() => null);
+    const token = typeof data?.dexter_mcp_jwt === 'string' ? data.dexter_mcp_jwt.trim() : '';
+    if (!token) {
+      if (process.env.HARNESS_DEBUG_SESSION === '1') {
+        console.warn('[pumpstream] dexter_mcp_jwt missing in token response; falling back.');
+      }
+      return null;
+    }
+    return ensureBearerPrefix(token);
+  } catch (error) {
+    console.warn('Failed to mint per-user MCP JWT:', error?.message || error);
+    return null;
+  }
+}
+
+async function resolveMcpBearer() {
+  const envBearer = ensureBearerPrefix(process.env.HARNESS_MCP_TOKEN || '');
+  if (envBearer) {
+    return { bearer: envBearer, source: 'HARNESS_MCP_TOKEN' };
+  }
+  const staticBearer = ensureBearerPrefix(process.env.TOKEN_AI_MCP_TOKEN || '');
+  if (staticBearer) {
+    return { bearer: staticBearer, source: 'TOKEN_AI_MCP_TOKEN' };
+  }
+  const cookieHeader = parseCookieHeader();
+  if (!cookieHeader) {
+    return { bearer: null, source: 'none' };
+  }
+  const minted = await mintMcpBearerFromCookie(cookieHeader);
+  if (minted) {
+    return { bearer: minted, source: 'minted' };
+  }
+  return { bearer: null, source: 'none' };
+}
+
 async function runUiHarness({ prompt, targetUrl, waitMs, headless, saveArtifact, outputDir }) {
   const storageState = parseStorageState();
+  const authHeader = parseAuthorizationHeader();
+  const cookieHeader = parseCookieHeader();
+  const cookies = parsePlaywrightCookies();
+
+  const extraHTTPHeaders = {};
+  if (authHeader) extraHTTPHeaders.Authorization = authHeader;
+  if (cookieHeader) extraHTTPHeaders.cookie = cookieHeader;
+
   const options = {
     prompt,
     targetUrl,
@@ -128,6 +267,8 @@ async function runUiHarness({ prompt, targetUrl, waitMs, headless, saveArtifact,
     saveArtifact,
     outputDir,
     storageState,
+    extraHTTPHeaders: Object.keys(extraHTTPHeaders).length > 0 ? extraHTTPHeaders : undefined,
+    cookies: cookies.length > 0 ? cookies : undefined,
   };
 
   const { artifact, artifactPath } = await runHarness(options);
@@ -210,7 +351,8 @@ function buildSupabaseToken() {
   return null;
 }
 
-async function callMcpTool({ session, pageSize }) {
+async function callMcpTool({ session, pageSize, bearerOverride }) {
+  const { McpClient, StreamableHTTPClientTransport } = await loadMcpModules();
   const mcp = Array.isArray(session?.tools) ? session.tools.find((t) => t.type === 'mcp') : null;
   if (!mcp?.server_url) throw new Error('Session missing MCP connector info');
 
@@ -228,17 +370,26 @@ async function callMcpTool({ session, pageSize }) {
       if (typeof value === 'string') headers.set(key, value);
     }
   }
-  const authHeader = headers.get('Authorization');
-  if (!authHeader || authHeader.includes('<redacted>')) {
-    const fallbackToken = process.env.HARNESS_MCP_TOKEN || process.env.TOKEN_AI_MCP_TOKEN;
-    if (!fallbackToken) {
-      console.warn('No MCP bearer supplied (HARNESS_MCP_TOKEN / TOKEN_AI_MCP_TOKEN); the call will likely fail.');
-    } else {
+  let bearerToUse = ensureBearerPrefix(bearerOverride || '');
+  const existingAuth = headers.get('Authorization');
+  if (!bearerToUse && existingAuth && !existingAuth.includes('<redacted>')) {
+    bearerToUse = ensureBearerPrefix(existingAuth);
+  }
+  if (!bearerToUse) {
+    const envFallback = ensureBearerPrefix(process.env.HARNESS_MCP_TOKEN || '')
+      || ensureBearerPrefix(process.env.TOKEN_AI_MCP_TOKEN || '');
+    if (envFallback) {
       if (!process.env.HARNESS_MCP_TOKEN && process.env.TOKEN_AI_MCP_TOKEN) {
         console.warn('HARNESS_MCP_TOKEN missing; using TOKEN_AI_MCP_TOKEN fallback.');
       }
-      headers.set('Authorization', fallbackToken.startsWith('Bearer ') ? fallbackToken : `Bearer ${fallbackToken}`);
+      bearerToUse = envFallback;
     }
+  }
+  if (bearerToUse) {
+    headers.set('Authorization', bearerToUse);
+  } else if (existingAuth && existingAuth.includes('<redacted>')) {
+    headers.delete('Authorization');
+    console.warn('No MCP bearer resolved; proceeding without Authorization header.');
   }
 
   const requestPayload = {
@@ -278,13 +429,13 @@ async function callMcpTool({ session, pageSize }) {
   }
 }
 
-async function runApiHarness({ pageSize }) {
+async function runApiHarness({ pageSize, bearerOverride }) {
   const supabaseToken = buildSupabaseToken();
   const session = await createRealtimeSession({ supabaseToken });
   if (process.env.HARNESS_DEBUG_SESSION === '1') {
     process.stdout.write(`Realtime session response:\n${JSON.stringify(session, null, 2)}\n`);
   }
-  const toolResult = await callMcpTool({ session, pageSize });
+  const toolResult = await callMcpTool({ session, pageSize, bearerOverride });
   return {
     session: {
       id: session?.id ?? null,
@@ -342,7 +493,7 @@ async function main() {
   const headless = args.headful ? false : headlessEnv === 'false' ? false : true;
   const saveArtifact = args.artifact ? (saveArtifactEnv === 'false' ? false : true) : false;
 
-  const outputDir = resolveOutputDir(process.env.HARNESS_OUTPUT_DIR);
+  const outputDir = resolveOutputDir(args.output || process.env.HARNESS_OUTPUT_DIR);
 
   const hasCookie = !!parseCookieHeader();
   const hasBearer = !!parseAuthorizationHeader();
@@ -378,7 +529,11 @@ async function main() {
 
   if (args.mode === 'api' || args.mode === 'both') {
     process.stdout.write('\n=== API Harness (direct MCP) ===\n');
-    const apiResult = await runApiHarness({ pageSize });
+    const bearerInfo = await resolveMcpBearer();
+    if (!bearerInfo.bearer && process.env.HARNESS_DEBUG_SESSION === '1') {
+      console.warn('[pumpstream] MCP bearer not resolved via env or cookie; proceeding unauthenticated.');
+    }
+    const apiResult = await runApiHarness({ pageSize, bearerOverride: bearerInfo.bearer });
     summarizeApiResult(apiResult);
     results.push({ mode: 'api', artifact: apiResult });
     if (args.json) {

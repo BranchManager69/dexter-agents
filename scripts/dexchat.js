@@ -2,7 +2,7 @@
 const path = require('path');
 const yargs = require('yargs/yargs');
 const { hideBin } = require('yargs/helpers');
-const { runHarness } = require('./runHarness');
+const { runHarness, resolveOutputDir } = require('./runHarness');
 
 (async () => {
   const argv = yargs(hideBin(process.argv))
@@ -54,11 +54,13 @@ const { runHarness } = require('./runHarness');
     ).argv;
 
   try {
+    const outputDir = resolveOutputDir(argv.output);
+
     const { artifact, artifactPath } = await runHarness({
       prompt: argv.prompt,
       targetUrl: argv.url,
       waitMs: argv.wait,
-      outputDir: path.resolve(argv.output),
+      outputDir,
       headless: !argv.headful,
       saveArtifact: argv.artifact,
     });

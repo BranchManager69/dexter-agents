@@ -56,6 +56,9 @@ npm install
 npm link   # now `dexchat` works from any path
 ```
 
+> **Note:** The harness scripts rely on the global `fetch` that ships with Node 20.
+> Make sure you are running on Node.js v20 or newer before invoking them.
+
 Without `npm link`, you can still run the tool via `npm run dexchat -- --prompt "..."`.
 
 ## Usage
@@ -92,6 +95,7 @@ Environment equivalents remain available for pipelines:
 | `HARNESS_OUTPUT_DIR` | Customize artifact directory. |
 | `HARNESS_HEADLESS` | Set `false` to force headed mode. |
 | `HARNESS_SAVE_ARTIFACT` | Set `false` to skip saving. |
+| `HARNESS_API_BASE` | (Optional) Override the Dexter API base URL when minting MCP JWTs. |
 
 ## Artifacts
 
@@ -153,8 +157,27 @@ npm run pumpstream:harness -- --mode both --page-size 5
 - **Auth inputs** – supply session context with `HARNESS_STORAGE_STATE`,
   `HARNESS_AUTHORIZATION`, or `HARNESS_COOKIE`. The script safely reuses the shared
   output directory guard so `HARNESS_OUTPUT_DIR=~/...` never punches outside the repo.
+- **Zero-click bearer** – the harness resolves MCP auth automatically (env `HARNESS_MCP_TOKEN`
+  → `TOKEN_AI_MCP_TOKEN` → mint per-user `dexter_mcp_jwt` from `HARNESS_COOKIE`
+  via `/api/connector/oauth/token`), so runs succeed without manual DevTools work.
 - **Artifacts** – UI runs land in `harness-results/` like Dexchat; API runs write
   `pumpstream-api-*.json` snapshots alongside them.
+- **Overrides** – `HARNESS_MCP_URL` points the API run at an alternate MCP endpoint if
+  you’re testing staging or local connectors.
+
+Defaults: mode `api`, wait `45000` ms, page-size `5`, artifacts enabled. UI runs
+require either a Playwright storage state file or cookies exported via
+`HARNESS_PLAYWRIGHT_COOKIES` (JSON array with `domain`/`path`/`value`). API runs can
+fall back to guest mode but need `HARNESS_MCP_TOKEN` when the connector redacts its
+bearer.
+
+Example cookies payload:
+
+```json
+[
+  { "name": "dexter_session", "value": "...", "domain": "beta.dexter.cash", "path": "/", "httpOnly": true, "secure": true }
+]
+```
 
 This scenario still imports the shared `runHarness` engine, so any improvements to the
 core (storage-state handling, extra headers, quiet-window heuristics) flow into every
