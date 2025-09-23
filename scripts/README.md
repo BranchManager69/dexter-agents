@@ -126,3 +126,15 @@ work without modification.
 ---
 
 Questions or improvement ideas? Tag `#dexchat-harness` in issues so we can iterate quickly.
+
+---
+
+## Wrapper History
+
+`runHarness.js` ships the actual Playwright logic. `dexchat.js` layers a modern CLI on
+top of it, while `check-realtime.js` survives as a legacy wrapper that reads the same
+inputs from `HARNESS_*` environment variables. We kept both entrypoints so older
+automation (cron jobs, PM2 scripts, simple shell aliases) can continue to export env
+vars without refactors, while newer workflows enjoy the richer CLI flags. Both paths
+ultimately invoke the same harness engine, so behavior stays consistent regardless of
+how it is triggered.
