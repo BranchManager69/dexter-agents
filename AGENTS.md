@@ -14,7 +14,7 @@
 - `dxsnap` – runs from anywhere, refreshes preview media and the shared wordmark quietly (`node ops/scripts/capture-previews.mjs --quiet`). Requires Playwright dependencies (run `npm install` and `npx playwright install --with-deps` once).
 - `npm run capture:previews` – verbose variant for detailed output or troubleshooting.
 - `ops/scripts/apply-nginx-alpha.sh` – example bootstrap for nginx configs; inspect outputs before running in production.
-- **Dexchat harness** – `scripts/dexchat.js` exposes the Playwright driver with CLI flags; `scripts/check-realtime.js` is the legacy wrapper that reads the same parameters from `HARNESS_*` env vars. Both call `scripts/runHarness.js`, so behavior stays identical whether a run is triggered by flags or exported variables.
+- **Dexchat harness** – `scripts/dexchat.js` exposes the Playwright driver with CLI flags; `scripts/check-realtime.js` is the legacy wrapper that reads the same parameters from `HARNESS_*` env vars. Both call `scripts/runHarness.js`, so behavior stays identical whether a run is triggered by flags or exported variables. `scripts/run-pumpstream-harness.js` extends the same engine with MCP API checks—use `npm run pumpstream:harness` when you need the dual UI+API scenario.
 
 ## Deployment & Verification
 - PM2 process definitions live in `ops/ecosystem.config.cjs`. After edits, use `pm2 restart <process>` and confirm the change with `npm run smoke:prod`.

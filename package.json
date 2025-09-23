@@ -11,12 +11,14 @@
     "pm2:prod": "NODE_ENV=production NODE_OPTIONS=--enable-source-maps pm2 restart dexter-agents --update-env -- start --hostname 0.0.0.0 --port 3210",
     "pm2:dev": "NODE_ENV=development pm2 restart dexter-agents --update-env -- dev --hostname 0.0.0.0 --port 3211",
     "logs": "pm2 logs dexter-agents --timestamp --lines 100",
-    "dexchat": "node scripts/dexchat.js"
+    "dexchat": "node scripts/dexchat.js",
+    "pumpstream:harness": "node scripts/run-pumpstream-harness.js"
   },
   "bin": {
     "dexchat": "./scripts/dexchat.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
     "@openai/agents": "^0.1.3",
     "@openai/agents-realtime": "^0.1.3",
     "@radix-ui/react-icons": "^1.3.2",

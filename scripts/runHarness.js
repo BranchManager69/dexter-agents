@@ -2,18 +2,43 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
+const DEFAULT_OUTPUT_DIR = path.join(__dirname, '..', 'harness-results');
+
+function resolveOutputDir(rawDir) {
+  const fallback = DEFAULT_OUTPUT_DIR;
+  if (!rawDir || typeof rawDir !== 'string') {
+    return fallback;
+  }
+  const trimmed = rawDir.trim();
+  if (!trimmed) {
+    return fallback;
+  }
+  if (trimmed === '~' || trimmed === '~/' || trimmed.startsWith('~/') || trimmed === '~\\' || trimmed.startsWith('~\\')) {
+    console.warn('Ignoring unsafe output directory "~/" – using harness-results/ instead.');
+    return fallback;
+  }
+  return path.resolve(trimmed);
+}
+
 async function runHarness({
   prompt,
   targetUrl = 'https://beta.dexter.cash/',
   waitMs = 45000,
-  outputDir = path.join(__dirname, '..', 'harness-results'),
+  outputDir,
   headless = true,
   saveArtifact = true,
   extraEnv = {},
+  storageState,
+  extraHTTPHeaders,
+  cookies,
+  onPageReady,
+  beforeSend,
 } = {}) {
   if (!prompt || !prompt.trim()) {
     throw new Error('runHarness requires a non-empty prompt.');
   }
+
+  const artifactDir = resolveOutputDir(outputDir);
 
   const browser = await chromium.launch({
     headless,
@@ -29,8 +54,29 @@ async function runHarness({
   });
 
   try {
-    const context = await browser.newContext({ permissions: ['microphone'] });
+    const contextOptions = { permissions: ['microphone'] };
+    if (storageState) {
+      contextOptions.storageState = storageState;
+    }
+    if (extraHTTPHeaders && typeof extraHTTPHeaders === 'object') {
+      contextOptions.extraHTTPHeaders = extraHTTPHeaders;
+    }
+
+    const context = await browser.newContext(contextOptions);
+
+    if (Array.isArray(cookies) && cookies.length > 0) {
+      try {
+        await context.addCookies(cookies);
+      } catch (cookieErr) {
+        console.warn('Failed adding Playwright cookies:', cookieErr?.message || cookieErr);
+      }
+    }
+
     const page = await context.newPage();
+
+    if (typeof onPageReady === 'function') {
+      await onPageReady({ browser, context, page });
+    }
 
     const consoleLogs = [];
     let lastActivity = Date.now();
@@ -53,6 +99,10 @@ async function runHarness({
     const authGate = await page.evaluate(() => document.body && document.body.innerText);
     if (authGate && /401 Authorization Required/i.test(authGate)) {
       throw new Error(`Failed to load ${targetUrl}: received 401 Authorization Required.`);
+    }
+
+    if (typeof beforeSend === 'function') {
+      await beforeSend({ browser, context, page });
     }
 
     const chatInput = await page.waitForSelector('input[placeholder="Type a message..."]', { timeout: 30000 });
@@ -166,7 +216,7 @@ async function runHarness({
 
     let artifactPath = null;
     if (saveArtifact) {
-      artifactPath = path.join(outputDir, `run-${timestamp.replace(/[:.]/g, '-')}.json`);
+      artifactPath = path.join(artifactDir, `run-${timestamp.replace(/[:.]/g, '-')}.json`);
       fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
       fs.writeFileSync(artifactPath, JSON.stringify(artifact, null, 2), 'utf8');
       process.stdout.write(`Harness artifact written to ${artifactPath}\n`);
@@ -182,4 +232,5 @@ async function runHarness({
 
 module.exports = {
   runHarness,
+  resolveOutputDir,
 };

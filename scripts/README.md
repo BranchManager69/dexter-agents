@@ -38,7 +38,8 @@ dexter-agents/
 ├── scripts/
 │   ├── dexchat.js        # CLI entrypoint (also exposed via npm bin)
 │   ├── runHarness.js     # Shared Playwright harness logic
-│   └── check-realtime.js # Legacy wrapper keeping env-based workflow
+│   ├── check-realtime.js # Legacy wrapper keeping env-based workflow
+│   └── run-pumpstream-harness.js # Dual-mode (UI + API) pumpstream checks
 └── harness-results/      # Timestamped JSON artifacts (git-ignored)
 ```
 
@@ -138,3 +139,23 @@ automation (cron jobs, PM2 scripts, simple shell aliases) can continue to export
 vars without refactors, while newer workflows enjoy the richer CLI flags. Both paths
 ultimately invoke the same harness engine, so behavior stays consistent regardless of
 how it is triggered.
+
+## Pumpstream Harness
+
+```
+npm run pumpstream:harness -- --mode both --page-size 5
+```
+
+- **Dual execution** – `--mode api` (default) hits the MCP tool directly, `--mode ui`
+  replays the Playwright flow, and `--mode both` runs them in sequence for diffing.
+- **Scenario defaults** – prompt and page-size align with the live pumpstream
+  experience, but you can override them with flags or `HARNESS_*` env vars.
+- **Auth inputs** – supply session context with `HARNESS_STORAGE_STATE`,
+  `HARNESS_AUTHORIZATION`, or `HARNESS_COOKIE`. The script safely reuses the shared
+  output directory guard so `HARNESS_OUTPUT_DIR=~/...` never punches outside the repo.
+- **Artifacts** – UI runs land in `harness-results/` like Dexchat; API runs write
+  `pumpstream-api-*.json` snapshots alongside them.
+
+This scenario still imports the shared `runHarness` engine, so any improvements to the
+core (storage-state handling, extra headers, quiet-window heuristics) flow into every
+wrapper automatically.
