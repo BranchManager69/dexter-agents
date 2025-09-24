@@ -77,7 +77,7 @@ export function TopRibbon({
           className="group flex items-center gap-3 text-left"
         >
           <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-surface-glass/70 ring-1 ring-neutral-800/60 transition group-hover:ring-flux/40">
-            <Image src="/openai-logomark.svg" alt="Dexter" fill />
+            <Image src="/assets/logos/logo_orange.png" alt="Dexter" fill sizes="32px" priority />
           </div>
           <div>
             <div className="font-display text-lg font-semibold tracking-wide uppercase text-foreground/90">
