@@ -16,7 +16,8 @@
     "logs": "pm2 logs dexter-agents --timestamp --lines 100",
     "dexchat": "node scripts/dexchat.js",
     "dexchat:refresh": "node scripts/dexchat.js refresh",
-    "pumpstream:harness": "node scripts/run-pumpstream-harness.js"
+    "pumpstream:harness": "node scripts/run-pumpstream-harness.js",
+    "harness": "node scripts/run-tool-harness.js"
   },
   "bin": {
     "dexchat": "./scripts/dexchat.js"

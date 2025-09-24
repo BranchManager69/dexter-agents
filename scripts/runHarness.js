@@ -2,6 +2,15 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
+// Core Playwright harness used by Dexchat and tool runners.
+// Responsibilities:
+// - Launch Chromium, apply storage state or cookie headers, and open the target URL.
+// - Submit the prompt via the chat UI, watch transcripts until activity quiets down, and
+//   collect console/event logs.
+// - Persist JSON artifacts (and optional storage state) inside harness-results/.
+// Limitations: assumes the Dexter chat DOM (input + bubble selectors) and closes the
+// browser on failure—callers must catch surfaced errors.
+
 const DEFAULT_OUTPUT_DIR = path.join(__dirname, '..', 'harness-results');
 
 function resolveOutputDir(rawDir) {
