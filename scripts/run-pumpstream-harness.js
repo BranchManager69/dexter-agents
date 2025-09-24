@@ -275,6 +275,17 @@ async function runUiHarness({ prompt, targetUrl, waitMs, headless, saveArtifact,
   const cookieHeader = guest ? null : parseCookieHeader();
   const cookies = guest ? [] : parsePlaywrightCookies();
 
+  if (!guest) {
+    const supabaseToken = buildSupabaseToken();
+    const hasBearer = !!authHeader || !!supabaseToken;
+    if (hasBearer) {
+      await createRealtimeSession({ supabaseToken, guest: false });
+    }
+    // Preflight realtime session to surface stale Supabase tokens before launching Playwright.
+    // If we only have cookies (no bearer token yet), fall back to the real UI flow — it will
+    // surface the PAT/disabled button if auth is still stale.
+  }
+
   const extraHTTPHeaders = {};
   if (!guest) {
     if (authHeader) extraHTTPHeaders.Authorization = authHeader;
@@ -344,13 +355,29 @@ async function createRealtimeSession({ supabaseToken, guest }) {
       headers.set('cookie', cookieHeader);
     }
   }
-  const session = await fetchJson(process.env.HARNESS_SESSION_URL || 'https://api.dexter.cash/realtime/sessions', {
-    method: 'POST',
-    headers: Object.fromEntries(headers.entries()),
-    body: JSON.stringify(payload),
-  });
+  const sessionUrl = process.env.HARNESS_SESSION_URL || 'https://api.dexter.cash/realtime/sessions';
+  let session;
+  try {
+    session = await fetchJson(sessionUrl, {
+      method: 'POST',
+      headers: Object.fromEntries(headers.entries()),
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    if (!guest && error?.status === 401) {
+      throw new Error('Supabase session appears to be expired (401 from realtime sessions). Run "npm run dexchat:refresh" and retry.');
+    }
+    const body = typeof error?.body === 'string' ? error.body : JSON.stringify(error?.body || '');
+    if (!guest && error?.status === 403 && /bad_jwt/i.test(body)) {
+      throw new Error('Supabase session rejected as bad JWT. Refresh HARNESS_COOKIE / HARNESS_AUTHORIZATION via "npm run dexchat:refresh".');
+    }
+    throw error;
+  }
   if (!session?.client_secret?.value) {
     throw new Error('Realtime session response missing client_secret');
+  }
+  if (!guest && session?.dexter_session?.type === 'guest') {
+    throw new Error('Realtime session downgraded to guest while authenticated. Refresh HARNESS_COOKIE / HARNESS_AUTHORIZATION and retry.');
   }
   return session;
 }
