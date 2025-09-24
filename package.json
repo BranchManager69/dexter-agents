@@ -15,6 +15,7 @@
     "pm2:dev": "NODE_ENV=development pm2 restart dexter-agents --update-env -- dev --hostname 0.0.0.0 --port 3211",
     "logs": "pm2 logs dexter-agents --timestamp --lines 100",
     "dexchat": "node scripts/dexchat.js",
+    "dexchat:refresh": "node scripts/dexchat.js refresh",
     "pumpstream:harness": "node scripts/run-pumpstream-harness.js"
   },
   "bin": {

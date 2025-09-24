@@ -33,6 +33,7 @@ function parseArgs(argv) {
     mode: 'api',
     pageSize: null,
     output: null,
+    guest: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -79,6 +80,10 @@ function parseArgs(argv) {
     if (arg === '--page-size') {
       args.pageSize = Number(argv[i + 1]);
       i += 1;
+      continue;
+    }
+    if (arg === '--guest') {
+      args.guest = true;
       continue;
     }
   }
@@ -229,12 +234,27 @@ async function mintMcpBearerFromCookie(cookieHeader) {
   }
 }
 
-async function resolveMcpBearer() {
+function resolveStaticBearer() {
+  return ensureBearerPrefix(
+    process.env.TOKEN_AI_MCP_TOKEN || process.env.NEXT_PUBLIC_TOKEN_AI_MCP_TOKEN || '',
+  );
+}
+
+async function resolveMcpBearer({ guest } = {}) {
+  const demoBearer = resolveStaticBearer();
+
+  if (guest) {
+    if (demoBearer) {
+      return { bearer: demoBearer, source: 'TOKEN_AI_MCP_TOKEN (guest fallback)' };
+    }
+    // Fall through so we can still honor HARNESS_MCP_TOKEN if someone sets it explicitly.
+  }
+
   const envBearer = ensureBearerPrefix(process.env.HARNESS_MCP_TOKEN || '');
   if (envBearer) {
     return { bearer: envBearer, source: 'HARNESS_MCP_TOKEN' };
   }
-  const staticBearer = ensureBearerPrefix(process.env.TOKEN_AI_MCP_TOKEN || '');
+  const staticBearer = demoBearer;
   if (staticBearer) {
     return { bearer: staticBearer, source: 'TOKEN_AI_MCP_TOKEN' };
   }
@@ -249,15 +269,17 @@ async function resolveMcpBearer() {
   return { bearer: null, source: 'none' };
 }
 
-async function runUiHarness({ prompt, targetUrl, waitMs, headless, saveArtifact, outputDir }) {
-  const storageState = parseStorageState();
-  const authHeader = parseAuthorizationHeader();
-  const cookieHeader = parseCookieHeader();
-  const cookies = parsePlaywrightCookies();
+async function runUiHarness({ prompt, targetUrl, waitMs, headless, saveArtifact, outputDir, guest }) {
+  const storageState = guest ? null : parseStorageState();
+  const authHeader = guest ? null : parseAuthorizationHeader();
+  const cookieHeader = guest ? null : parseCookieHeader();
+  const cookies = guest ? [] : parsePlaywrightCookies();
 
   const extraHTTPHeaders = {};
-  if (authHeader) extraHTTPHeaders.Authorization = authHeader;
-  if (cookieHeader) extraHTTPHeaders.cookie = cookieHeader;
+  if (!guest) {
+    if (authHeader) extraHTTPHeaders.Authorization = authHeader;
+    if (cookieHeader) extraHTTPHeaders.cookie = cookieHeader;
+  }
 
   const options = {
     prompt,
@@ -301,7 +323,7 @@ async function fetchJson(url, { method = 'GET', headers = {}, body, signal } = {
   return text ? JSON.parse(text) : null;
 }
 
-async function createRealtimeSession({ supabaseToken }) {
+async function createRealtimeSession({ supabaseToken, guest }) {
   const payload = supabaseToken
     ? { supabaseAccessToken: supabaseToken }
     : {
@@ -312,13 +334,15 @@ async function createRealtimeSession({ supabaseToken }) {
         },
       };
   const headers = new Headers({ 'Content-Type': 'application/json' });
-  const authHeader = parseAuthorizationHeader();
-  const cookieHeader = parseCookieHeader();
-  if (authHeader) {
-    headers.set('Authorization', authHeader);
-  }
-  if (cookieHeader) {
-    headers.set('cookie', cookieHeader);
+  if (!guest) {
+    const authHeader = parseAuthorizationHeader();
+    const cookieHeader = parseCookieHeader();
+    if (authHeader) {
+      headers.set('Authorization', authHeader);
+    }
+    if (cookieHeader) {
+      headers.set('cookie', cookieHeader);
+    }
   }
   const session = await fetchJson(process.env.HARNESS_SESSION_URL || 'https://api.dexter.cash/realtime/sessions', {
     method: 'POST',
@@ -351,7 +375,7 @@ function buildSupabaseToken() {
   return null;
 }
 
-async function callMcpTool({ session, pageSize, bearerOverride }) {
+async function callMcpTool({ session, pageSize, bearerOverride, guest }) {
   const { McpClient, StreamableHTTPClientTransport } = await loadMcpModules();
   const mcp = Array.isArray(session?.tools) ? session.tools.find((t) => t.type === 'mcp') : null;
   if (!mcp?.server_url) throw new Error('Session missing MCP connector info');
@@ -365,7 +389,7 @@ async function callMcpTool({ session, pageSize, bearerOverride }) {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   });
-  if (mcp?.headers && typeof mcp.headers === 'object') {
+  if (!guest && mcp?.headers && typeof mcp.headers === 'object') {
     for (const [key, value] of Object.entries(mcp.headers)) {
       if (typeof value === 'string') headers.set(key, value);
     }
@@ -375,12 +399,12 @@ async function callMcpTool({ session, pageSize, bearerOverride }) {
   if (!bearerToUse && existingAuth && !existingAuth.includes('<redacted>')) {
     bearerToUse = ensureBearerPrefix(existingAuth);
   }
-  if (!bearerToUse) {
-    const envFallback = ensureBearerPrefix(process.env.HARNESS_MCP_TOKEN || '')
-      || ensureBearerPrefix(process.env.TOKEN_AI_MCP_TOKEN || '');
+  if (!bearerToUse && !guest) {
+  const envFallback = ensureBearerPrefix(process.env.HARNESS_MCP_TOKEN || '')
+      || resolveStaticBearer();
     if (envFallback) {
-      if (!process.env.HARNESS_MCP_TOKEN && process.env.TOKEN_AI_MCP_TOKEN) {
-        console.warn('HARNESS_MCP_TOKEN missing; using TOKEN_AI_MCP_TOKEN fallback.');
+      if (!process.env.HARNESS_MCP_TOKEN && resolveStaticBearer()) {
+        console.warn('HARNESS_MCP_TOKEN missing; using demo bearer fallback.');
       }
       bearerToUse = envFallback;
     }
@@ -429,13 +453,13 @@ async function callMcpTool({ session, pageSize, bearerOverride }) {
   }
 }
 
-async function runApiHarness({ pageSize, bearerOverride }) {
-  const supabaseToken = buildSupabaseToken();
-  const session = await createRealtimeSession({ supabaseToken });
+async function runApiHarness({ pageSize, bearerOverride, guest }) {
+  const supabaseToken = guest ? null : buildSupabaseToken();
+  const session = await createRealtimeSession({ supabaseToken, guest });
   if (process.env.HARNESS_DEBUG_SESSION === '1') {
     process.stdout.write(`Realtime session response:\n${JSON.stringify(session, null, 2)}\n`);
   }
-  const toolResult = await callMcpTool({ session, pageSize, bearerOverride });
+  const toolResult = await callMcpTool({ session, pageSize, bearerOverride, guest });
   return {
     session: {
       id: session?.id ?? null,
@@ -487,6 +511,7 @@ async function main() {
   const targetUrl = resolveUrl(args.url);
   const waitMs = resolveWait(args.wait);
   const pageSize = resolvePageSize(args.pageSize);
+  const guest = args.guest;
 
   const saveArtifactEnv = process.env.HARNESS_SAVE_ARTIFACT;
   const headlessEnv = process.env.HARNESS_HEADLESS;
@@ -495,9 +520,9 @@ async function main() {
 
   const outputDir = resolveOutputDir(args.output || process.env.HARNESS_OUTPUT_DIR);
 
-  const hasCookie = !!parseCookieHeader();
-  const hasBearer = !!parseAuthorizationHeader();
-  const hasCreds = hasCookie || hasBearer;
+  const hasCookie = guest ? false : !!parseCookieHeader();
+  const hasBearer = guest ? false : !!parseAuthorizationHeader();
+  const hasCreds = guest ? true : hasCookie || hasBearer;
 
   const results = [];
 
@@ -512,7 +537,10 @@ async function main() {
     } else {
       process.stdout.write('\n=== UI Harness (Playwright) ===\n');
       try {
-        const artifact = await runUiHarness({ prompt, targetUrl, waitMs, headless, saveArtifact, outputDir });
+        if (guest) {
+          process.stdout.write('[guest] Running UI harness without stored auth.\n');
+        }
+        const artifact = await runUiHarness({ prompt, targetUrl, waitMs, headless, saveArtifact, outputDir, guest });
         results.push({ mode: 'ui', artifact });
         if (args.json) {
           process.stdout.write(`${JSON.stringify({ mode: 'ui', artifact }, null, 2)}\n`);
@@ -529,11 +557,14 @@ async function main() {
 
   if (args.mode === 'api' || args.mode === 'both') {
     process.stdout.write('\n=== API Harness (direct MCP) ===\n');
-    const bearerInfo = await resolveMcpBearer();
+    const bearerInfo = await resolveMcpBearer({ guest });
     if (!bearerInfo.bearer && process.env.HARNESS_DEBUG_SESSION === '1') {
       console.warn('[pumpstream] MCP bearer not resolved via env or cookie; proceeding unauthenticated.');
     }
-    const apiResult = await runApiHarness({ pageSize, bearerOverride: bearerInfo.bearer });
+    if (guest) {
+      process.stdout.write('[guest] Running API harness without stored auth.\n');
+    }
+    const apiResult = await runApiHarness({ pageSize, bearerOverride: bearerInfo.bearer, guest });
     summarizeApiResult(apiResult);
     results.push({ mode: 'api', artifact: apiResult });
     if (args.json) {

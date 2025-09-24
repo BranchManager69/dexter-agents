@@ -14,7 +14,7 @@
 - `dxsnap` – runs from anywhere, refreshes preview media and the shared wordmark quietly (`node ops/scripts/capture-previews.mjs --quiet`). Requires Playwright dependencies (run `npm install` and `npx playwright install --with-deps` once).
 - `npm run capture:previews` – verbose variant for detailed output or troubleshooting.
 - `ops/scripts/apply-nginx-alpha.sh` – example bootstrap for nginx configs; inspect outputs before running in production.
-- **Dexchat harness** – `scripts/dexchat.js` exposes the Playwright driver with CLI flags; `scripts/check-realtime.js` is the legacy wrapper that reads the same parameters from `HARNESS_*` env vars. Both call `scripts/runHarness.js`, so behavior stays identical whether a run is triggered by flags or exported variables. `scripts/run-pumpstream-harness.js` extends the same engine with MCP API checks—use `npm run pumpstream:harness` when you need the dual UI+API scenario.
+- **Dexchat harness** – `scripts/dexchat.js` exposes the Playwright driver with CLI flags; `scripts/check-realtime.js` is the legacy wrapper that reads the same parameters from `HARNESS_*` env vars. Both call `scripts/runHarness.js`, so behavior stays identical whether a run is triggered by flags or exported variables. `scripts/run-pumpstream-harness.js` extends the same engine with MCP API checks—use `npm run pumpstream:harness` when you need the dual UI+API scenario. Append `--guest` to either harness when you want to ignore stored auth for the UI; the API leg will still reuse the shared demo bearer (`TOKEN_AI_MCP_TOKEN`).
 
 ## Deployment & Verification
 - PM2 process definitions live in `ops/ecosystem.config.cjs`. After edits, use `pm2 restart <process>` and confirm the change with `npm run smoke:prod`.
@@ -27,4 +27,26 @@
 - For long-form architecture notes, use the GitBook instance on `docs.dexter.cash` and link from this repo when relevant.
 ### Supabase Session Refresh
 
-- Use the desktop helper `refresh-supabase-session.ps1` when the Turnstile/Supabase session expires. It launches the SOCKS proxy + Chrome, prints the DevTools snippet, and sends the encoded cookie to `scripts/update_harness_cookie.py` to rewrite HARNESS_COOKIE in both `.env` files. Choose the storage-refresh option to regenerate Playwright `state.json` after logging in.
+- Use the desktop helper `refresh-supabase-session.ps1` whenever the Turnstile/Supabase session expires. It launches the SOCKS proxy, opens Chrome, and waits while you finish the login.
+- After you are signed in, open DevTools → **Console** and paste the contents of `scripts/devtools-cookie-helper.js`. The helper prints (and copies) the combined `sb-…-auth-token; sb-…-refresh-token` header expected by the harness.
+- Back on Linux, run `npm run dexchat:refresh` (or `dexchat refresh`) and paste that header when prompted. The script writes `HARNESS_COOKIE` into both `.env` files and regenerates `~/websites/dexter-mcp/state.json`.
+- The desktop helper still warns if the refresh token is missing; without it the harness can’t mint per-user MCP JWTs.
+
+### Harness Auth Flow (Quick Reference)
+
+```
+Turnstile + Supabase login (desktop helper)
+           │  generates encoded cookie + state.json
+           ▼
+HARNESS_COOKIE in repos (.env)
+           │  injected into Playwright runs
+           ▼
+Dexchat / pumpstream harness executions
+```
+
+- **Daily driver** – `dexchat refresh` (or `npm run dexchat:refresh`) prompts for the encoded cookie, updates both repos, and rewrites `~/websites/dexter-mcp/state.json` locally. No proxy required.
+- **When everything stops working** – `refresh-supabase-session.ps1` rebuilds the Supabase session via SOCKS + Chrome; afterwards rerun `dexchat refresh` with the new cookie.
+- Storage state only changes when `dexchat` runs with `--storage` (the helper does this for you). MCP harnesses read the canonical `state.json` from their repo, which is why we save it there.
+- Add `--guest` to Dexchat or the pumpstream harness to bypass stored auth without scrubbing env files.
+
+See `scripts/README.md` for full command examples and troubleshooting notes.

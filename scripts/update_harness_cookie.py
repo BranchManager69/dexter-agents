@@ -40,10 +40,11 @@ def ensure_storage_state_line(path: Path, state_path: Path) -> None:
 
 
 def run_storage_export(prompt: str) -> None:
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         'npm', 'run', 'dexchat', '--',
         '--prompt', prompt,
-        '--storage', STATE_FILE.name,
+        '--storage', str(STATE_FILE),
         '--no-artifact',
     ]
     subprocess.run(cmd, cwd=str(HOME / 'websites' / 'dexter-agents'), check=True)
@@ -66,10 +67,19 @@ def main() -> None:
     elif args.value:
         value = args.value.strip()
     else:
-        raise SystemExit('Provide --value or use --stdin to supply the encoded cookie string.')
+        try:
+            value = input('Paste URL-encoded HARNESS_COOKIE: ').strip()
+        except EOFError:
+            value = ''
+        if not value:
+            raise SystemExit('HARNESS_COOKIE value is required; rerun with --value, --stdin, or provide input when prompted.')
 
     if not value:
         raise SystemExit('Empty value provided for HARNESS_COOKIE.')
+
+    if '-refresh-token=' not in value:
+        print('WARNING: HARNESS_COOKIE value does not include an sb-...-refresh-token entry.\n'
+              'Per-user MCP JWT minting will fail until the refresh token is present.', file=sys.stderr)
 
     update_env_file(AGENTS_ENV, value)
     update_env_file(MCP_ENV, value)

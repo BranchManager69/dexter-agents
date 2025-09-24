@@ -12,7 +12,6 @@ const { runHarness, resolveOutputDir } = require('./runHarness');
     const storageState = process.env.HARNESS_STORAGE_STATE
       ? process.env.HARNESS_STORAGE_STATE.trim()
       : undefined;
-
     const { artifactPath } = await runHarness({
       prompt,
       targetUrl,

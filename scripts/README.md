@@ -71,6 +71,10 @@ npm run dexchat -- --prompt "Check wallet status"
 
 # or, after npm link
 dexchat --prompt "Check wallet status"
+
+# regenerate HARNESS_COOKIE + storage state through the helper
+dexchat refresh
+# or: npm run dexchat:refresh
 ```
 
 ### Options
@@ -84,6 +88,9 @@ dexchat --prompt "Check wallet status"
 | `--no-artifact` | `false` | Skip writing the JSON artifact. |
 | `--headful` | `false` | Launch Playwright with a visible browser window. |
 | `--json` | `false` | Print the run artifact to stdout when finished. |
+| `--storage <path>` | - | Save Playwright storage state to the given file on completion. |
+| `--storage-state <path>` | - | Load an existing storage state before running the harness. |
+| `--guest` | `false` | Skip stored auth (storage state, cookies) and run as a guest. |
 
 Environment equivalents remain available for pipelines:
 
@@ -96,6 +103,50 @@ Environment equivalents remain available for pipelines:
 | `HARNESS_HEADLESS` | Set `false` to force headed mode. |
 | `HARNESS_SAVE_ARTIFACT` | Set `false` to skip saving. |
 | `HARNESS_API_BASE` | (Optional) Override the Dexter API base URL when minting MCP JWTs. |
+| `HARNESS_STORAGE_STATE` | Path to a storage state file to preload before launching. |
+| `HARNESS_JSON` | Set `1` to emit the artifact JSON to stdout. |
+
+### Refresh Shortcut
+
+Run `dexchat refresh` to update `HARNESS_COOKIE` in both repos and regenerate the shared Playwright storage state at `~/websites/dexter-mcp/state.json`. The command expects the combined Supabase cookie header (`sb-…-auth-token=<encoded>; sb-…-refresh-token=<encoded>`). Use the utilities in this repo to capture it:
+
+- On Windows, run `refresh-supabase-session.ps1` to bring up the proxy Chrome session and log in.
+- In that Chrome window, open DevTools → **Console** and paste the snippet stored in `scripts/devtools-cookie-helper.js`. It logs and copies the header that `dexchat refresh` needs.
+- Back on Linux, run `dexchat refresh` (or `npm run dexchat:refresh`) and paste the header at the prompt.
+
+Optional flags remain available:
+
+- `dexchat refresh --cookie <value>` – bypass the prompt by passing the header inline.
+- `dexchat refresh --stdin` – pipe the header in (e.g. `cat header.txt | dexchat refresh --stdin`).
+- `--prompt` customises the Playwright run used while capturing the new storage state.
+
+If the header is missing the `sb-…-refresh-token` entry, the helper prints a warning so you know per-user MCP JWT minting will fail.
+
+The existing Python helper remains available (`python scripts/update_harness_cookie.py --refresh-storage`).
+
+### Session Maintenance Cheatsheet
+
+```
+Turnstile + Supabase login (desktop helper)
+           │  generates encoded cookie + state.json
+           ▼
+HARNESS_COOKIE in repos (.env)
+           │  injected into Playwright runs
+           ▼
+Dexchat / pumpstream harness executions
+```
+
+| Situation | Run this | What it does |
+|-----------|----------|---------------|
+| Fresh cookie string in hand | `dexchat refresh` (paste when prompted) | Updates both `.env` files and rewrites `~/websites/dexter-mcp/state.json` via Playwright. |
+| Need to automate the same flow | `npm run dexchat:refresh -- --cookie $(cat cookie.txt)` | Non-interactive variant; still regenerates the storage state. |
+| Supabase session expired / cookie dies immediately | `refresh-supabase-session.ps1` + paste `scripts/devtools-cookie-helper.js` | Launches SOCKS proxy + Chrome so you can solve Turnstile, then the DevTools helper copies the combined cookie header. Afterwards run `dexchat refresh` with that value. |
+
+**Key points**
+- The SOCKS/Chrome helper is heavyweight but rarely needed (usually weeks between runs). Use it only when cookies stop working entirely.
+- `dexchat refresh` is lightweight and local; run it whenever you obtain a new Supabase cookie header. It never touches the proxy.
+- Storage state lives in `~/websites/dexter-mcp/state.json` because MCP harnesses read that path directly. `dexchat --storage <path>` is the only way the file is rewritten.
+- Add `--guest` to Dexchat when you want to ignore stored auth for the UI; the API leg still falls back to the shared demo bearer (`TOKEN_AI_MCP_TOKEN`).
 
 ## Artifacts
 
@@ -157,6 +208,9 @@ npm run pumpstream:harness -- --mode both --page-size 5
 - **Auth inputs** – supply session context with `HARNESS_STORAGE_STATE`,
   `HARNESS_AUTHORIZATION`, or `HARNESS_COOKIE`. The script safely reuses the shared
   output directory guard so `HARNESS_OUTPUT_DIR=~/...` never punches outside the repo.
+- **Guest mode** – append `--guest` to skip storage state and cookies. The UI
+  stays anonymous, while the API leg reuses the shared demo bearer from
+  `TOKEN_AI_MCP_TOKEN` so the request still succeeds.
 - **Zero-click bearer** – the harness resolves MCP auth automatically (env `HARNESS_MCP_TOKEN`
   → `TOKEN_AI_MCP_TOKEN` → mint per-user `dexter_mcp_jwt` from `HARNESS_COOKIE`
   via `/api/connector/oauth/token`), so runs succeed without manual DevTools work.
@@ -167,9 +221,9 @@ npm run pumpstream:harness -- --mode both --page-size 5
 
 Defaults: mode `api`, wait `45000` ms, page-size `5`, artifacts enabled. UI runs
 require either a Playwright storage state file or cookies exported via
-`HARNESS_PLAYWRIGHT_COOKIES` (JSON array with `domain`/`path`/`value`). API runs can
-fall back to guest mode but need `HARNESS_MCP_TOKEN` when the connector redacts its
-bearer.
+`HARNESS_PLAYWRIGHT_COOKIES` (JSON array with `domain`/`path`/`value`) unless you
+explicitly pass `--guest`. API runs can fall back to guest mode automatically, but
+still need `HARNESS_MCP_TOKEN` when the connector redacts its bearer.
 
 Example cookies payload:
 

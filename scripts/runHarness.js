@@ -29,6 +29,7 @@ async function runHarness({
   saveArtifact = true,
   extraEnv = {},
   storageState,
+  storageStatePath,
   extraHTTPHeaders,
   cookies,
   onPageReady,
@@ -215,6 +216,7 @@ async function runHarness({
     };
 
     let artifactPath = null;
+    let savedStorageStatePath = null;
     if (saveArtifact) {
       artifactPath = path.join(artifactDir, `run-${timestamp.replace(/[:.]/g, '-')}.json`);
       fs.mkdirSync(path.dirname(artifactPath), { recursive: true });
@@ -222,8 +224,20 @@ async function runHarness({
       process.stdout.write(`Harness artifact written to ${artifactPath}\n`);
     }
 
+    if (storageStatePath) {
+      try {
+        const resolvedStoragePath = path.resolve(storageStatePath);
+        fs.mkdirSync(path.dirname(resolvedStoragePath), { recursive: true });
+        await context.storageState({ path: resolvedStoragePath });
+        savedStorageStatePath = resolvedStoragePath;
+        process.stdout.write(`Playwright storage state written to ${resolvedStoragePath}\n`);
+      } catch (storageErr) {
+        console.warn('Failed to write Playwright storage state:', storageErr?.message || storageErr);
+      }
+    }
+
     await browser.close();
-    return { artifact, artifactPath };
+    return { artifact, artifactPath, storageStatePath: savedStorageStatePath };
   } catch (err) {
     await browser.close().catch(() => {});
     throw err;
