@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { TranscriptItem } from "@/app/types";
 import Image from "next/image";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
+import { useEvent } from "@/app/contexts/EventContext";
 import { DownloadIcon, ClipboardCopyIcon } from "@radix-ui/react-icons";
 import { GuardrailChip } from "./GuardrailChip";
 
@@ -24,9 +25,11 @@ function Transcript({
   downloadRecording,
 }: TranscriptProps) {
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
+  const { loggedEvents } = useEvent();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
   const [justCopied, setJustCopied] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   function scrollToBottom() {
@@ -70,6 +73,47 @@ function Transcript({
     }
   };
 
+  const handleSaveLog = () => {
+    try {
+      const artifact = {
+        timestamp: new Date().toISOString(),
+        source: "live",
+        structured: {
+          transcripts: transcriptItems,
+          events: loggedEvents,
+        },
+        meta: {
+          assistantMessageCount: transcriptItems.filter(
+            (item) => item.type === "MESSAGE" && item.role === "assistant" && !item.isHidden,
+          ).length,
+          userMessageCount: transcriptItems.filter(
+            (item) => item.type === "MESSAGE" && item.role === "user",
+          ).length,
+          generatedAt: new Date().toLocaleString(),
+        },
+      };
+
+      const blob = new Blob([JSON.stringify(artifact, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `live-${artifact.timestamp.replace(/[:.]/g, "-")}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      requestAnimationFrame(() => {
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+      });
+
+      setJustSaved(true);
+      setTimeout(() => setJustSaved(false), 1500);
+    } catch (error) {
+      console.error("Failed to save run artifact:", error);
+    }
+  };
+
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 flex-col">
@@ -91,6 +135,13 @@ function Transcript({
             >
               <DownloadIcon />
               <span>Download Audio</span>
+            </button>
+            <button
+              onClick={handleSaveLog}
+              className="flex w-40 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-amber-400/60 hover:text-amber-300"
+            >
+              <span className="text-lg leading-none">⬇</span>
+              <span>{justSaved ? "Saved!" : "Save Log"}</span>
             </button>
           </div>
         </div>

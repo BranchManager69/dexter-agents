@@ -18,7 +18,8 @@
     "dexchat:refresh": "node scripts/dexchat.js refresh",
     "pumpstream:harness": "node scripts/run-pumpstream-harness.js",
     "harness": "node scripts/run-tool-harness.js",
-    "agent-tools": "node scripts/list-agent-tools.mjs"
+    "agent-tools": "node scripts/list-agent-tools.mjs",
+    "harness:report": "node scripts/reportHarness.js"
   },
   "bin": {
     "dexchat": "./scripts/dexchat.js"
