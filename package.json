@@ -1,0 +1,56 @@
+{
+  "name": "dexter-agents",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0 --port 3211",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "deploy": "NEXT_PUBLIC_BUILD_TAG=$(date -u +%Y%m%d%H%M%S) npm run build && NODE_ENV=production NODE_OPTIONS=--enable-source-maps pm2 restart dexter-agents --update-env -- start --hostname 0.0.0.0 --port 3210",
+    "pm2:prod": "NEXT_PUBLIC_BUILD_TAG=$(date -u +%Y%m%d%H%M%S) NODE_ENV=production NODE_OPTIONS=--enable-source-maps pm2 restart dexter-agents --update-env -- start --hostname 0.0.0.0 --port 3210",
+    "pm2:dev": "NODE_ENV=development pm2 restart dexter-agents --update-env -- dev --hostname 0.0.0.0 --port 3211",
+    "logs": "pm2 logs dexter-agents --timestamp --lines 100",
+    "dexchat": "node scripts/dexchat.js",
+    "dexchat:refresh": "node scripts/dexchat.js refresh",
+    "pumpstream:harness": "node scripts/run-pumpstream-harness.js",
+    "harness": "node scripts/run-tool-harness.js",
+    "agent-tools": "node scripts/list-agent-tools.mjs"
+  },
+  "bin": {
+    "dexchat": "./scripts/dexchat.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "@openai/agents": "^0.1.3",
+    "@openai/agents-realtime": "^0.1.3",
+    "@radix-ui/react-icons": "^1.3.2",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/supabase-js": "^2.47.0",
+    "dotenv": "^16.4.7",
+    "next": "^15.3.1",
+    "openai": "^4.77.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-markdown": "^9.0.3",
+    "@marsidev/react-turnstile": "^1.0.5",
+    "uuid": "^11.0.4",
+    "yargs": "^18.0.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.4",
+    "playwright": "^1.55.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}

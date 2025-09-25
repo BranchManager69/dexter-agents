@@ -189,6 +189,8 @@ function App() {
       return stored ? stored === 'true' : true;
     },
   );
+  const [hasActivatedSession, setHasActivatedSession] = useState<boolean>(false);
+  const [pendingAutoConnect, setPendingAutoConnect] = useState<boolean>(false);
 
   // Initialize the recording hook.
   const { startRecording, stopRecording, downloadRecording } =
@@ -241,12 +243,6 @@ function App() {
   useHandleSessionHistory();
 
   useEffect(() => {
-    if (selectedAgentName && sessionStatus === "DISCONNECTED") {
-      connectToRealtime();
-    }
-  }, [selectedAgentName]);
-
-  useEffect(() => {
     if (
       sessionStatus === "CONNECTED" &&
       selectedAgentName
@@ -255,11 +251,22 @@ function App() {
         (a) => a.name === selectedAgentName
       );
       addTranscriptBreadcrumb(`Agent: ${selectedAgentName}`, currentAgent);
-      updateSession(!handoffTriggeredRef.current);
+      const isHandoff = handoffTriggeredRef.current;
+      updateSession(false);
+      if (!isHandoff) {
+        setHasActivatedSession(false);
+      }
       // Reset flag after handling so subsequent effects behave normally
       handoffTriggeredRef.current = false;
     }
   }, [scenarioAgents, selectedAgentName, sessionStatus]);
+
+  useEffect(() => {
+    if (pendingAutoConnect && sessionStatus === "DISCONNECTED" && selectedAgentName) {
+      connectToRealtime();
+      setPendingAutoConnect(false);
+    }
+  }, [pendingAutoConnect, sessionStatus, selectedAgentName]);
 
   useEffect(() => {
     if (sessionStatus === "CONNECTED") {
@@ -328,6 +335,7 @@ function App() {
     const agentSetKey = defaultAgentSetKey;
     const scenario = sdkScenarioMap[agentSetKey];
     if (!scenario || sessionStatus !== "DISCONNECTED") return;
+    setHasActivatedSession(false);
     setSessionStatus("CONNECTING");
 
     try {
@@ -366,6 +374,8 @@ function App() {
     setSessionStatus("DISCONNECTED");
     setIsPTTUserSpeaking(false);
     resetSessionIdentity();
+    setHasActivatedSession(false);
+    setPendingAutoConnect(false);
   };
 
   const handleSignOut = useCallback(async () => {
@@ -422,9 +432,16 @@ function App() {
     return;
   }
 
+  const handleStartConversation = () => {
+    if (sessionStatus !== 'CONNECTED' || hasActivatedSession) return;
+    updateSession(true);
+    setHasActivatedSession(true);
+  };
+
   const handleSendTextMessage = () => {
     if (!userText.trim()) return;
     interrupt();
+    setHasActivatedSession(true);
 
     try {
       sendUserText(userText.trim());
@@ -438,6 +455,7 @@ function App() {
   const handleTalkButtonDown = () => {
     if (sessionStatus !== 'CONNECTED') return;
     interrupt();
+    setHasActivatedSession(true);
 
     setIsPTTUserSpeaking(true);
     sendClientEvent({ type: 'input_audio_buffer.clear' }, 'clear PTT buffer');
@@ -459,6 +477,7 @@ function App() {
       disconnectFromRealtime();
       setSessionStatus("DISCONNECTED");
     } else {
+      setHasActivatedSession(false);
       connectToRealtime();
     }
   };
@@ -468,7 +487,8 @@ function App() {
     // execution works correctly.
     disconnectFromRealtime();
     setSelectedAgentName(newAgentName);
-    // connectToRealtime will be triggered by effect watching selectedAgentName
+    setHasActivatedSession(false);
+    setPendingAutoConnect(true);
   };
 
   // Because we need a new connection, refresh the page when codec changes
@@ -576,6 +596,16 @@ function App() {
               {chip}
             </span>
           ))}
+
+          {sessionStatus === "CONNECTED" && !hasActivatedSession && (
+            <button
+              type="button"
+              onClick={handleStartConversation}
+              className="rounded-pill border border-flux/50 bg-flux/20 px-4 py-1 text-xs uppercase tracking-[0.28em] text-flux transition hover:bg-flux/30"
+            >
+              Start Conversation
+            </button>
+          )}
 
           <button
             type="button"
