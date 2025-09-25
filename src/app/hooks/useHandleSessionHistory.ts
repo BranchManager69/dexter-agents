@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
 
@@ -8,12 +8,29 @@ export function useHandleSessionHistory() {
   const {
     transcriptItems,
     addTranscriptBreadcrumb,
+    addTranscriptToolNote,
     addTranscriptMessage,
     updateTranscriptMessage,
     updateTranscriptItem,
   } = useTranscript();
 
   const { logServerEvent } = useEvent();
+
+  const transcriptItemsRef = useRef(transcriptItems);
+
+  useEffect(() => {
+    transcriptItemsRef.current = transcriptItems;
+  }, [transcriptItems]);
+
+  const ensureUserTranscriptMessage = (itemId: string, initialText = "") => {
+    const existing = transcriptItemsRef.current.find(
+      (item) => item.itemId === itemId && item.type === "MESSAGE",
+    );
+
+    if (!existing) {
+      addTranscriptMessage(itemId, "user", initialText);
+    }
+  };
 
   /* ----------------------- helpers ------------------------- */
 
@@ -76,6 +93,9 @@ export function useHandleSessionHistory() {
       `function call: ${function_name}`,
       function_args
     );    
+    const displayName = function_name ?? functionCall?.name ?? 'tool_call';
+    const parsedArgs = maybeParseJson(function_args ?? functionCall?.arguments ?? {});
+    addTranscriptToolNote(displayName, parsedArgs);
   }
   function handleAgentToolEnd(details: any, _agent: any, _functionCall: any, result: any) {
     const lastFunctionCall = extractFunctionCallByName(_functionCall.name, details?.context?.history);
@@ -125,15 +145,24 @@ export function useHandleSessionHistory() {
     });
   }
 
-  function handleTranscriptionDelta(item: any) {
+  function handleTranscriptionDelta(
+    item: any,
+    role: 'user' | 'assistant' = 'assistant',
+  ) {
     const itemId = item.item_id;
     const deltaText = item.delta || "";
     if (itemId) {
+      if (role === 'user') {
+        ensureUserTranscriptMessage(itemId);
+      }
       updateTranscriptMessage(itemId, deltaText, true);
     }
   }
 
-  function handleTranscriptionCompleted(item: any) {
+  function handleTranscriptionCompleted(
+    item: any,
+    role: 'user' | 'assistant' = 'assistant',
+  ) {
     // History updates don't reliably end in a completed item, 
     // so we need to handle finishing up when the transcription is completed.
     const itemId = item.item_id;
@@ -142,9 +171,11 @@ export function useHandleSessionHistory() {
         ? "[inaudible]"
         : item.transcript;
     if (itemId) {
+      if (role === 'user') {
+        ensureUserTranscriptMessage(itemId);
+      }
       updateTranscriptMessage(itemId, finalTranscript, false);
-      // Use the ref to get the latest transcriptItems
-      const transcriptItem = transcriptItems.find((i) => i.itemId === itemId);
+      const transcriptItem = transcriptItemsRef.current.find((i) => i.itemId === itemId);
       updateTranscriptItem(itemId, { status: 'DONE' });
 
       // If guardrailResult still pending, mark PASS.
@@ -184,6 +215,31 @@ export function useHandleSessionHistory() {
     }
   }
 
+  function handleMcpToolCallCompleted(_context: any, _agent: any, toolCall: any) {
+    const toolName = toolCall?.name ?? 'mcp_tool';
+    const parsedArgs = maybeParseJson(toolCall?.arguments ?? {});
+    const parsedOutput = toolCall?.output ? maybeParseJson(toolCall.output) : undefined;
+    const noteData: Record<string, any> = {};
+
+    if (
+      parsedArgs !== undefined &&
+      parsedArgs !== null &&
+      (typeof parsedArgs !== 'string' || parsedArgs.trim?.()?.length)
+    ) {
+      noteData.arguments = parsedArgs;
+    }
+
+    if (
+      parsedOutput !== undefined &&
+      parsedOutput !== null &&
+      (typeof parsedOutput !== 'string' || parsedOutput.trim?.()?.length)
+    ) {
+      noteData.output = parsedOutput;
+    }
+
+    addTranscriptToolNote(toolName, Object.keys(noteData).length ? noteData : undefined);
+  }
+
   const handlersRef = useRef({
     handleAgentToolStart,
     handleAgentToolEnd,
@@ -192,6 +248,7 @@ export function useHandleSessionHistory() {
     handleTranscriptionDelta,
     handleTranscriptionCompleted,
     handleGuardrailTripped,
+    handleMcpToolCallCompleted,
   });
 
   return handlersRef;

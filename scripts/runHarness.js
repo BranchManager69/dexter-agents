@@ -115,6 +115,21 @@ async function runHarness({
       await beforeSend({ browser, context, page });
     }
 
+    const connectButton = page.locator('button:has-text("Connect")').first();
+    if (await connectButton.count()) {
+      const isDisabled = await connectButton.getAttribute('disabled');
+      if (isDisabled === null) {
+        await connectButton.click();
+      }
+    }
+
+    await page.locator('button:has-text("Disconnect")').first().waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
+
+    const startButton = page.locator('button:has-text("Start Conversation")').first();
+    if (await startButton.count()) {
+      await startButton.click().catch(() => {});
+    }
+
     const chatInput = await page.waitForSelector('input[placeholder="Type a question or directive"], input[placeholder="Type a message..."]', { timeout: 30000 });
     await chatInput.fill(prompt);
     await page.locator('button:has(img[alt="Send"])').click();

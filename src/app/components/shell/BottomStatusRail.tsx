@@ -35,6 +35,7 @@ export function BottomStatusRail({
 }: BottomStatusRailProps) {
   const isConnecting = sessionStatus === "CONNECTING";
   const isConnected = sessionStatus === "CONNECTED";
+  const buildTag = process.env.NEXT_PUBLIC_BUILD_TAG ?? "dev";
 
   return (
     <div className="flex flex-col gap-3 px-9 py-4 text-sm text-neutral-200 md:flex-row md:items-center md:justify-between">
@@ -85,6 +86,7 @@ export function BottomStatusRail({
           <option value="pcmu">PCMU (8k)</option>
           <option value="pcma">PCMA (8k)</option>
         </select>
+        <span className="text-[10px] tracking-[0.3em] text-neutral-600">Build {buildTag}</span>
       </div>
     </div>
   );

@@ -163,6 +163,39 @@ function Transcript({
                   </div>
                 </div>
               );
+            } else if (type === "TOOL_NOTE") {
+              const hasDetails = data && Object.keys(data).length > 0;
+              return (
+                <div
+                  key={itemId}
+                  className="flex flex-col items-start text-[11px] text-neutral-400"
+                >
+                  <div
+                    className={`flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 font-mono uppercase tracking-[0.28em] text-[10px] text-neutral-300 ${
+                      hasDetails ? "cursor-pointer hover:border-flux/60" : ""
+                    }`}
+                    onClick={() => hasDetails && toggleTranscriptItemExpand(itemId)}
+                  >
+                    <span className="text-[9px] text-flux">•</span>
+                    <span>Tool</span>
+                    <span className="tracking-normal text-neutral-200">{title}</span>
+                    {hasDetails && (
+                      <span
+                        className={`ml-1 select-none text-neutral-500 transition-transform duration-200 ${
+                          expanded ? "rotate-90" : "rotate-0"
+                        }`}
+                      >
+                        ▶
+                      </span>
+                    )}
+                  </div>
+                  {expanded && hasDetails && (
+                    <pre className="mt-2 w-full max-w-xl break-words whitespace-pre-wrap rounded-md border border-neutral-800/40 bg-surface-glass/40 px-3 py-2 text-[11px] font-mono text-neutral-200">
+                      {JSON.stringify(data, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              );
             } else if (type === "BREADCRUMB") {
               return (
                 <div
