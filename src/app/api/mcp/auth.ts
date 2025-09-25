@@ -52,14 +52,15 @@ export interface McpIdentitySummary {
 }
 
 export async function resolveMcpAuth(): Promise<McpAuthDetails> {
-  const cookieStore = cookies();
-  const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore });
+  const cookieStorePromise = cookies();
+  const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStorePromise });
   const {
     data: { session },
   } = await supabase.auth.getSession();
 
+  const cookieStore = await cookieStorePromise;
   const refreshToken = getRefreshToken(session) || extractRefreshTokenFromCookies(cookieStore.getAll());
-  const sessionId = session?.session_id ?? null;
+  const sessionId = (session as Session & { session_id?: string | null })?.session_id ?? null;
 
   if (session && refreshToken && sessionId) {
     const minted = await resolveMintedBearer(sessionId, refreshToken);
@@ -95,7 +96,7 @@ export async function resolveMcpAuth(): Promise<McpAuthDetails> {
       cacheKey: 'shared',
       identity: session ? 'fallback' : 'guest',
       minted: false,
-      sessionId: session?.session_id ?? null,
+      sessionId,
       user: session?.user
         ? { id: session.user.id, email: session.user.email ?? null }
         : null,
@@ -107,7 +108,7 @@ export async function resolveMcpAuth(): Promise<McpAuthDetails> {
     cacheKey: 'shared',
     identity: 'none',
     minted: false,
-    sessionId: session?.session_id ?? null,
+    sessionId,
     user: session?.user
       ? { id: session.user.id, email: session.user.email ?? null }
       : null,

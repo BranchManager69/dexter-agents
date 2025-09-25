@@ -30,6 +30,7 @@ export type DexterSessionSummary = {
   type: "guest" | "user";
   user: { id?: string | null; email?: string | null } | null;
   guestProfile?: { label?: string; instructions?: string } | null;
+  wallet?: { public_key: string | null; label?: string | null } | null;
 };
 
 type McpStatusState = {
@@ -45,6 +46,7 @@ const createGuestIdentity = (): DexterSessionSummary => ({
   type: "guest",
   user: null,
   guestProfile: { label: "Dexter Demo Wallet", instructions: GUEST_SESSION_INSTRUCTIONS },
+  wallet: null,
 });
 
 // Agent configs
