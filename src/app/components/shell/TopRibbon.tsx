@@ -15,6 +15,12 @@ interface AuthStateSummary {
   email: string | null;
 }
 
+interface McpStatusProps {
+  state: 'loading' | 'user' | 'fallback' | 'guest' | 'none' | 'error';
+  label: string;
+  detail?: string;
+}
+
 interface TopRibbonProps {
   sessionStatus: SessionStatus;
   selectedAgentName: string;
@@ -23,6 +29,8 @@ interface TopRibbonProps {
   onReloadBrand?: () => void;
   authState: AuthStateSummary;
   sessionIdentity: SessionIdentitySummary;
+  mcpStatus: McpStatusProps;
+  activeWalletKey?: string | null;
   onSignIn?: () => void;
   onSignOut?: () => void;
   turnstileSlot?: React.ReactNode;
@@ -49,6 +57,8 @@ export function TopRibbon({
   onReloadBrand,
   authState,
   sessionIdentity,
+  mcpStatus,
+  activeWalletKey,
   onSignIn,
   onSignOut,
   turnstileSlot,
@@ -65,59 +75,63 @@ export function TopRibbon({
       ? authState.email || "Signed in"
       : "Guest";
 
+  const mcpChip = getMcpAccent(mcpStatus.state);
+  const mcpLabel = mcpStatus.label || (mcpStatus.state === 'loading' ? 'Checking…' : 'Unavailable');
+  const walletLabel = formatWalletAddress(activeWalletKey);
+
   const showSignOut = authState.isAuthenticated && !authState.loading && Boolean(onSignOut);
   const showSignIn = !authState.isAuthenticated && !authState.loading && Boolean(onSignIn);
 
   return (
-    <div className="flex w-full flex-col gap-4 px-9 py-5 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex items-center justify-between gap-4 lg:justify-start">
+    <div className="flex w-full flex-col gap-3 px-6 py-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="flex items-center justify-between gap-3 lg:justify-start">
         <button
           type="button"
           onClick={onReloadBrand}
-          className="group flex items-center gap-3 text-left"
+          className="group flex items-center gap-2 text-left"
         >
-          <div className="relative h-8 w-8 overflow-hidden rounded-lg bg-surface-glass/70 ring-1 ring-neutral-800/60 transition group-hover:ring-flux/40">
-            <Image src="/assets/logos/logo_orange.png" alt="Dexter" fill sizes="32px" priority />
+          <div className="relative h-7 w-7 overflow-hidden rounded-lg bg-surface-glass/70 ring-1 ring-neutral-800/60 transition group-hover:ring-flux/40">
+            <Image src="/assets/logos/logo_orange.png" alt="Dexter" fill sizes="28px" priority />
           </div>
           <div>
-            <div className="font-display text-lg font-semibold tracking-wide uppercase text-foreground/90">
+            <div className="font-display text-base font-semibold tracking-[0.2em] uppercase text-foreground/90">
               Dexter
             </div>
-            <div className="text-xs uppercase tracking-[0.2em] text-neutral-500">
+            <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
               Situation Room
             </div>
           </div>
         </button>
       </div>
 
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-7">
-        <div className="flex items-center gap-3 rounded-md bg-surface-glass/60 px-4 py-2 text-sm text-neutral-200 ring-1 ring-neutral-800/60">
-          <span className="font-mono uppercase tracking-[0.24em] text-neutral-400">
+      <div className="flex flex-col gap-2.5 lg:flex-row lg:items-center lg:gap-5">
+        <div className="flex items-center gap-2 rounded-md bg-surface-glass/60 px-3 py-1.5 text-xs text-neutral-200 ring-1 ring-neutral-800/60">
+          <span className="font-mono uppercase tracking-[0.18em] text-neutral-400">
             Link
           </span>
-          <span className={`rounded-pill px-3 py-1 text-xs font-semibold ${statusChip.tone}`}>
+          <span className={`rounded-pill px-2.5 py-0.5 text-[11px] font-semibold ${statusChip.tone}`}>
             {statusChip.label}
           </span>
         </div>
 
-        <div className="hidden items-center gap-3 xl:flex">
-          <div className="text-xs uppercase tracking-[0.3em] text-neutral-500">
+        <div className="hidden items-center gap-2.5 xl:flex">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">
             Scenario
           </div>
-          <div className="rounded-md border border-neutral-800/70 bg-surface-glass/60 px-3 py-2 font-body text-sm text-neutral-200">
+          <div className="rounded-md border border-neutral-800/70 bg-surface-glass/60 px-2.5 py-1.5 text-xs text-neutral-200">
             Dexter Trading Desk
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-xs uppercase tracking-[0.3em] text-neutral-500">
+        <div className="flex items-center gap-2.5">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">
             Agent
           </div>
           <div className="relative">
             <select
               value={selectedAgentName}
               onChange={(event) => onAgentChange(event.target.value)}
-              className="appearance-none rounded-md border border-neutral-800/80 bg-surface-glass/80 px-4 py-2 pr-10 text-sm text-neutral-100 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30"
+              className="appearance-none rounded-md border border-neutral-800/80 bg-surface-glass/80 px-3 py-1.5 pr-8 text-xs text-neutral-100 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30"
             >
               {agents.map((agent) => (
                 <option key={agent.name} value={agent.name}>
@@ -125,9 +139,9 @@ export function TopRibbon({
                 </option>
               ))}
             </select>
-            <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-neutral-500">
+            <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-neutral-500">
               <svg
-                className="h-4 w-4"
+                className="h-3.5 w-3.5"
                 viewBox="0 0 20 20"
                 fill="currentColor"
               >
@@ -141,19 +155,19 @@ export function TopRibbon({
           </div>
         </div>
 
-        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-2.5">
           <div className="flex items-center gap-2">
-            <div className="text-xs uppercase tracking-[0.3em] text-neutral-500">
+            <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">
               Account
             </div>
-            <div className="rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 text-xs font-medium text-neutral-200">
+            <div className="rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2.5 py-1.5 text-[11px] font-medium text-neutral-200">
               {accountLabel}
             </div>
             {showSignOut && (
               <button
                 type="button"
                 onClick={onSignOut}
-                className="rounded-md border border-neutral-800/60 px-3 py-1 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-flux/40 hover:text-flux"
+                className="rounded-md border border-neutral-800/60 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-neutral-300 transition hover:border-flux/40 hover:text-flux"
               >
                 Sign out
               </button>
@@ -169,7 +183,7 @@ export function TopRibbon({
                 <button
                   type="button"
                   onClick={onSignIn}
-                  className="rounded-md border border-flux/40 bg-flux/10 px-3 py-1 text-xs uppercase tracking-[0.2em] text-flux transition hover:bg-flux/20"
+                  className="rounded-md border border-flux/40 bg-flux/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-flux transition hover:bg-flux/20"
                 >
                   Send magic link
                 </button>
@@ -178,17 +192,41 @@ export function TopRibbon({
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="text-xs uppercase tracking-[0.3em] text-neutral-500">
+            <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">
               Session
             </div>
             <div
-              className={`rounded-md border px-3 py-2 text-xs font-medium ${
+              className={`rounded-md border px-2.5 py-1.5 text-[11px] font-medium ${
                 sessionIdentity.type === 'user'
                   ? 'border-flux/40 bg-flux/10 text-flux'
                   : 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300'
               }`}
             >
               {sessionLabel}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">
+              MCP
+            </div>
+            <div
+              className={`rounded-md border px-2.5 py-1.5 text-[11px] font-medium ${mcpChip.tone}`}
+              title={mcpStatus.detail || undefined}
+            >
+              {mcpLabel}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">
+              Wallet
+            </div>
+            <div
+              className="rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2.5 py-1.5 text-[11px] font-medium text-neutral-200"
+              title={activeWalletKey || undefined}
+            >
+              {walletLabel}
             </div>
           </div>
         </div>
@@ -198,3 +236,29 @@ export function TopRibbon({
 }
 
 export default TopRibbon;
+
+function getMcpAccent(state: McpStatusProps['state']) {
+  switch (state) {
+    case 'user':
+      return { tone: 'border-flux/40 bg-flux/10 text-flux' };
+    case 'fallback':
+      return { tone: 'border-amber-600/40 bg-amber-500/10 text-amber-200' };
+    case 'guest':
+    case 'none':
+      return { tone: 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300' };
+    case 'error':
+      return { tone: 'border-accent-critical/40 bg-accent-critical/10 text-accent-critical' };
+    default:
+      return { tone: 'border-neutral-800/60 bg-surface-glass/60 text-neutral-400' };
+  }
+}
+
+function formatWalletAddress(address?: string | null) {
+  if (!address || address === 'Auto' || address.trim().length === 0) {
+    return 'Auto';
+  }
+  if (address.length <= 10) {
+    return address;
+  }
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
+}

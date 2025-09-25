@@ -1,4 +1,5 @@
 import { tool } from '@openai/agents/realtime';
+import { setMcpStatusError, updateMcpStatusFromHeaders } from '@/app/state/mcpStatusStore';
 
 type ToolCallArgs = Record<string, unknown> | undefined;
 
@@ -8,19 +9,32 @@ type McpToolResponse =
   | Record<string, unknown>;
 
 const callMcp = async (toolName: string, args: ToolCallArgs = {}) => {
-  const response = await fetch('/api/mcp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ tool: toolName, arguments: args ?? {} }),
-  });
+  let stateSnapshotCaptured = false;
+  try {
+    const response = await fetch('/api/mcp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ tool: toolName, arguments: args ?? {} }),
+    });
 
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    throw new Error(`MCP call failed (${response.status}): ${text.slice(0, 200)}`);
+    if (response.headers.has('x-dexter-mcp-state')) {
+      stateSnapshotCaptured = true;
+      updateMcpStatusFromHeaders(response);
+    }
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => '');
+      throw new Error(`MCP call failed (${response.status}): ${text.slice(0, 200)}`);
+    }
+
+    return (await response.json()) as McpToolResponse;
+  } catch (error) {
+    if (!stateSnapshotCaptured) {
+      setMcpStatusError(error instanceof Error ? error.message : undefined);
+    }
+    throw error;
   }
-
-  return (await response.json()) as McpToolResponse;
 };
 
 const normalizeResult = (result: McpToolResponse) => {

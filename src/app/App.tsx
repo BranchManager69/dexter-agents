@@ -32,6 +32,12 @@ export type DexterSessionSummary = {
   guestProfile?: { label?: string; instructions?: string } | null;
 };
 
+type McpStatusState = {
+  state: "loading" | "user" | "fallback" | "guest" | "none" | "error";
+  label: string;
+  detail?: string;
+};
+
 const GUEST_SESSION_INSTRUCTIONS =
   "Operate using the shared Dexter demo wallet with limited funds. Avoid destructive actions and encourage the user to sign in for persistent access.";
 
@@ -53,6 +59,12 @@ const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
 
 import useAudioDownload from "./hooks/useAudioDownload";
 import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
+import {
+  getMcpStatusSnapshot,
+  setMcpStatusError,
+  subscribeMcpStatus,
+  updateMcpStatusFromPayload,
+} from "./state/mcpStatusStore";
 
 function App() {
   const searchParams = useSearchParams()!;
@@ -69,6 +81,7 @@ function App() {
   const [turnstileRefreshKey, setTurnstileRefreshKey] = useState(0);
 
   const [sessionIdentity, setSessionIdentity] = useState<DexterSessionSummary>(createGuestIdentity);
+  const [mcpStatus, setMcpStatus] = useState<McpStatusState>(getMcpStatusSnapshot());
 
   const authEmail = useMemo(() => {
     if (!authSession) return null;
@@ -82,6 +95,20 @@ function App() {
   const resetSessionIdentity = useCallback(() => {
     setSessionIdentity(createGuestIdentity());
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeMcpStatus((snapshot) => {
+      setMcpStatus({ state: snapshot.state, label: snapshot.label, detail: snapshot.detail });
+    });
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/mcp/status", { credentials: "include" })
+      .then((response) => response.json())
+      .then((data) => updateMcpStatusFromPayload(data || {}))
+      .catch(() => setMcpStatusError());
+  }, [sessionIdentity.type, sessionIdentity.user?.id, sessionIdentity.guestProfile?.label]);
 
   // ---------------------------------------------------------------------
   // Codec selector – lets you toggle between wide-band Opus (48 kHz)
@@ -629,6 +656,8 @@ function App() {
             email: authEmail,
           }}
           sessionIdentity={sessionIdentity}
+          mcpStatus={mcpStatus}
+          activeWalletKey={signalData.wallet.summary.activeWallet ?? null}
           onSignIn={handleSignIn}
           onSignOut={handleSignOut}
           turnstileSlot={

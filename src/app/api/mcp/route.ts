@@ -1,51 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { MCPServerStreamableHttp } from '@openai/agents-core';
 
-const MCP_URL = (process.env.MCP_URL || process.env.NEXT_PUBLIC_MCP_URL || 'https://mcp.dexter.cash/mcp').replace(/\/$/, '');
-const MCP_TOKEN = process.env.TOKEN_AI_MCP_TOKEN || process.env.NEXT_PUBLIC_TOKEN_AI_MCP_TOKEN || '';
-
-const globalAny = globalThis as typeof globalThis & {
-  __dexterMcpClient?: {
-    server: MCPServerStreamableHttp;
-    connected: boolean;
-    connecting: Promise<void> | null;
-  };
-};
-
-function getClient() {
-  if (!globalAny.__dexterMcpClient) {
-    const headers = MCP_TOKEN ? { Authorization: `Bearer ${MCP_TOKEN}` } : undefined;
-    const server = new MCPServerStreamableHttp({
-      url: MCP_URL,
-      requestInit: headers ? { headers } : undefined,
-      cacheToolsList: true,
-    });
-    globalAny.__dexterMcpClient = { server, connected: false, connecting: null };
-  }
-  return globalAny.__dexterMcpClient!;
-}
-
-async function ensureConnected() {
-  const client = getClient();
-  if (client.connected) return client.server;
-  if (!client.connecting) {
-    client.connecting = client.server.connect().then(() => {
-      client.connected = true;
-      client.connecting = null;
-    }).catch((error) => {
-      client.connecting = null;
-      throw error;
-    });
-  }
-  await client.connecting;
-  return client.server;
-}
+import { getConnectedMcpServer, resolveMcpAuth, summarizeIdentity } from './auth';
 
 export async function GET() {
   try {
-    const server = await ensureConnected();
+    const auth = await resolveMcpAuth();
+    const server = await getConnectedMcpServer(auth);
     const tools = await server.listTools();
-    return NextResponse.json({ tools });
+
+    const summary = summarizeIdentity(auth);
+    const response = NextResponse.json({
+      tools,
+      identity: summary,
+    });
+    response.headers.set('x-dexter-mcp-state', summary.state);
+    if (summary.detail) {
+      response.headers.set('x-dexter-mcp-detail', summary.detail);
+    }
+    return response;
   } catch (error: any) {
     console.error('[mcp] list tools failed', error?.message || error);
     return NextResponse.json({ error: 'mcp_list_failed' }, { status: 500 });
@@ -62,9 +34,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'missing_tool' }, { status: 400 });
     }
 
-    const server = await ensureConnected();
+    const auth = await resolveMcpAuth();
+    const server = await getConnectedMcpServer(auth);
     const result = await server.callTool(tool, args);
-    return NextResponse.json(result);
+
+    const summary = summarizeIdentity(auth);
+    const response = NextResponse.json(result);
+    response.headers.set('x-dexter-mcp-state', summary.state);
+    if (summary.detail) {
+      response.headers.set('x-dexter-mcp-detail', summary.detail);
+    }
+    return response;
   } catch (error: any) {
     console.error('[mcp] call failed', error?.message || error);
     return NextResponse.json({ error: 'mcp_call_failed', message: error?.message || String(error) }, { status: 500 });
