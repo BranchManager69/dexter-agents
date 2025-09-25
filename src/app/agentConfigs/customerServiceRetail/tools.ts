@@ -194,6 +194,33 @@ export const codexReply = tool({
   execute: async (input) => normalizeResult(await callMcp('codex_reply', input as ToolCallArgs)),
 });
 
+export const codexExec = tool({
+  name: 'codex_exec',
+  description:
+    'Run Codex in exec mode. Optionally pass output_schema (stringified JSON) for structured replies.',
+  parameters: {
+    type: 'object',
+    properties: {
+      prompt: {
+        type: 'string',
+        description: 'Instruction or question for Codex exec mode.',
+      },
+      output_schema: {
+        type: 'string',
+        description: 'JSON schema describing the desired final response shape.',
+      },
+      metadata: {
+        type: 'object',
+        description: 'Optional metadata to inject into the Codex prompt preface.',
+        additionalProperties: true,
+      },
+    },
+    required: ['prompt'],
+    additionalProperties: true,
+  },
+  execute: async (input) => normalizeResult(await callMcp('codex_exec', input as ToolCallArgs)),
+});
+
 export const walletToolSet = [
   resolveWallet,
   listMyWallets,
@@ -206,7 +233,8 @@ export const intelToolSet = [
   dexterSearch,
   dexterFetch,
   codexStart,
+  codexExec,
   codexReply,
 ];
 
-export const codexToolSet = [codexStart, codexReply];
+export const codexToolSet = [codexStart, codexReply, codexExec];
