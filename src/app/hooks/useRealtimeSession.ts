@@ -42,25 +42,25 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
 
   const { logServerEvent } = useEvent();
 
-  const historyHandlers = useHandleSessionHistory().current;
+  const historyHandlersRef = useHandleSessionHistory();
 
   function handleTransportEvent(event: any) {
     // Handle additional server events that aren't managed by the session
     switch (event.type) {
       case "conversation.item.input_audio_transcription.delta": {
-        historyHandlers.handleTranscriptionDelta(event, 'user');
+        historyHandlersRef.current.handleTranscriptionDelta(event, 'user');
         break;
       }
       case "conversation.item.input_audio_transcription.completed": {
-        historyHandlers.handleTranscriptionCompleted(event, 'user');
+        historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
         break;
       }
       case "response.audio_transcript.done": {
-        historyHandlers.handleTranscriptionCompleted(event, 'assistant');
+        historyHandlersRef.current.handleTranscriptionCompleted(event, 'assistant');
         break;
       }
       case "response.audio_transcript.delta": {
-        historyHandlers.handleTranscriptionDelta(event, 'assistant');
+        historyHandlersRef.current.handleTranscriptionDelta(event, 'assistant');
         break;
       }
       default: {
@@ -121,16 +121,16 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
 
       // history events
       sessionRef.current.on("agent_handoff", handleAgentHandoff);
-      sessionRef.current.on("agent_tool_start", historyHandlers.handleAgentToolStart);
+      sessionRef.current.on("agent_tool_start", historyHandlersRef.current.handleAgentToolStart);
       sessionRef.current.on("agent_tool_end", (context: any, agent: any, tool: any, result: any) => {
-        historyHandlers.handleAgentToolEnd(context, agent, tool, result);
+        historyHandlersRef.current.handleAgentToolEnd(context, agent, tool, result);
         sessionRef.current?.transport.sendEvent({ type: 'response.create' } as any);
       });
-      sessionRef.current.on("history_updated", historyHandlers.handleHistoryUpdated);
-      sessionRef.current.on("history_added", historyHandlers.handleHistoryAdded);
-      sessionRef.current.on("guardrail_tripped", historyHandlers.handleGuardrailTripped);
+      sessionRef.current.on("history_updated", historyHandlersRef.current.handleHistoryUpdated);
+      sessionRef.current.on("history_added", historyHandlersRef.current.handleHistoryAdded);
+      sessionRef.current.on("guardrail_tripped", historyHandlersRef.current.handleGuardrailTripped);
       sessionRef.current.on("mcp_tool_call_completed", (context: any, agent: any, toolCall: any) => {
-        historyHandlers.handleMcpToolCallCompleted(context, agent, toolCall);
+        historyHandlersRef.current.handleMcpToolCallCompleted(context, agent, toolCall);
         sessionRef.current?.transport.sendEvent({ type: 'response.create' } as any);
       });
 
@@ -209,8 +209,9 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
   
   const sendUserText = useCallback((text: string) => {
     assertconnected();
+    historyHandlersRef.current.logOutgoingUserText?.(text);
     sessionRef.current!.sendMessage(text);
-  }, []);
+  }, [historyHandlersRef]);
 
   const sendEvent = useCallback((ev: any) => {
     sessionRef.current?.transport.sendEvent(ev);

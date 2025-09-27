@@ -62,7 +62,8 @@ export const resolveWallet = tool({
     properties: {},
     required: [],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async () => normalizeResult(await callMcp('resolve_wallet')),
 });
 
@@ -74,7 +75,8 @@ export const listMyWallets = tool({
     properties: {},
     required: [],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async () => normalizeResult(await callMcp('list_my_wallets')),
 });
 
@@ -89,7 +91,8 @@ export const setSessionWalletOverride = tool({
     },
     required: [],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async (input) => normalizeResult(await callMcp('set_session_wallet_override', input as ToolCallArgs)),
 });
 
@@ -101,7 +104,8 @@ export const authInfo = tool({
     properties: {},
     required: [],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async () => normalizeResult(await callMcp('auth_info')),
 });
 
@@ -118,7 +122,8 @@ export const pumpstreamLiveSummary = tool({
     },
     required: [],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async (input) => normalizeResult(await callMcp('pumpstream_live_summary', input as ToolCallArgs)),
 });
 
@@ -135,7 +140,8 @@ export const dexterSearch = tool({
     },
     required: [],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async (input) => normalizeResult(await callMcp('search', input as ToolCallArgs)),
 });
 
@@ -152,7 +158,8 @@ export const dexterFetch = tool({
     },
     required: ['id'],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async (input) => normalizeResult(await callMcp('fetch', input as ToolCallArgs)),
 });
 
@@ -169,7 +176,8 @@ export const codexStart = tool({
     },
     required: ['prompt'],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async (input) => normalizeResult(await callMcp('codex_start', input as ToolCallArgs)),
 });
 
@@ -190,7 +198,8 @@ export const codexReply = tool({
     },
     required: ['conversation_id', 'prompt'],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async (input) => normalizeResult(await callMcp('codex_reply', input as ToolCallArgs)),
 });
 
@@ -217,7 +226,8 @@ export const codexExec = tool({
     },
     required: ['prompt'],
     additionalProperties: true,
-  },
+  } as const,
+  strict: false,
   execute: async (input) => normalizeResult(await callMcp('codex_exec', input as ToolCallArgs)),
 });
 

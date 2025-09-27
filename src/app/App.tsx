@@ -14,6 +14,12 @@ import SignalStack from "./components/signals/SignalStack";
 import SignalsDrawer from "./components/signals/SignalsDrawer";
 import { TurnstileWidget } from "./components/TurnstileWidget";
 
+declare global {
+  interface Window {
+    __DEXTER_DISABLE_SYNTHETIC_GREETING?: boolean;
+  }
+}
+
 // Types
 import { SessionStatus } from "@/app/types";
 import type { RealtimeAgent } from '@openai/agents/realtime';
@@ -214,7 +220,6 @@ function App() {
 
     try {
       const result = await sendMagicLink(email, {
-        redirectTo: window.location.href,
         captchaToken: turnstileToken ?? undefined,
       });
       if (!result.success) {
@@ -404,6 +409,23 @@ function App() {
     sendClientEvent({ type: 'response.create' }, '(simulated user text message)');
   };
 
+  const shouldSkipSyntheticGreeting = () => {
+    if (process.env.NEXT_PUBLIC_DISABLE_SYNTHETIC_GREETING === 'true') {
+      return true;
+    }
+    if (typeof window !== 'undefined') {
+      if (window.__DEXTER_DISABLE_SYNTHETIC_GREETING === true) {
+        return true;
+      }
+      try {
+        return window.localStorage?.getItem('dexter:disableSyntheticGreeting') === 'true';
+      } catch (error) {
+        console.warn('Failed to read synthetic greeting preference:', error);
+      }
+    }
+    return false;
+  };
+
   const updateSession = (shouldTriggerResponse: boolean = false) => {
     // Reflect Push-to-Talk UI state by (de)activating server VAD on the
     // backend. The Realtime SDK supports live session updates via the
@@ -426,7 +448,7 @@ function App() {
     });
 
     // Send an initial 'hi' message to trigger the agent to greet the user
-    if (shouldTriggerResponse) {
+    if (shouldTriggerResponse && !shouldSkipSyntheticGreeting()) {
       sendSimulatedUserMessage('hi');
     }
     return;
