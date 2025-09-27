@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 type AccessLevel = 'guest' | 'pro' | 'holders';
+type Source = 'live' | 'cache' | 'none';
 
 export interface ToolCatalogEntry {
   name: string;
@@ -11,10 +12,13 @@ export interface ToolCatalogEntry {
   tags: string[];
 }
 
-interface ToolCatalogState {
+export interface ToolCatalogState {
   tools: ToolCatalogEntry[];
   loading: boolean;
   error: string | null;
+  source: Source;
+  lastUpdated: Date | null;
+  refresh: () => void;
 }
 
 const ACCESS_MAP: Record<string, AccessLevel> = {
@@ -30,6 +34,15 @@ const ACCESS_MAP: Record<string, AccessLevel> = {
   holders: 'holders',
   premium: 'holders',
   internal: 'holders',
+};
+
+const STORAGE_KEY = 'dexter.toolCatalog';
+const STORAGE_VERSION = 1;
+
+type CachedCatalog = {
+  version: number;
+  timestamp: number;
+  tools: ToolCatalogEntry[];
 };
 
 function normaliseAccess(value?: string): AccessLevel {
@@ -79,40 +92,121 @@ function transformCatalog(raw: any): ToolCatalogEntry[] {
     .filter(Boolean) as ToolCatalogEntry[];
 }
 
-export function useToolCatalog(): ToolCatalogState {
-  const [state, setState] = useState<ToolCatalogState>({ tools: [], loading: true, error: null });
+function readCachedCatalog(): { source: Source; tools: ToolCatalogEntry[]; lastUpdated: Date | null } {
+  if (typeof window === 'undefined') {
+    return { source: 'none', tools: [], lastUpdated: null };
+  }
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return { source: 'none', tools: [], lastUpdated: null };
 
-  useEffect(() => {
-    let cancelled = false;
+    const parsed = JSON.parse(raw) as CachedCatalog;
+    if (!parsed || parsed.version !== STORAGE_VERSION || !Array.isArray(parsed.tools)) {
+      return { source: 'none', tools: [], lastUpdated: null };
+    }
 
-    (async () => {
-      try {
-        setState((prev) => ({ ...prev, loading: true, error: null }));
-        const response = await fetch('/api/tools', { credentials: 'include' });
-        const text = await response.text();
-        let data: any = {};
-        try {
-          data = JSON.parse(text);
-        } catch {
-          data = { raw: text };
-        }
-        if (cancelled) return;
-        if (!response.ok) {
-          setState({ tools: [], loading: false, error: `${response.status} ${response.statusText}` });
-          return;
-        }
-        const catalog = transformCatalog(data);
-        setState({ tools: catalog, loading: false, error: null });
-      } catch (error: any) {
-        if (cancelled) return;
-        setState({ tools: [], loading: false, error: error?.message || 'Failed to load tools' });
-      }
-    })();
-
-    return () => {
-      cancelled = true;
+    return {
+      source: 'cache',
+      tools: parsed.tools,
+      lastUpdated: parsed.timestamp ? new Date(parsed.timestamp) : null,
     };
+  } catch (error) {
+    console.warn('[dexter-agents] Failed to read cached tool catalog:', error);
+    return { source: 'none', tools: [], lastUpdated: null };
+  }
+}
+
+function writeCachedCatalog(tools: ToolCatalogEntry[]) {
+  if (typeof window === 'undefined') return;
+  try {
+    const payload: CachedCatalog = {
+      version: STORAGE_VERSION,
+      timestamp: Date.now(),
+      tools,
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch (error) {
+    console.warn('[dexter-agents] Failed to persist tool catalog cache:', error);
+  }
+}
+
+export function useToolCatalog(): ToolCatalogState {
+  const [state, setState] = useState<Omit<ToolCatalogState, 'refresh'>>({
+    tools: [],
+    loading: true,
+    error: null,
+    source: 'none',
+    lastUpdated: null,
+  });
+
+  const fetchCatalog = useCallback(async () => {
+    try {
+      setState((prev) => ({ ...prev, loading: true, error: null }));
+      const response = await fetch('/api/tools', { credentials: 'include' });
+      const text = await response.text();
+      let data: any = {};
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { raw: text };
+      }
+
+      if (!response.ok) {
+        const message = `${response.status} ${response.statusText}`;
+        throw new Error(message || 'Failed to load tools');
+      }
+
+      const catalog = transformCatalog(data);
+      if (!catalog.length) {
+        throw new Error('Tool catalog returned no entries');
+      }
+
+      writeCachedCatalog(catalog);
+      setState({
+        tools: catalog,
+        loading: false,
+        error: null,
+        source: 'live',
+        lastUpdated: new Date(),
+      });
+    } catch (error: any) {
+      const cache = readCachedCatalog();
+      if (cache.source === 'cache' && cache.tools.length) {
+        setState({
+          tools: cache.tools,
+          loading: false,
+          error: error?.message || 'Unable to refresh tool catalog; showing cached list.',
+          source: 'cache',
+          lastUpdated: cache.lastUpdated,
+        });
+      } else {
+        setState({
+          tools: [],
+          loading: false,
+          error: error?.message || 'Failed to load tools',
+          source: 'none',
+          lastUpdated: null,
+        });
+      }
+    }
   }, []);
 
-  return state;
+  useEffect(() => {
+    const cache = readCachedCatalog();
+    if (cache.source === 'cache' && cache.tools.length) {
+      setState({
+        tools: cache.tools,
+        loading: false,
+        error: null,
+        source: 'cache',
+        lastUpdated: cache.lastUpdated,
+      });
+    }
+    fetchCatalog();
+  }, [fetchCatalog]);
+
+  return {
+    ...state,
+    refresh: fetchCatalog,
+  };
 }

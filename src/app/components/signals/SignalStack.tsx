@@ -6,6 +6,9 @@ interface ToolCatalogSnapshot {
   tools: ToolCatalogEntry[];
   loading: boolean;
   error: string | null;
+  source: 'live' | 'cache' | 'none';
+  lastUpdated: Date | null;
+  refresh: () => void;
 }
 
 interface SignalStackProps {
@@ -165,13 +168,38 @@ export function SignalStack({
       </section>
 
       <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
-        <div className="flex items-center justify-between">
-          <h3 className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
-            Available Tools
-          </h3>
-          <span className="text-xs text-neutral-500">
-            {toolCatalog.loading ? 'Refreshing…' : `${toolCatalog.tools.length} listed`}
-          </span>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <h3 className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
+              Available Tools
+            </h3>
+            {toolCatalog.source === 'cache' && (
+              <span className="rounded-pill border border-accent-warning/40 bg-accent-warning/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-accent-warning">
+                Cached
+              </span>
+            )}
+            {toolCatalog.source === 'live' && (
+              <span className="rounded-pill border border-flux/40 bg-flux/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-flux">
+                Live
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-xs text-neutral-500">
+            <span>
+              {toolCatalog.loading
+                ? 'Refreshing…'
+                : toolCatalog.lastUpdated
+                ? `Updated ${toolCatalog.lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                : `${toolCatalog.tools.length} listed`}
+            </span>
+            <button
+              type="button"
+              onClick={toolCatalog.refresh}
+              className="rounded-md border border-neutral-800/60 px-2 py-0.5 text-[11px] uppercase tracking-[0.16em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
+            >
+              Refresh
+            </button>
+          </div>
         </div>
         <div className="mt-3 space-y-2 text-sm text-neutral-200">
           {toolCatalog.error && (
@@ -179,19 +207,32 @@ export function SignalStack({
               {toolCatalog.error}
             </div>
           )}
-          {!toolCatalog.error && toolCatalog.tools.length === 0 && !toolCatalog.loading && (
+          {toolCatalog.tools.length === 0 && !toolCatalog.loading && !toolCatalog.error && (
             renderEmptyState('No tools reported. Try reloading or checking MCP status.')
           )}
           {toolCatalog.tools.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-col gap-2">
               {toolCatalog.tools.map((tool) => (
-                <span
+                <div
                   key={tool.name}
-                  className="rounded-pill border border-neutral-800/60 bg-surface-glass/60 px-3 py-1 text-xs uppercase tracking-[0.18em] text-neutral-300"
+                  className="flex flex-wrap items-center gap-2 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-1"
                   title={tool.description}
                 >
-                  {tool.name}
-                </span>
+                  <span className="text-xs uppercase tracking-[0.2em] text-neutral-200">
+                    {tool.name}
+                  </span>
+                  <span className="rounded-pill border border-neutral-700/60 bg-neutral-900/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-400">
+                    {tool.access}
+                  </span>
+                  {tool.tags.map((tag) => (
+                    <span
+                      key={`${tool.name}-${tag}`}
+                      className="rounded-pill border border-neutral-700/40 bg-neutral-900/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-500"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               ))}
             </div>
           )}
