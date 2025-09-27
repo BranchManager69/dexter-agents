@@ -1,6 +1,6 @@
 import { RealtimeAgent } from '@openai/agents/realtime';
 
-import { codexToolSet, walletToolSet } from './tools';
+import { intelToolSet, walletToolSet } from './tools';
 
 export const portfolioAgent = new RealtimeAgent({
   name: 'portfolioNavigator',
@@ -35,7 +35,7 @@ You are the Dexter Trading Desk concierge. Your job is to welcome the caller, un
 - Market research, pump/fund flows, knowledge docs → MarketIntel agent.
 - Human escalation → HumanDesk agent.
 `,
-  tools: [...walletToolSet, ...codexToolSet],
+  tools: [...walletToolSet, ...intelToolSet],
   handoffs: [],
 });
 

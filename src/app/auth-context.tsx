@@ -107,6 +107,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   };
 
+  const normalizeRedirectTo = (raw?: string): string | undefined => {
+    if (!raw) return undefined;
+    try {
+      if (typeof window !== "undefined") {
+        return new URL(raw, window.location.origin).toString();
+      }
+      if (process.env.NEXT_PUBLIC_SITE_URL) {
+        return new URL(raw, process.env.NEXT_PUBLIC_SITE_URL).toString();
+      }
+      return new URL(raw).toString();
+    } catch {
+      return raw;
+    }
+  };
+
+  const deriveRedirectTo = (explicit?: string): string | undefined => {
+    const normalizedExplicit = normalizeRedirectTo(explicit);
+    if (normalizedExplicit) return normalizedExplicit;
+
+    if (typeof window !== "undefined") {
+      try {
+        const current = new URL(window.location.href);
+        const param =
+          current.searchParams.get("redirect_to") ||
+          current.searchParams.get("redirect") ||
+          current.searchParams.get("return_to");
+        if (param) {
+          const normalizedParam = normalizeRedirectTo(param.trim());
+          if (normalizedParam) return normalizedParam;
+        }
+        return `${current.origin}/`;
+      } catch {
+        // ignore and fall through to env fallback
+      }
+    }
+
+    return normalizeRedirectTo(process.env.NEXT_PUBLIC_SITE_URL);
+  };
+
   const sendMagicLink = async (
     email: string,
     options?: { redirectTo?: string; captchaToken?: string },
@@ -119,7 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const redirectTo = options?.redirectTo || (typeof window !== "undefined" ? `${window.location.origin}/` : undefined);
+      const redirectTo = deriveRedirectTo(options?.redirectTo);
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmed,
         options: {
@@ -135,11 +174,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const resolveRedirectTo = (explicit?: string) => {
-    if (explicit) return explicit;
-    if (typeof window !== "undefined") return `${window.location.origin}/`;
-    return undefined;
-  };
+  const resolveRedirectTo = (explicit?: string) => deriveRedirectTo(explicit);
 
   const signInWithTwitter = async (options?: { redirectTo?: string; captchaToken?: string }) => {
     if (!supabase) return { success: false, message: "Authentication not initialized" };

@@ -268,7 +268,8 @@ export const getNextResponseFromSupervisor = tool({
     },
     required: ['relevantContextFromLastUserMessage'],
     additionalProperties: false,
-  },
+  } as const,
+  strict: true,
   execute: async (input, details) => {
     const { relevantContextFromLastUserMessage } = input as {
       relevantContextFromLastUserMessage: string;

@@ -43,6 +43,9 @@ async function runHarness({
   cookies,
   onPageReady,
   beforeSend,
+  followUpPrompts,
+  followUpDelayMs = 3000,
+  skipSyntheticGreeting = false,
 } = {}) {
   if (!prompt || !prompt.trim()) {
     throw new Error('runHarness requires a non-empty prompt.');
@@ -73,6 +76,17 @@ async function runHarness({
     }
 
     const context = await browser.newContext(contextOptions);
+
+    if (skipSyntheticGreeting) {
+      await context.addInitScript(() => {
+        window.__DEXTER_DISABLE_SYNTHETIC_GREETING = true;
+        try {
+          window.localStorage?.setItem('dexter:disableSyntheticGreeting', 'true');
+        } catch (_storageError) {
+          // Swallow storage writes silently; the in-memory flag is sufficient.
+        }
+      });
+    }
 
     if (Array.isArray(cookies) && cookies.length > 0) {
       try {
@@ -130,9 +144,38 @@ async function runHarness({
       await startButton.click().catch(() => {});
     }
 
-    const chatInput = await page.waitForSelector('input[placeholder="Type a question or directive"], input[placeholder="Type a message..."]', { timeout: 30000 });
-    await chatInput.fill(prompt);
-    await page.locator('button:has(img[alt="Send"])').click();
+    async function sendMessage(text) {
+      const input = await page.waitForSelector('input[placeholder="Type a question or directive"], input[placeholder="Type a message..."]', { timeout: 30000 });
+      await input.fill(text);
+      const sendButton = page.locator('button:has(img[alt="Send"])');
+      await sendButton.waitFor({ state: 'visible', timeout: 30000 });
+      for (let attempt = 0; attempt < 60; attempt += 1) {
+        if (await sendButton.isEnabled()) {
+          await sendButton.click();
+          return;
+        }
+        await page.waitForTimeout(500);
+      }
+      throw new Error('Send button was not enabled before timeout');
+    }
+
+    await sendMessage(prompt);
+
+    const followUpQueue = Array.isArray(followUpPrompts)
+      ? followUpPrompts.filter((text) => typeof text === 'string' && text.trim().length > 0)
+      : [];
+
+    const expectedAssistantMessages = Math.max(1, 1 + followUpQueue.length);
+
+    if (followUpQueue.length > 0) {
+      const delayMs = Math.max(0, Number(followUpDelayMs) || 0);
+      for (const message of followUpQueue) {
+        if (delayMs > 0) {
+          await page.waitForTimeout(delayMs);
+        }
+        await sendMessage(message.trim());
+      }
+    }
 
     const readTranscriptTexts = async () =>
       page.evaluate(() =>
@@ -143,7 +186,7 @@ async function runHarness({
 
     let previousTexts = await readTranscriptTexts();
     let assistantCount = previousTexts.filter((text) => !text.startsWith('▶')).length;
-    const quietWindowMs = 2000;
+    const quietWindowMs = 5000;
     const deadline = Date.now() + waitMs;
     const startTime = Date.now();
 
@@ -166,7 +209,7 @@ async function runHarness({
 
       previousTexts = currentTexts;
 
-      if (assistantCount > 0 && Date.now() - lastActivity > quietWindowMs) {
+      if (assistantCount >= expectedAssistantMessages && Date.now() - lastActivity > quietWindowMs) {
         break;
       }
     }

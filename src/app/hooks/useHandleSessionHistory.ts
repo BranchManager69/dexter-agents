@@ -17,10 +17,56 @@ export function useHandleSessionHistory() {
   const { logServerEvent } = useEvent();
 
   const transcriptItemsRef = useRef(transcriptItems);
+  const shouldLogServerSide = process.env.NEXT_PUBLIC_LOG_TRANSCRIPTS === 'true';
+  const messageLogStateRef = useRef(new Map<string, string>());
+  const toolLogSetRef = useRef(new Set<string>());
 
   useEffect(() => {
     transcriptItemsRef.current = transcriptItems;
   }, [transcriptItems]);
+
+  const postToServerLog = (payload: Record<string, unknown>) => {
+    if (!shouldLogServerSide || typeof window === 'undefined') return;
+    try {
+      const body = JSON.stringify({
+        ...payload,
+        ts: new Date().toISOString(),
+      });
+
+      if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+        const blob = new Blob([body], { type: 'application/json' });
+        navigator.sendBeacon('/api/transcript-log', blob);
+      } else {
+        fetch('/api/transcript-log', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          keepalive: true,
+        }).catch(() => {});
+      }
+    } catch (error) {
+      console.warn('Failed to forward transcript log:', error);
+    }
+  };
+
+  const logMessageToServer = (itemId: string | undefined, role: string, text: string) => {
+    if (!itemId) return;
+    const trimmed = text?.trim();
+    if (!trimmed) return;
+
+    const previous = messageLogStateRef.current.get(itemId);
+    if (previous === trimmed) return;
+
+    messageLogStateRef.current.set(itemId, trimmed);
+    postToServerLog({ kind: 'message', itemId, role, text: trimmed });
+  };
+
+  const logToolToServer = (toolId: string | undefined, entry: Record<string, unknown>) => {
+    if (!toolId) return;
+    if (toolLogSetRef.current.has(toolId)) return;
+    toolLogSetRef.current.add(toolId);
+    postToServerLog({ kind: 'tool', toolId, ...entry });
+  };
 
   const ensureUserTranscriptMessage = (itemId: string, initialText = "") => {
     const existing = transcriptItemsRef.current.find(
@@ -126,6 +172,7 @@ export function useHandleSessionHistory() {
         addTranscriptBreadcrumb('Output Guardrail Active', { details: failureDetails });
       } else {
         addTranscriptMessage(itemId, role, text);
+        logMessageToServer(itemId, role, text);
       }
     }
   }
@@ -141,6 +188,7 @@ export function useHandleSessionHistory() {
 
       if (text) {
         updateTranscriptMessage(itemId, text, false);
+        logMessageToServer(itemId, item.role ?? 'assistant', text);
       }
     });
   }
@@ -177,6 +225,8 @@ export function useHandleSessionHistory() {
       updateTranscriptMessage(itemId, finalTranscript, false);
       const transcriptItem = transcriptItemsRef.current.find((i) => i.itemId === itemId);
       updateTranscriptItem(itemId, { status: 'DONE' });
+
+      logMessageToServer(itemId, role, finalTranscript);
 
       // If guardrailResult still pending, mark PASS.
       if (transcriptItem?.guardrailResult?.status === 'IN_PROGRESS') {
@@ -238,6 +288,16 @@ export function useHandleSessionHistory() {
     }
 
     addTranscriptToolNote(toolName, Object.keys(noteData).length ? noteData : undefined);
+
+    const toolIdentifier = toolCall?.id || toolCall?.call_id || toolCall?.name;
+    const safeOutput = parsedOutput && typeof parsedOutput === 'object'
+      ? parsedOutput
+      : parsedOutput;
+    logToolToServer(toolIdentifier, {
+      toolName,
+      arguments: parsedArgs,
+      output: safeOutput,
+    });
   }
 
   const handlersRef = useRef({
@@ -249,6 +309,12 @@ export function useHandleSessionHistory() {
     handleTranscriptionCompleted,
     handleGuardrailTripped,
     handleMcpToolCallCompleted,
+    logOutgoingUserText: (text: string) => {
+      const trimmed = text?.trim();
+      if (!trimmed) return;
+      const syntheticId = `outbound-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      logMessageToServer(syntheticId, 'user', trimmed);
+    },
   });
 
   return handlersRef;
