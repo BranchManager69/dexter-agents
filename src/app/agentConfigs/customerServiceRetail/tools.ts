@@ -231,14 +231,11 @@ export const codexExec = tool({
   execute: async (input) => normalizeResult(await callMcp('codex_exec', input as ToolCallArgs)),
 });
 
-export const walletToolSet = [
+export const dexterVoiceTools = [
   resolveWallet,
   listMyWallets,
   setSessionWalletOverride,
   authInfo,
-];
-
-export const intelToolSet = [
   pumpstreamLiveSummary,
   dexterSearch,
   dexterFetch,
