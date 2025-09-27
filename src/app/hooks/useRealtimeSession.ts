@@ -20,7 +20,6 @@ export interface ConnectOptions {
   getEphemeralKey: () => Promise<string>;
   initialAgents: RealtimeAgent[];
   audioElement?: HTMLAudioElement;
-  extraContext?: Record<string, any>;
   outputGuardrails?: any[];
 }
 
@@ -144,7 +143,6 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       getEphemeralKey,
       initialAgents,
       audioElement,
-      extraContext,
       outputGuardrails,
     }: ConnectOptions) => {
       if (sessionRef.current) return; // already connected
@@ -181,7 +179,8 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
           },
         },
         outputGuardrails: outputGuardrails ?? [],
-        context: extraContext ?? {},
+        // The OpenAI Realtime API no longer accepts an arbitrary `context` payload,
+        // so we avoid attaching it to prevent 400 Unknown parameter errors.
         automaticallyTriggerResponseForMcpToolCalls: true,
       });
 

@@ -366,9 +366,6 @@ function App() {
         initialAgents: reorderedAgents,
         audioElement: sdkAudioElement,
         outputGuardrails: [guardrail],
-        extraContext: {
-          addTranscriptBreadcrumb,
-        },
       });
     } catch (err) {
       console.error("Error connecting via SDK:", err);
