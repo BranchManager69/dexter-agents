@@ -1,5 +1,6 @@
 import { tool } from '@openai/agents/realtime';
 import { setMcpStatusError, updateMcpStatusFromHeaders } from '@/app/state/mcpStatusStore';
+import { CONFIG, getDexterApiRoute } from '@/app/config/env';
 
 type ToolCallArgs = Record<string, unknown> | undefined;
 
@@ -231,7 +232,7 @@ export const codexExec = tool({
   execute: async (input) => normalizeResult(await callMcp('codex_exec', input as ToolCallArgs)),
 });
 
-export const dexterVoiceTools = [
+export const staticDexterVoiceTools = [
   resolveWallet,
   listMyWallets,
   setSessionWalletOverride,
@@ -244,4 +245,98 @@ export const dexterVoiceTools = [
   codexReply,
 ];
 
-export const codexToolSet = [codexStart, codexReply, codexExec];
+type RemoteToolMeta = {
+  name?: string;
+  title?: string;
+  description?: string;
+  summary?: string;
+  input_schema?: unknown;
+  inputSchema?: unknown;
+  parameters?: unknown;
+  _meta?: {
+    category?: string;
+    access?: string;
+    tags?: string[];
+    icon?: string;
+  };
+};
+
+const DEFAULT_PARAMETERS = {
+  type: 'object',
+  properties: {},
+  required: [],
+  additionalProperties: true,
+};
+
+function coerceParameters(meta: RemoteToolMeta) {
+  const candidate =
+    (meta.parameters && typeof meta.parameters === 'object' && meta.parameters) ||
+    (meta.input_schema && typeof meta.input_schema === 'object' && meta.input_schema) ||
+    (meta.inputSchema && typeof meta.inputSchema === 'object' && meta.inputSchema);
+  if (candidate) return candidate as Record<string, unknown>;
+  return DEFAULT_PARAMETERS;
+}
+
+function createToolFromMeta(meta: RemoteToolMeta) {
+  const rawName = meta.name?.trim();
+  if (!rawName) return null;
+  const description = meta.description || meta.summary || meta.title || 'Dexter MCP tool';
+  const parameters = coerceParameters(meta);
+  return tool({
+    name: rawName,
+    description,
+    parameters: parameters as any,
+    strict: true,
+    execute: async (input) => normalizeResult(await callMcp(rawName, input as ToolCallArgs)),
+  });
+}
+
+function dedupeTools<T extends { name: string }>(list: T[]): T[] {
+  const seen = new Map<string, T>();
+  for (const item of list) {
+    if (!seen.has(item.name)) {
+      seen.set(item.name, item);
+    }
+  }
+  return Array.from(seen.values());
+}
+
+export async function loadDexterVoiceTools(): Promise<ReturnType<typeof tool>[]> {
+  try {
+    const url = getDexterApiRoute('/tools');
+    const headers: Record<string, string> = {};
+    if (CONFIG.mcpToken) {
+      headers.Authorization = `Bearer ${CONFIG.mcpToken}`;
+    }
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch tool catalog (${response.status})`);
+    }
+
+    const json = await response.json();
+    const rawTools: RemoteToolMeta[] = Array.isArray(json?.tools)
+      ? (json.tools as RemoteToolMeta[])
+      : Array.isArray(json)
+      ? (json as RemoteToolMeta[])
+      : [];
+
+    const dynamic = rawTools
+      .map(createToolFromMeta)
+      .filter(Boolean) as ReturnType<typeof tool>[];
+
+    if (dynamic.length === 0) {
+      return staticDexterVoiceTools;
+    }
+
+    return dedupeTools([...dynamic, ...staticDexterVoiceTools]);
+  } catch (error) {
+    console.warn('[dexter-agents] Falling back to static tool list:', error);
+    return staticDexterVoiceTools;
+  }
+}

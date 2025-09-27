@@ -73,6 +73,7 @@ import {
   subscribeMcpStatus,
   updateMcpStatusFromPayload,
 } from "./state/mcpStatusStore";
+import { useToolCatalog } from "./hooks/useToolCatalog";
 
 function App() {
   const searchParams = useSearchParams()!;
@@ -203,6 +204,7 @@ function App() {
     useAudioDownload();
 
   const signalData = useSignalData();
+  const toolCatalog = useToolCatalog();
 
   const handleSignIn = useCallback(async () => {
     if (typeof window === "undefined") return;
@@ -659,6 +661,7 @@ function App() {
       marketPulse={signalData.marketPulse}
       pumpStreams={signalData.pumpStreams}
       wallet={signalData.wallet}
+      toolCatalog={toolCatalog}
     />
   );
 
