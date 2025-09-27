@@ -232,19 +232,6 @@ export const codexExec = tool({
   execute: async (input) => normalizeResult(await callMcp('codex_exec', input as ToolCallArgs)),
 });
 
-export const staticDexterVoiceTools = [
-  resolveWallet,
-  listMyWallets,
-  setSessionWalletOverride,
-  authInfo,
-  pumpstreamLiveSummary,
-  dexterSearch,
-  dexterFetch,
-  codexStart,
-  codexExec,
-  codexReply,
-];
-
 type RemoteToolMeta = {
   name?: string;
   title?: string;
@@ -302,41 +289,37 @@ function dedupeTools<T extends { name: string }>(list: T[]): T[] {
 }
 
 export async function loadDexterVoiceTools(): Promise<ReturnType<typeof tool>[]> {
-  try {
-    const url = getDexterApiRoute('/tools');
-    const headers: Record<string, string> = {};
-    if (CONFIG.mcpToken) {
-      headers.Authorization = `Bearer ${CONFIG.mcpToken}`;
-    }
-
-    const response = await fetch(url, {
-      method: 'GET',
-      headers,
-      cache: 'no-store',
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch tool catalog (${response.status})`);
-    }
-
-    const json = await response.json();
-    const rawTools: RemoteToolMeta[] = Array.isArray(json?.tools)
-      ? (json.tools as RemoteToolMeta[])
-      : Array.isArray(json)
-      ? (json as RemoteToolMeta[])
-      : [];
-
-    const dynamic = rawTools
-      .map(createToolFromMeta)
-      .filter(Boolean) as ReturnType<typeof tool>[];
-
-    if (dynamic.length === 0) {
-      return staticDexterVoiceTools;
-    }
-
-    return dedupeTools([...dynamic, ...staticDexterVoiceTools]);
-  } catch (error) {
-    console.warn('[dexter-agents] Falling back to static tool list:', error);
-    return staticDexterVoiceTools;
+  const url = getDexterApiRoute('/tools');
+  const headers: Record<string, string> = {};
+  if (CONFIG.mcpToken) {
+    headers.Authorization = `Bearer ${CONFIG.mcpToken}`;
   }
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers,
+    cache: 'no-store',
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Tool catalog request failed (${response.status} ${response.statusText}): ${body.slice(0, 200)}`);
+  }
+
+  const json = await response.json();
+  const rawTools: RemoteToolMeta[] = Array.isArray(json?.tools)
+    ? (json.tools as RemoteToolMeta[])
+    : Array.isArray(json)
+    ? (json as RemoteToolMeta[])
+    : [];
+
+  const dynamic = rawTools
+    .map(createToolFromMeta)
+    .filter(Boolean) as ReturnType<typeof tool>[];
+
+  if (dynamic.length === 0) {
+    throw new Error('Tool catalog returned no entries.');
+  }
+
+  return dedupeTools(dynamic);
 }
