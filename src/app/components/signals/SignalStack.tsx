@@ -1,5 +1,12 @@
 import React from "react";
 import type { MarketPulse, PumpStreams, WalletSignals } from "@/app/hooks/useSignalData";
+import type { ToolCatalogEntry } from "@/app/hooks/useToolCatalog";
+
+interface ToolCatalogSnapshot {
+  tools: ToolCatalogEntry[];
+  loading: boolean;
+  error: string | null;
+}
 
 interface SignalStackProps {
   showLogs: boolean;
@@ -7,6 +14,7 @@ interface SignalStackProps {
   marketPulse: MarketPulse;
   pumpStreams: PumpStreams;
   wallet: WalletSignals;
+  toolCatalog: ToolCatalogSnapshot;
 }
 
 function changeToneClass(tone: "positive" | "negative" | "neutral") {
@@ -29,6 +37,7 @@ export function SignalStack({
   marketPulse,
   pumpStreams,
   wallet,
+  toolCatalog,
 }: SignalStackProps) {
   return (
     <div className="flex h-full flex-col gap-4 p-5">
@@ -151,6 +160,40 @@ export function SignalStack({
                 ? "Call list_my_wallets to populate wallet intel."
                 : "Wallet tool responses did not contain structured balances."
             )
+          )}
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
+            Available Tools
+          </h3>
+          <span className="text-xs text-neutral-500">
+            {toolCatalog.loading ? 'Refreshing…' : `${toolCatalog.tools.length} listed`}
+          </span>
+        </div>
+        <div className="mt-3 space-y-2 text-sm text-neutral-200">
+          {toolCatalog.error && (
+            <div className="rounded-md border border-accent-critical/40 bg-accent-critical/10 px-3 py-2 text-xs text-accent-critical">
+              {toolCatalog.error}
+            </div>
+          )}
+          {!toolCatalog.error && toolCatalog.tools.length === 0 && !toolCatalog.loading && (
+            renderEmptyState('No tools reported. Try reloading or checking MCP status.')
+          )}
+          {toolCatalog.tools.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {toolCatalog.tools.map((tool) => (
+                <span
+                  key={tool.name}
+                  className="rounded-pill border border-neutral-800/60 bg-surface-glass/60 px-3 py-1 text-xs uppercase tracking-[0.18em] text-neutral-300"
+                  title={tool.description}
+                >
+                  {tool.name}
+                </span>
+              ))}
+            </div>
           )}
         </div>
       </section>
