@@ -73,6 +73,23 @@ async function runHarness({
     launchOptions.channel = browserChannel;
   }
 
+  // Allow an explicit executable path for Chrome/Edge, takes precedence over channel
+  // HARNESS_EXECUTABLE=/usr/bin/google-chrome or HARNESS_CHROME_PATH=/opt/google/chrome/google-chrome
+  const executablePath = (process.env.HARNESS_EXECUTABLE || process.env.HARNESS_CHROME_PATH || '').trim();
+  if (executablePath) {
+    // When executablePath is provided, Playwright ignores channel
+    delete launchOptions.channel;
+    launchOptions.executablePath = executablePath;
+  }
+
+  if (launchOptions.executablePath) {
+    process.stdout.write(`Harness: launching browser executable: ${launchOptions.executablePath}\n`);
+  } else if (launchOptions.channel) {
+    process.stdout.write(`Harness: launching browser channel: ${launchOptions.channel}\n`);
+  } else {
+    process.stdout.write('Harness: launching bundled Chromium (no channel/executable override)\n');
+  }
+
   const browser = await chromium.launch(launchOptions);
 
   try {
