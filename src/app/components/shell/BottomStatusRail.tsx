@@ -1,93 +1,51 @@
 import React from "react";
-import { SessionStatus } from "@/app/types";
 
 interface BottomStatusRailProps {
-  sessionStatus: SessionStatus;
-  onToggleConnection: () => void;
-  isAudioPlaybackEnabled: boolean;
-  setIsAudioPlaybackEnabled: (value: boolean) => void;
-  isEventsPaneExpanded: boolean;
-  setIsEventsPaneExpanded: (value: boolean) => void;
-  codec: string;
-  onCodecChange: (codec: string) => void;
-}
-
-function getConnectLabel(sessionStatus: SessionStatus) {
-  switch (sessionStatus) {
-    case "CONNECTED":
-      return "Disconnect";
-    case "CONNECTING":
-      return "Connecting";
-    default:
-      return "Connect";
-  }
+  onOpenDebugModal: () => void;
 }
 
 export function BottomStatusRail({
-  sessionStatus,
-  onToggleConnection,
-  isAudioPlaybackEnabled,
-  setIsAudioPlaybackEnabled,
-  isEventsPaneExpanded,
-  setIsEventsPaneExpanded,
-  codec,
-  onCodecChange,
+  onOpenDebugModal,
 }: BottomStatusRailProps) {
-  const isConnecting = sessionStatus === "CONNECTING";
-  const isConnected = sessionStatus === "CONNECTED";
-  const buildTag = process.env.NEXT_PUBLIC_BUILD_TAG ?? "dev";
-
   return (
-    <div className="flex flex-col gap-3 px-9 py-4 text-sm text-neutral-200 md:flex-row md:items-center md:justify-between">
-      <div className="flex items-center gap-4">
-        <button
-          type="button"
-          onClick={onToggleConnection}
-          disabled={isConnecting}
-          className={`rounded-pill px-5 py-2 text-sm font-medium transition ${
-            isConnected
-              ? "bg-iris/20 text-iris hover:bg-iris/30"
-              : "bg-flux/20 text-flux hover:bg-flux/30"
-          } ${isConnecting ? "opacity-70" : ""}`}
-        >
-          {getConnectLabel(sessionStatus)}
-        </button>
+    <div className="flex items-center justify-between px-9 py-3 text-sm text-neutral-200">
+      {/* Left: Branch.bet link with icon */}
+      <a
+        href="https://branch.bet"
+        className="flex items-center gap-2 text-xs text-neutral-500 transition hover:text-flux"
+      >
+        <svg width="16" height="16" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="branchStroke" x1="18" y1="10" x2="50" y2="54" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stopColor="#34d399"/>
+              <stop offset="1" stopColor="#0ea5e9"/>
+            </linearGradient>
+            <linearGradient id="branchFill" x1="16" y1="16" x2="46" y2="48" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stopColor="#d1fae5" stopOpacity="0.9"/>
+              <stop offset="1" stopColor="#bae6fd" stopOpacity="0.7"/>
+            </linearGradient>
+          </defs>
+          <path d="M20 12h12c10 0 16 5 16 13 0 5.6-3.2 9.7-8.6 11.5C43.4 38 48 42.6 48 49c0 7.8-6.2 13-15.8 13H20" stroke="url(#branchStroke)" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M20 12h10c8.4 0 13 3.7 13 10.5 0 5.3-3 8.8-7.8 10.2" fill="none" stroke="url(#branchFill)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span>branch.bet</span>
+      </a>
 
-        <label className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-neutral-500">
-          <span>Audio</span>
-          <input
-            type="checkbox"
-            className="h-4 w-4 accent-flux"
-            checked={isAudioPlaybackEnabled}
-            onChange={(event) => setIsAudioPlaybackEnabled(event.target.checked)}
-            disabled={!isConnected}
-          />
-        </label>
+      {/* Center: Empty for now */}
+      <div className="flex-1" />
 
-        <label className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-neutral-500">
-          <span>Logs</span>
-          <input
-            type="checkbox"
-            className="h-4 w-4 accent-iris"
-            checked={isEventsPaneExpanded}
-            onChange={(event) => setIsEventsPaneExpanded(event.target.checked)}
-          />
-        </label>
-      </div>
-
-      <div className="flex items-center gap-4 text-xs uppercase tracking-[0.25em] text-neutral-500">
-        <span>Codec</span>
-        <select
-          value={codec}
-          onChange={(event) => onCodecChange(event.target.value)}
-          className="rounded-md border border-neutral-800/80 bg-surface-glass/60 px-4 py-2 text-sm normal-case text-neutral-200 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30"
-        >
-          <option value="opus">Opus (48k)</option>
-          <option value="pcmu">PCMU (8k)</option>
-          <option value="pcma">PCMA (8k)</option>
-        </select>
-        <span className="text-[10px] tracking-[0.3em] text-neutral-600">Build {buildTag}</span>
-      </div>
+      {/* Right: Debug info icon */}
+      <button
+        onClick={onOpenDebugModal}
+        className="flex items-center justify-center text-neutral-500 transition hover:text-flux"
+        title="Debug Info"
+      >
+        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 16v-4" />
+          <path d="M12 8h.01" />
+        </svg>
+      </button>
     </div>
   );
 }

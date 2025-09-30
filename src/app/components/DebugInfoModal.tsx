@@ -6,17 +6,33 @@ import { createPortal } from "react-dom";
 interface DebugInfoModalProps {
   open: boolean;
   onClose: () => void;
-  sessionStatus: string;
+  connectionStatus: string;
+  identityLabel: string;
   mcpStatus: string;
   walletStatus: string;
+  isAudioPlaybackEnabled: boolean;
+  setIsAudioPlaybackEnabled: (value: boolean) => void;
+  isEventsPaneExpanded: boolean;
+  setIsEventsPaneExpanded: (value: boolean) => void;
+  codec: string;
+  onCodecChange: (codec: string) => void;
+  buildTag: string;
 }
 
 export function DebugInfoModal({
   open,
   onClose,
-  sessionStatus,
+  connectionStatus,
+  identityLabel,
   mcpStatus,
   walletStatus,
+  isAudioPlaybackEnabled,
+  setIsAudioPlaybackEnabled,
+  isEventsPaneExpanded,
+  setIsEventsPaneExpanded,
+  codec,
+  onCodecChange,
+  buildTag,
 }: DebugInfoModalProps) {
   // Close on Escape key
   useEffect(() => {
@@ -72,13 +88,21 @@ export function DebugInfoModal({
             </button>
           </div>
 
-          {/* Badge rows */}
-          <div className="space-y-3">
-            {/* Session */}
+          {/* Status rows */}
+          <div className="space-y-3 mb-6">
+            {/* Identity */}
             <div className="flex items-center justify-between rounded-md bg-neutral-900/40 px-4 py-3">
-              <span className="text-sm text-neutral-400">Session</span>
+              <span className="text-sm text-neutral-400">Identity</span>
               <span className="rounded-full bg-neutral-800/80 px-3 py-1 text-xs font-medium text-neutral-200">
-                {sessionStatus}
+                {identityLabel}
+              </span>
+            </div>
+
+            {/* Connection */}
+            <div className="flex items-center justify-between rounded-md bg-neutral-900/40 px-4 py-3">
+              <span className="text-sm text-neutral-400">Connection</span>
+              <span className="rounded-full bg-neutral-800/80 px-3 py-1 text-xs font-medium text-neutral-200">
+                {connectionStatus}
               </span>
             </div>
 
@@ -96,6 +120,53 @@ export function DebugInfoModal({
               <span className="rounded-full bg-neutral-800/80 px-3 py-1 text-xs font-medium text-neutral-200">
                 {walletStatus}
               </span>
+            </div>
+
+            {/* Build */}
+            <div className="flex items-center justify-between rounded-md bg-neutral-900/40 px-4 py-3">
+              <span className="text-sm text-neutral-400">Build</span>
+              <span className="rounded-full bg-neutral-800/80 px-3 py-1 text-xs font-medium text-neutral-200">
+                {buildTag}
+              </span>
+            </div>
+          </div>
+
+          {/* Controls section */}
+          <div className="space-y-4 border-t border-neutral-800/60 pt-4">
+            {/* Audio Playback */}
+            <label className="flex items-center justify-between cursor-pointer">
+              <span className="text-sm text-neutral-400">Audio Playback</span>
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-flux cursor-pointer"
+                checked={isAudioPlaybackEnabled}
+                onChange={(e) => setIsAudioPlaybackEnabled(e.target.checked)}
+              />
+            </label>
+
+            {/* Event Logs */}
+            <label className="flex items-center justify-between cursor-pointer">
+              <span className="text-sm text-neutral-400">Event Logs</span>
+              <input
+                type="checkbox"
+                className="h-4 w-4 accent-iris cursor-pointer"
+                checked={isEventsPaneExpanded}
+                onChange={(e) => setIsEventsPaneExpanded(e.target.checked)}
+              />
+            </label>
+
+            {/* Codec Selector */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-neutral-400">Audio Codec</span>
+              <select
+                value={codec}
+                onChange={(e) => onCodecChange(e.target.value)}
+                className="rounded-md border border-neutral-800/80 bg-surface-glass/60 px-3 py-1.5 text-xs text-neutral-200 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30"
+              >
+                <option value="opus">Opus (48k)</option>
+                <option value="pcmu">PCMU (8k)</option>
+                <option value="pcma">PCMA (8k)</option>
+              </select>
             </div>
           </div>
         </div>

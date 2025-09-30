@@ -5,7 +5,6 @@ import { v4 as uuidv4 } from "uuid";
 
 // UI components
 import Hero from "./components/Hero";
-import ConversationHeader from "./components/ConversationHeader";
 import TranscriptMessages from "./components/TranscriptMessages";
 import InputBar from "./components/InputBar";
 import Events from "./components/Events";
@@ -15,6 +14,7 @@ import VoiceDock from "./components/shell/VoiceDock";
 import BottomStatusRail from "./components/shell/BottomStatusRail";
 import SignalStack from "./components/signals/SignalStack";
 import SignalsDrawer from "./components/signals/SignalsDrawer";
+import { DebugInfoModal } from "./components/DebugInfoModal";
 
 declare global {
   interface Window {
@@ -197,6 +197,8 @@ function App() {
   );
   const [hasActivatedSession, setHasActivatedSession] = useState<boolean>(false);
   const [pendingAutoConnect, setPendingAutoConnect] = useState<boolean>(false);
+  const [isVoiceDockExpanded, setIsVoiceDockExpanded] = useState<boolean>(true);
+  const [isDebugModalOpen, setIsDebugModalOpen] = useState<boolean>(false);
 
   // Initialize the recording hook.
   const { startRecording, stopRecording, downloadRecording } =
@@ -438,18 +440,31 @@ function App() {
     setHasActivatedSession(true);
   };
 
-  const handleSendTextMessage = () => {
+  const handleSendTextMessage = async () => {
     if (!userText.trim()) return;
+
+    const messageToSend = userText.trim();
+    setUserText("");
+
+    // If not connected, connect first
+    if (sessionStatus !== 'CONNECTED') {
+      try {
+        await connectToRealtime();
+      } catch (err) {
+        console.error('Failed to connect', err);
+        setUserText(messageToSend);
+        return;
+      }
+    }
+
     interrupt();
     setHasActivatedSession(true);
 
     try {
-      sendUserText(userText.trim());
+      sendUserText(messageToSend);
     } catch (err) {
       console.error('Failed to send via SDK', err);
     }
-
-    setUserText("");
   };
 
   const handleTalkButtonDown = () => {
@@ -578,15 +593,6 @@ function App() {
     };
   }, [sessionStatus]);
 
-  const hero = (
-    <Hero
-      sessionStatus={sessionStatus}
-      hasActivatedSession={hasActivatedSession}
-      onStartConversation={handleStartConversation}
-      onOpenSignals={() => setIsMobileSignalsOpen(true)}
-    />
-  );
-
   const { transcriptItems } = useTranscript();
   const { loggedEvents } = useEvent();
 
@@ -628,18 +634,37 @@ function App() {
     }
   };
 
-  const conversationHeader = (
-    <ConversationHeader
-      onCopyTranscript={async () => {
-        const transcriptRef = document.querySelector('[data-transcript-messages]');
-        if (transcriptRef) {
-          await navigator.clipboard.writeText(transcriptRef.textContent || '');
-        }
-      }}
+  const handleCopyTranscript = async () => {
+    const transcriptRef = document.querySelector('[data-transcript-messages]');
+    if (transcriptRef) {
+      await navigator.clipboard.writeText(transcriptRef.textContent || '');
+    }
+  };
+
+  const hero = (
+    <Hero
+      sessionStatus={sessionStatus}
+      hasActivatedSession={hasActivatedSession}
+      onStartConversation={handleStartConversation}
+      onOpenSignals={() => setIsMobileSignalsOpen(true)}
+      onCopyTranscript={handleCopyTranscript}
       onDownloadAudio={downloadRecording}
       onSaveLog={handleSaveLog}
+      isVoiceDockExpanded={isVoiceDockExpanded}
+      onToggleVoiceDock={() => setIsVoiceDockExpanded(!isVoiceDockExpanded)}
     />
   );
+
+  const voiceDock = sessionStatus === "CONNECTED" && isVoiceDockExpanded ? (
+    <VoiceDock
+      sessionStatus={sessionStatus}
+      isPTTActive={isPTTActive}
+      isPTTUserSpeaking={isPTTUserSpeaking}
+      onTogglePTT={setIsPTTActive}
+      onTalkStart={handleTalkButtonDown}
+      onTalkEnd={handleTalkButtonUp}
+    />
+  ) : null;
 
   const messages = <TranscriptMessages />;
 
@@ -648,7 +673,7 @@ function App() {
       userText={userText}
       setUserText={setUserText}
       onSendMessage={handleSendTextMessage}
-      canSend={sessionStatus === "CONNECTED"}
+      canSend={true}
     />
   );
 
@@ -663,27 +688,9 @@ function App() {
     />
   );
 
-  const voiceDock = (
-    <VoiceDock
-      sessionStatus={sessionStatus}
-      isPTTActive={isPTTActive}
-      isPTTUserSpeaking={isPTTUserSpeaking}
-      onTogglePTT={setIsPTTActive}
-      onTalkStart={handleTalkButtonDown}
-      onTalkEnd={handleTalkButtonUp}
-    />
-  );
-
   const statusRail = (
     <BottomStatusRail
-      sessionStatus={sessionStatus}
-      onToggleConnection={onToggleConnection}
-      isAudioPlaybackEnabled={isAudioPlaybackEnabled}
-      setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
-      isEventsPaneExpanded={isEventsPaneExpanded}
-      setIsEventsPaneExpanded={setIsEventsPaneExpanded}
-      codec={urlCodec}
-      onCodecChange={handleCodecChange}
+      onOpenDebugModal={() => setIsDebugModalOpen(true)}
     />
   );
 
@@ -697,36 +704,57 @@ function App() {
   );
 
   return (
-    <DexterShell
-      topBar={
-        <TopRibbon
-          sessionStatus={sessionStatus}
-          selectedAgentName={selectedAgentName}
-          agents={scenarioAgents}
-          onAgentChange={handleSelectedAgentChange}
-          onReloadBrand={() => window.location.reload()}
-          authState={{
-            loading: authLoading,
-            isAuthenticated: Boolean(authSession),
-            email: authEmail,
-          }}
-          sessionIdentity={sessionIdentity}
-          mcpStatus={mcpStatus}
-          activeWalletKey={signalData.wallet.summary.activeWallet ?? null}
-          onSignIn={handleSignIn}
-          onSignOut={handleSignOut}
-          turnstileSiteKey={turnstileSiteKey}
-        />
-      }
-      hero={hero}
-      conversationHeader={conversationHeader}
-      messages={messages}
-      inputBar={inputBar}
-      signals={renderSignalStack()}
-      statusBar={statusRail}
-      voiceDock={voiceDock}
-      mobileOverlay={mobileSignalsOverlay}
-    />
+    <>
+      <DexterShell
+        topBar={
+          <TopRibbon
+            sessionStatus={sessionStatus}
+            selectedAgentName={selectedAgentName}
+            agents={scenarioAgents}
+            onAgentChange={handleSelectedAgentChange}
+            onToggleConnection={onToggleConnection}
+            onReloadBrand={() => window.location.reload()}
+            authState={{
+              loading: authLoading,
+              isAuthenticated: Boolean(authSession),
+              email: authEmail,
+            }}
+            sessionIdentity={sessionIdentity}
+            mcpStatus={mcpStatus}
+            activeWalletKey={signalData.wallet.summary.activeWallet ?? null}
+            onSignIn={handleSignIn}
+            onSignOut={handleSignOut}
+            turnstileSiteKey={turnstileSiteKey}
+          />
+        }
+        hero={hero}
+        messages={messages}
+        inputBar={inputBar}
+        signals={renderSignalStack()}
+        statusBar={statusRail}
+        voiceDock={voiceDock}
+        mobileOverlay={mobileSignalsOverlay}
+      />
+
+      {/* Debug Modal - accessible from both TopRibbon and Footer */}
+      <DebugInfoModal
+        open={isDebugModalOpen}
+        onClose={() => setIsDebugModalOpen(false)}
+        connectionStatus={sessionStatus}
+        identityLabel={sessionIdentity.type === "user"
+          ? sessionIdentity.user?.email?.split("@")[0] || "User"
+          : "Demo"}
+        mcpStatus={mcpStatus.label}
+        walletStatus={signalData.wallet.summary.activeWallet || "Auto"}
+        isAudioPlaybackEnabled={isAudioPlaybackEnabled}
+        setIsAudioPlaybackEnabled={setIsAudioPlaybackEnabled}
+        isEventsPaneExpanded={isEventsPaneExpanded}
+        setIsEventsPaneExpanded={setIsEventsPaneExpanded}
+        codec={urlCodec}
+        onCodecChange={handleCodecChange}
+        buildTag={process.env.NEXT_PUBLIC_BUILD_TAG ?? "dev"}
+      />
+    </>
   );
 }
 
