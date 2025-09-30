@@ -603,13 +603,13 @@ function App() {
     <div className="flex h-full flex-1 flex-col">
       <div className="border-b border-neutral-800/60 px-7 py-7">
         <div className="font-display text-3xl tracking-tight text-neutral-100">
-          Command the Solana edge.
+          You say, I do.
         </div>
         <p className="mt-2 max-w-2xl text-sm text-neutral-400">
-          Dexter synchronises research, live pump streams, and trade execution through a single multimodal agent. Speak or type—every insight rolls in with receipts.
+          Dexter synchronises research, trade execution, wallet management, and Solana-specific feeds through a single multimodal agent. Speak or type—every insight rolls in with receipts.
         </p>
         <div className="mt-5 flex flex-wrap items-center gap-2">
-          {["Research tokens", "Monitor streams", "Execute swaps"].map((chip) => (
+          {["Manage wallets and swap tokens", "Monitor pump.fun live streams", "Formulate and deploy agentic trading strategies"].map((chip) => (
             <span
               key={chip}
               className="rounded-pill border border-neutral-800/60 bg-surface-glass/60 px-4 py-1 text-xs uppercase tracking-[0.28em] text-neutral-400"
