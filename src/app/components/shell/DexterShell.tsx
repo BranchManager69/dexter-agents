@@ -2,7 +2,10 @@ import React from "react";
 
 interface DexterShellProps {
   topBar: React.ReactNode;
-  conversation: React.ReactNode;
+  hero: React.ReactNode;
+  conversationHeader: React.ReactNode;
+  messages: React.ReactNode;
+  inputBar: React.ReactNode;
   signals: React.ReactNode;
   statusBar: React.ReactNode;
   voiceDock: React.ReactNode;
@@ -11,7 +14,10 @@ interface DexterShellProps {
 
 export function DexterShell({
   topBar,
-  conversation,
+  hero,
+  conversationHeader,
+  messages,
+  inputBar,
   signals,
   statusBar,
   voiceDock,
@@ -30,7 +36,12 @@ export function DexterShell({
       <main className="z-10 flex flex-1 flex-col gap-7.5 overflow-y-auto px-9 py-8">
         <div className="flex flex-1 flex-col gap-7.5 lg:flex-row">
           <section className="flex w-full flex-1 flex-col rounded-lg border border-neutral-800/60 bg-surface-base/80 shadow-elevated backdrop-blur-xl">
-            {conversation}
+            {hero}
+            <div className="flex min-h-0 flex-1 flex-col">
+              {conversationHeader}
+              {messages}
+            </div>
+            {inputBar}
           </section>
 
           <aside className="hidden w-full max-w-sm flex-col gap-4 rounded-lg border border-neutral-800/60 bg-surface-raised/80 shadow-elevated backdrop-blur-xl lg:flex">

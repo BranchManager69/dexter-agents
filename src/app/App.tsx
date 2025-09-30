@@ -4,7 +4,10 @@ import { useSearchParams } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
 
 // UI components
-import Transcript from "./components/Transcript";
+import Hero from "./components/Hero";
+import ConversationHeader from "./components/ConversationHeader";
+import TranscriptMessages from "./components/TranscriptMessages";
+import InputBar from "./components/InputBar";
 import Events from "./components/Events";
 import DexterShell from "./components/shell/DexterShell";
 import TopRibbon from "./components/shell/TopRibbon";
@@ -575,56 +578,78 @@ function App() {
     };
   }, [sessionStatus]);
 
-  const conversationContent = (
-    <div className="flex h-full flex-1 flex-col">
-      <div className="border-b border-neutral-800/60 px-7 py-7">
-        <div className="font-display text-3xl tracking-tight text-neutral-100">
-          You say, I do.
-        </div>
-        <p className="mt-2 max-w-2xl text-sm text-neutral-400">
-          Dexter synchronises research, trade execution, wallet management, and Solana-specific feeds through a single multimodal agent. Speak or type—every insight rolls in with receipts.
-        </p>
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          {["Manage wallets and swap tokens", "Monitor pump.fun live streams", "Formulate and deploy agentic trading strategies"].map((chip) => (
-            <span
-              key={chip}
-              className="rounded-pill border border-neutral-800/60 bg-surface-glass/60 px-4 py-1 text-xs uppercase tracking-[0.28em] text-neutral-400"
-            >
-              {chip}
-            </span>
-          ))}
+  const hero = (
+    <Hero
+      sessionStatus={sessionStatus}
+      hasActivatedSession={hasActivatedSession}
+      onStartConversation={handleStartConversation}
+      onOpenSignals={() => setIsMobileSignalsOpen(true)}
+    />
+  );
 
-          {sessionStatus === "CONNECTED" && !hasActivatedSession && (
-            <button
-              type="button"
-              onClick={handleStartConversation}
-              className="rounded-pill border border-flux/50 bg-flux/20 px-4 py-1 text-xs uppercase tracking-[0.28em] text-flux transition hover:bg-flux/30"
-            >
-              Start Conversation
-            </button>
-          )}
+  const { transcriptItems } = useTranscript();
+  const { loggedEvents } = useEvent();
 
-          <button
-            type="button"
-            onClick={() => setIsMobileSignalsOpen(true)}
-            className="ml-auto inline-flex items-center gap-2 rounded-pill border border-neutral-800/60 bg-surface-glass/70 px-4 py-1 text-xs uppercase tracking-[0.28em] text-neutral-300 transition hover:border-flux/50 hover:text-flux lg:hidden"
-          >
-            <span className="h-2 w-2 rounded-full bg-flux shadow-glow-flux" />
-            Signals
-          </button>
-        </div>
-      </div>
+  const handleSaveLog = () => {
+    try {
+      const artifact = {
+        timestamp: new Date().toISOString(),
+        source: "live",
+        structured: {
+          transcripts: transcriptItems,
+          events: loggedEvents,
+        },
+        meta: {
+          assistantMessageCount: transcriptItems.filter(
+            (item) => item.type === "MESSAGE" && item.role === "assistant" && !item.isHidden,
+          ).length,
+          userMessageCount: transcriptItems.filter(
+            (item) => item.type === "MESSAGE" && item.role === "user",
+          ).length,
+          generatedAt: new Date().toLocaleString(),
+        },
+      };
 
-      <div className="flex flex-1 flex-col">
-        <Transcript
-          userText={userText}
-          setUserText={setUserText}
-          onSendMessage={handleSendTextMessage}
-          downloadRecording={downloadRecording}
-          canSend={sessionStatus === "CONNECTED"}
-        />
-      </div>
-    </div>
+      const blob = new Blob([JSON.stringify(artifact, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `live-${artifact.timestamp.replace(/[:.]/g, "-")}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      requestAnimationFrame(() => {
+        document.body.removeChild(anchor);
+        URL.revokeObjectURL(url);
+      });
+    } catch (error) {
+      console.error("Failed to save run artifact:", error);
+    }
+  };
+
+  const conversationHeader = (
+    <ConversationHeader
+      onCopyTranscript={async () => {
+        const transcriptRef = document.querySelector('[data-transcript-messages]');
+        if (transcriptRef) {
+          await navigator.clipboard.writeText(transcriptRef.textContent || '');
+        }
+      }}
+      onDownloadAudio={downloadRecording}
+      onSaveLog={handleSaveLog}
+    />
+  );
+
+  const messages = <TranscriptMessages />;
+
+  const inputBar = (
+    <InputBar
+      userText={userText}
+      setUserText={setUserText}
+      onSendMessage={handleSendTextMessage}
+      canSend={sessionStatus === "CONNECTED"}
+    />
   );
 
   const renderSignalStack = () => (
@@ -693,7 +718,10 @@ function App() {
           turnstileSiteKey={turnstileSiteKey}
         />
       }
-      conversation={conversationContent}
+      hero={hero}
+      conversationHeader={conversationHeader}
+      messages={messages}
+      inputBar={inputBar}
       signals={renderSignalStack()}
       statusBar={statusRail}
       voiceDock={voiceDock}
