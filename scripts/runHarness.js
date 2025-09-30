@@ -53,7 +53,7 @@ async function runHarness({
 
   const artifactDir = resolveOutputDir(outputDir);
 
-  const browser = await chromium.launch({
+  const launchOptions = {
     headless,
     args: [
       '--use-fake-ui-for-media-stream',
@@ -64,7 +64,16 @@ async function runHarness({
       ...process.env,
       ...extraEnv,
     },
-  });
+  };
+
+  // Allow overriding the browser channel (e.g. Chrome) to satisfy auth challenges
+  // Set HARNESS_BROWSER=chrome to use the system Chrome instead of bundled Chromium
+  const browserChannel = (process.env.HARNESS_BROWSER || '').trim();
+  if (browserChannel) {
+    launchOptions.channel = browserChannel;
+  }
+
+  const browser = await chromium.launch(launchOptions);
 
   try {
     const contextOptions = { permissions: ['microphone'] };

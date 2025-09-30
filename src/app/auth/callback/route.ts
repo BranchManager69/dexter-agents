@@ -4,6 +4,8 @@ import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 
 type Database = any;
 
+export const dynamic = 'force-dynamic';
+
 const COOKIE_DOMAIN = process.env.SUPABASE_COOKIE_DOMAIN || ".dexter.cash";
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -18,16 +20,14 @@ const AUTH_COOKIE_NAMES = SUPABASE_PROJECT_REF
     ]
   : [];
 
-type CookieStore = ReturnType<typeof cookies>;
+type CookieStore = Awaited<ReturnType<typeof cookies>>;
 
 function resealCookies(store: CookieStore) {
   if (!AUTH_COOKIE_NAMES.length) return;
   for (const name of AUTH_COOKIE_NAMES) {
-    // @ts-expect-error: Next.js cookie store typing differs per runtime
-    const existing = store.get(name);
+    const existing = (store as any).get(name);
     if (!existing) continue;
-    // @ts-expect-error: Next.js cookie store typing differs per runtime
-    store.set(name, existing.value, {
+    (store as any).set(name, existing.value, {
       domain: COOKIE_DOMAIN,
       path: "/",
       httpOnly: true,
@@ -45,9 +45,9 @@ export async function POST(request: Request) {
   try {
     const payload = await request.json();
     const { event, session } = payload ?? {};
-    const cookieStore = cookies();
+    const cookieStorePromise = cookies();
     const supabase = createRouteHandlerClient<Database>(
-      { cookies: () => cookieStore },
+      { cookies: () => cookieStorePromise },
       {
         supabaseUrl: SUPABASE_URL,
         supabaseKey: SUPABASE_ANON_KEY,
@@ -64,6 +64,7 @@ export async function POST(request: Request) {
       await supabase.auth.signOut();
     } else {
       await supabase.auth.setSession(session);
+      const cookieStore = await cookieStorePromise;
       resealCookies(cookieStore);
     }
 
@@ -79,9 +80,9 @@ export async function DELETE() {
     console.error("/auth/callback DELETE missing Supabase configuration");
     return NextResponse.json({ ok: false, error: "supabase_config_missing" }, { status: 500 });
   }
-  const cookieStore = cookies();
+  const cookieStorePromise = cookies();
   const supabase = createRouteHandlerClient<Database>(
-    { cookies: () => cookieStore },
+    { cookies: () => cookieStorePromise },
     {
       supabaseUrl: SUPABASE_URL,
       supabaseKey: SUPABASE_ANON_KEY,
@@ -94,6 +95,7 @@ export async function DELETE() {
     },
   );
   await supabase.auth.signOut();
+  const cookieStore = await cookieStorePromise;
   resealCookies(cookieStore);
   return NextResponse.json({ ok: true });
 }

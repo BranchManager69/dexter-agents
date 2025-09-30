@@ -9,10 +9,12 @@ type Database = any;
 const ALLOW_GUEST_SESSIONS =
   process.env.NEXT_PUBLIC_ALLOW_GUEST_SESSIONS === "false" ? false : true;
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
-    const cookieStore = cookies();
-    const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore });
+    const cookieStorePromise = cookies();
+    const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStorePromise });
     const {
       data: { session },
       error: sessionError,

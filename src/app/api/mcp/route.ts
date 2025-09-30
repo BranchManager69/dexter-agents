@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConnectedMcpServer, resolveMcpAuth, summarizeIdentity } from './auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const auth = await resolveMcpAuth();
