@@ -52,9 +52,9 @@ export function SignalStack({
   });
 
   const [isLogsExpanded, setIsLogsExpanded] = React.useState<boolean>(() => {
-    if (typeof window === 'undefined') return true;
+    if (typeof window === 'undefined') return false;
     const stored = localStorage.getItem(STORAGE_KEY_LOGS_EXPANDED);
-    return stored ? stored === 'true' : true;
+    return stored ? stored === 'true' : false;
   });
 
   React.useEffect(() => {
@@ -231,54 +231,56 @@ export function SignalStack({
             </button>
           </div>
         </div>
-        <div className={`relative mt-3 overflow-hidden rounded-lg transition-all duration-300 ${isToolsExpanded ? 'max-h-96' : 'max-h-60'}`}>
-          <div className="space-y-2 text-sm text-neutral-200">
-          {toolCatalog.error && (
-            <div className="rounded-md border border-accent-critical/40 bg-accent-critical/10 px-3 py-2 text-xs text-accent-critical">
-              {toolCatalog.error}
-            </div>
-          )}
-          {toolCatalog.tools.length === 0 && !toolCatalog.loading && !toolCatalog.error && (
-            renderEmptyState('No tools reported. Try reloading or checking MCP status.')
-          )}
-          {toolCatalog.tools.length > 0 && (
-            <div className="flex flex-col gap-2">
-              {toolCatalog.tools.map((tool) => (
-                <div
-                  key={tool.name}
-                  className="flex flex-wrap items-center gap-2 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-1"
-                  title={tool.description}
-                >
-                  <span className="text-xs uppercase tracking-[0.2em] text-neutral-200">
-                    {tool.name}
-                  </span>
-                  <span className="rounded-pill border border-neutral-700/60 bg-neutral-900/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-400">
-                    {tool.access}
-                  </span>
-                  {tool.tags.map((tag) => (
-                    <span
-                      key={`${tool.name}-${tag}`}
-                      className="rounded-pill border border-neutral-700/40 bg-neutral-900/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-500"
-                    >
-                      {tag}
+        <div className="mt-3">
+          <div className={`relative overflow-hidden rounded-lg transition-all duration-300 ${isToolsExpanded ? 'max-h-96 overflow-y-auto' : 'max-h-60'}`}>
+            <div className="space-y-2 text-sm text-neutral-200">
+            {toolCatalog.error && (
+              <div className="rounded-md border border-accent-critical/40 bg-accent-critical/10 px-3 py-2 text-xs text-accent-critical">
+                {toolCatalog.error}
+              </div>
+            )}
+            {toolCatalog.tools.length === 0 && !toolCatalog.loading && !toolCatalog.error && (
+              renderEmptyState('No tools reported. Try reloading or checking MCP status.')
+            )}
+            {toolCatalog.tools.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {toolCatalog.tools.map((tool) => (
+                  <div
+                    key={tool.name}
+                    className="flex flex-wrap items-center gap-2 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-1"
+                    title={tool.description}
+                  >
+                    <span className="text-xs uppercase tracking-[0.2em] text-neutral-200">
+                      {tool.name}
                     </span>
-                  ))}
-                </div>
-              ))}
+                    <span className="rounded-pill border border-neutral-700/60 bg-neutral-900/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-400">
+                      {tool.access}
+                    </span>
+                    {tool.tags.map((tag) => (
+                      <span
+                        key={`${tool.name}-${tag}`}
+                        className="rounded-pill border border-neutral-700/40 bg-neutral-900/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-500"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            )}
             </div>
-          )}
+            {!isToolsExpanded && (
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-28 items-end justify-center bg-gradient-fade-dark pb-4">
+                <button
+                  type="button"
+                  onClick={() => setIsToolsExpanded(true)}
+                  className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
+                >
+                  Show {toolCatalog.tools.length} tool{toolCatalog.tools.length === 1 ? '' : 's'}
+                </button>
+              </div>
+            )}
           </div>
-          {!isToolsExpanded && (
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-28 items-end justify-center bg-gradient-fade-dark pb-4">
-              <button
-                type="button"
-                onClick={() => setIsToolsExpanded(true)}
-                className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
-              >
-                Show {toolCatalog.tools.length} tool{toolCatalog.tools.length === 1 ? '' : 's'}
-              </button>
-            </div>
-          )}
           {isToolsExpanded && (
             <div className="flex items-end justify-center pb-3 pt-2">
               <button
@@ -298,19 +300,21 @@ export function SignalStack({
           <h3 className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
             Event Logs
           </h3>
-          <div className={`relative mt-3 overflow-hidden rounded-lg transition-all duration-300 ${isLogsExpanded ? 'max-h-96' : 'max-h-60'}`}>
-            {logs}
-            {!isLogsExpanded && (
-              <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-28 items-end justify-center bg-gradient-fade-dark pb-4">
-                <button
-                  type="button"
-                  onClick={() => setIsLogsExpanded(true)}
-                  className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
-                >
-                  Show event logs
-                </button>
-              </div>
-            )}
+          <div className="mt-3">
+            <div className={`relative overflow-hidden rounded-lg transition-all duration-300 ${isLogsExpanded ? 'max-h-96 overflow-y-auto' : 'max-h-60'}`}>
+              {logs}
+              {!isLogsExpanded && (
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-28 items-end justify-center bg-gradient-fade-dark pb-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsLogsExpanded(true)}
+                    className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
+                  >
+                    Show event logs
+                  </button>
+                </div>
+              )}
+            </div>
             {isLogsExpanded && (
               <div className="flex items-end justify-center pb-3 pt-2">
                 <button
