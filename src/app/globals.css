@@ -4,6 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .bg-gradient-fade-dark {
+    background: linear-gradient(180deg, rgba(8, 14, 26, 0) 0%, rgba(8, 14, 26, 0.9) 45%, rgba(6, 12, 24, 0.96) 100%);
+  }
+}
+
 :root {
   color-scheme: dark;
 }

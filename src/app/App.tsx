@@ -107,6 +107,12 @@ function App() {
   useEffect(() => {
     const unsubscribe = subscribeMcpStatus((snapshot) => {
       setMcpStatus({ state: snapshot.state, label: snapshot.label, detail: snapshot.detail });
+
+      // Notify waiting callbacks if MCP is now ready
+      if (snapshot.state === 'user' || snapshot.state === 'fallback' || snapshot.state === 'guest') {
+        mcpReadyCallbacksRef.current.forEach(cb => cb());
+        mcpReadyCallbacksRef.current = [];
+      }
     });
     return unsubscribe;
   }, []);
@@ -181,6 +187,7 @@ function App() {
 
   const [sessionStatus, setSessionStatus] =
     useState<SessionStatus>("DISCONNECTED");
+  const mcpReadyCallbacksRef = useRef<Array<() => void>>([]);
 
   const [isEventsPaneExpanded, setIsEventsPaneExpanded] =
     useState<boolean>(true);
@@ -434,10 +441,29 @@ function App() {
     return;
   }
 
-  const handleSendTextMessage = async () => {
-    if (!userText.trim()) return;
+  const waitForMcpReady = () => {
+    const currentState = mcpStatus.state;
+    if (currentState === 'user' || currentState === 'fallback' || currentState === 'guest') {
+      return Promise.resolve();
+    }
 
-    const messageToSend = userText.trim();
+    return new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('MCP ready timeout'));
+      }, 10000);
+
+      mcpReadyCallbacksRef.current.push(() => {
+        clearTimeout(timeout);
+        resolve();
+      });
+    });
+  };
+
+  const handleSendTextMessage = async (directMessage?: string) => {
+    // Use provided message or fall back to state
+    const messageToSend = (directMessage || userText).trim();
+    if (!messageToSend) return;
+
     setUserText("");
 
     // If not connected, connect first
@@ -449,6 +475,15 @@ function App() {
         setUserText(messageToSend);
         return;
       }
+    }
+
+    // Wait for MCP to be ready
+    try {
+      await waitForMcpReady();
+    } catch (err) {
+      console.error('MCP not ready, aborting message send', err);
+      setUserText(messageToSend);
+      return;
     }
 
     interrupt();
@@ -660,12 +695,8 @@ function App() {
 
   const messages = (
     <TranscriptMessages
-      sessionStatus={sessionStatus}
       hasActivatedSession={hasActivatedSession}
-      onSendMessage={(message) => {
-        setUserText(message);
-        setTimeout(() => handleSendTextMessage(), 0);
-      }}
+      onSendMessage={(message) => handleSendTextMessage(message)}
     />
   );
 

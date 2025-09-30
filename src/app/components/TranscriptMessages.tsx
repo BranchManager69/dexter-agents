@@ -2,18 +2,16 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { TranscriptItem, SessionStatus } from "@/app/types";
+import { TranscriptItem } from "@/app/types";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { GuardrailChip } from "./GuardrailChip";
 
 interface TranscriptMessagesProps {
-  sessionStatus?: SessionStatus;
   hasActivatedSession?: boolean;
   onSendMessage?: (message: string) => void;
 }
 
 export function TranscriptMessages({
-  sessionStatus,
   hasActivatedSession,
   onSendMessage,
 }: TranscriptMessagesProps = {}) {
@@ -48,7 +46,7 @@ export function TranscriptMessages({
   const hasRealMessages = transcriptItems.some(item =>
     item.role === 'user' || item.role === 'assistant'
   );
-  const showEmptyState = sessionStatus === 'CONNECTED' && !hasActivatedSession && !hasRealMessages;
+  const showEmptyState = !hasActivatedSession && !hasRealMessages;
 
   const suggestedPrompts = [
     "What's trending on Pump.fun right now?",
