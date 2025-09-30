@@ -6,8 +6,6 @@ import { SessionStatus } from "@/app/types";
 
 interface HeroProps {
   sessionStatus: SessionStatus;
-  hasActivatedSession: boolean;
-  onStartConversation: () => void;
   onOpenSignals: () => void;
   onCopyTranscript: () => Promise<void>;
   onDownloadAudio: () => void;
@@ -18,8 +16,6 @@ interface HeroProps {
 
 export function Hero({
   sessionStatus,
-  hasActivatedSession,
-  onStartConversation,
   onOpenSignals,
   onCopyTranscript,
   onDownloadAudio,
@@ -53,16 +49,6 @@ export function Hero({
         Dexter synchronises research, trade execution, wallet management, and Solana-specific feeds through a single multimodal agent. Speak or type—every insight rolls in with receipts.
       </p>
       <div className="mt-5 flex flex-wrap items-start gap-3">
-        {sessionStatus === "CONNECTED" && !hasActivatedSession && (
-          <button
-            type="button"
-            onClick={onStartConversation}
-            className="rounded-pill border border-flux/50 bg-flux/20 px-4 py-1 text-xs uppercase tracking-[0.28em] text-flux transition hover:bg-flux/30"
-          >
-            Start Conversation
-          </button>
-        )}
-
         <button
           onClick={handleCopy}
           className="flex flex-shrink-0 items-center justify-center rounded border border-neutral-800/60 bg-surface-glass/60 p-1.5 text-neutral-300 transition hover:border-flux/50 hover:text-flux"

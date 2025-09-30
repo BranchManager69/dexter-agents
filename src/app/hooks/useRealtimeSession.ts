@@ -123,14 +123,12 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       sessionRef.current.on("agent_tool_start", historyHandlersRef.current.handleAgentToolStart);
       sessionRef.current.on("agent_tool_end", (context: any, agent: any, tool: any, result: any) => {
         historyHandlersRef.current.handleAgentToolEnd(context, agent, tool, result);
-        sessionRef.current?.transport.sendEvent({ type: 'response.create' } as any);
       });
       sessionRef.current.on("history_updated", historyHandlersRef.current.handleHistoryUpdated);
       sessionRef.current.on("history_added", historyHandlersRef.current.handleHistoryAdded);
       sessionRef.current.on("guardrail_tripped", historyHandlersRef.current.handleGuardrailTripped);
       sessionRef.current.on("mcp_tool_call_completed", (context: any, agent: any, toolCall: any) => {
         historyHandlersRef.current.handleMcpToolCallCompleted(context, agent, toolCall);
-        sessionRef.current?.transport.sendEvent({ type: 'response.create' } as any);
       });
 
       // additional transport events
