@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React from "react";
 import Image from "next/image";
 import type { RealtimeAgent } from "@openai/agents/realtime";
 import { SessionStatus } from "@/app/types";
 import { AuthMenu } from "@/app/components/AuthMenu";
-import { DebugInfoModal } from "@/app/components/DebugInfoModal";
 
 interface SessionIdentitySummary {
   type: "guest" | "user";
@@ -28,6 +27,7 @@ interface TopRibbonProps {
   selectedAgentName: string;
   agents: RealtimeAgent[];
   onAgentChange: (agentName: string) => void;
+  onToggleConnection?: () => void;
   onReloadBrand?: () => void;
   authState: AuthStateSummary;
   sessionIdentity: SessionIdentitySummary;
@@ -49,6 +49,13 @@ function getStatusAccent(sessionStatus: SessionStatus) {
     default:
       return { label: "Offline", tone: "bg-neutral-800/60 text-neutral-400 border-neutral-800" };
   }
+}
+
+function getAgentDisplayName(agentName: string): string {
+  const displayNames: Record<string, string> = {
+    'dexterVoice': 'Dexter Voice',
+  };
+  return displayNames[agentName] || agentName;
 }
 
 function getMcpAccent(state: McpStatusProps['state']) {
@@ -82,6 +89,7 @@ export function TopRibbon({
   selectedAgentName,
   agents,
   onAgentChange,
+  onToggleConnection,
   onReloadBrand,
   authState,
   sessionIdentity,
@@ -91,7 +99,6 @@ export function TopRibbon({
   onSignOut,
   turnstileSiteKey,
 }: TopRibbonProps) {
-  const [debugModalOpen, setDebugModalOpen] = useState(false);
 
   const statusChip = getStatusAccent(sessionStatus);
   const mcpTone = getMcpAccent(mcpStatus.state);
@@ -145,6 +152,21 @@ export function TopRibbon({
         title={`Connection status: ${statusChip.label}`}
       />
 
+      {/* Connect/Disconnect Button */}
+      {onToggleConnection && (
+        <button
+          type="button"
+          onClick={onToggleConnection}
+          className={`flex-shrink-0 rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wider transition ${
+            sessionStatus === "CONNECTED"
+              ? "bg-accent-critical/20 text-accent-critical hover:bg-accent-critical/30"
+              : "bg-flux/20 text-flux hover:bg-flux/30"
+          }`}
+        >
+          {sessionStatus === "CONNECTED" ? "Disconnect" : "Connect"}
+        </button>
+      )}
+
       {/* Agent Selector */}
       <div className="relative inline-flex flex-shrink min-w-0">
         <select
@@ -155,7 +177,7 @@ export function TopRibbon({
         >
           {agents.map((agent) => (
             <option key={agent.name} value={agent.name}>
-              {agent.name}
+              {getAgentDisplayName(agent.name)}
             </option>
           ))}
         </select>
@@ -199,27 +221,6 @@ export function TopRibbon({
           {walletLabel}
         </span>
 
-        {/* Debug Info Icon (mobile only) */}
-        <button
-          type="button"
-          onClick={() => setDebugModalOpen(true)}
-          className="flex-shrink-0 text-neutral-500 transition hover:text-neutral-300 md:hidden"
-          title="Debug info"
-          aria-label="Show debug info"
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-            <path d="M8 7V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-            <circle cx="8" cy="5" r="0.75" fill="currentColor" />
-          </svg>
-        </button>
-
         <span className="hidden h-4 w-px flex-shrink-0 bg-neutral-800/60 md:inline-block" aria-hidden="true" />
 
         {/* Auth Menu */}
@@ -234,15 +235,6 @@ export function TopRibbon({
           />
         </div>
       </div>
-
-      {/* Debug Modal */}
-      <DebugInfoModal
-        open={debugModalOpen}
-        onClose={() => setDebugModalOpen(false)}
-        sessionStatus={sessionLabel}
-        mcpStatus={mcpLabel}
-        walletStatus={walletLabel}
-      />
     </div>
   );
 }

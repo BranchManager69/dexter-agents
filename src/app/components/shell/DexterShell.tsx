@@ -3,19 +3,17 @@ import React from "react";
 interface DexterShellProps {
   topBar: React.ReactNode;
   hero: React.ReactNode;
-  conversationHeader: React.ReactNode;
   messages: React.ReactNode;
   inputBar: React.ReactNode;
   signals: React.ReactNode;
   statusBar: React.ReactNode;
-  voiceDock: React.ReactNode;
+  voiceDock?: React.ReactNode;
   mobileOverlay?: React.ReactNode;
 }
 
 export function DexterShell({
   topBar,
   hero,
-  conversationHeader,
   messages,
   inputBar,
   signals,
@@ -33,18 +31,17 @@ export function DexterShell({
         {topBar}
       </header>
 
-      <main className="z-10 flex flex-1 flex-col gap-7.5 overflow-y-auto px-9 py-8">
-        <div className="flex flex-1 flex-col gap-7.5 lg:flex-row">
-          <section className="flex w-full flex-1 flex-col rounded-lg border border-neutral-800/60 bg-surface-base/80 shadow-elevated backdrop-blur-xl">
+      <main className="z-10 flex flex-1 flex-col overflow-hidden">
+        <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+          <div className="flex w-full flex-1 flex-col overflow-hidden">
             {hero}
-            <div className="flex min-h-0 flex-1 flex-col">
-              {conversationHeader}
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {messages}
             </div>
             {inputBar}
-          </section>
+          </div>
 
-          <aside className="hidden w-full max-w-sm flex-col gap-4 rounded-lg border border-neutral-800/60 bg-surface-raised/80 shadow-elevated backdrop-blur-xl lg:flex">
+          <aside className="hidden w-full max-w-sm flex-col gap-4 rounded-lg border border-neutral-800/60 bg-surface-raised/80 shadow-elevated backdrop-blur-xl lg:flex lg:m-8">
             {signals}
           </aside>
         </div>
@@ -54,8 +51,17 @@ export function DexterShell({
         {statusBar}
       </footer>
 
+      {/* Floating Voice Dock - with scale animation */}
       <div className="pointer-events-none fixed bottom-10 left-9 right-auto z-20 max-w-xs">
-        <div className="pointer-events-auto">{voiceDock}</div>
+        <div
+          className={`pointer-events-auto transition-all duration-300 ease-out ${
+            voiceDock
+              ? "scale-100 opacity-100"
+              : "scale-75 opacity-0"
+          }`}
+        >
+          {voiceDock}
+        </div>
       </div>
 
       {mobileOverlay}
