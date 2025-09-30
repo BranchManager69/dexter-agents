@@ -117,31 +117,36 @@ function Transcript({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-800/50 bg-surface-base/90 px-6 py-4 backdrop-blur">
-          <span className="font-display text-sm uppercase tracking-[0.28em] text-neutral-400">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 overflow-hidden border-b border-neutral-800/50 bg-surface-base/90 px-6 py-4 backdrop-blur">
+          <span className="flex-shrink-0 font-display text-sm uppercase tracking-[0.28em] text-neutral-400">
             Conversation
           </span>
-          <div className="flex gap-x-2">
+          <div className="flex min-w-0 flex-shrink gap-2">
             <button
               onClick={handleCopyTranscript}
-              className="flex w-28 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-flux/50 hover:text-flux sm:px-3"
+              title="Copy transcript"
             >
               <ClipboardCopyIcon />
-              {justCopied ? "Copied!" : "Copy"}
+              <span className="hidden sm:inline">{justCopied ? "Copied!" : "Copy"}</span>
             </button>
             <button
               onClick={downloadRecording}
-              className="flex w-44 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-iris/50 hover:text-iris"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-iris/50 hover:text-iris sm:px-3"
+              title="Download audio recording"
             >
               <DownloadIcon />
-              <span>Download Audio</span>
+              <span className="hidden md:inline">Download Audio</span>
+              <span className="inline md:hidden">Audio</span>
             </button>
             <button
               onClick={handleSaveLog}
-              className="flex w-40 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-amber-400/60 hover:text-amber-300"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-amber-400/60 hover:text-amber-300 sm:px-3"
+              title="Save conversation log"
             >
               <span className="text-lg leading-none">⬇</span>
-              <span>{justSaved ? "Saved!" : "Save Log"}</span>
+              <span className="hidden sm:inline">{justSaved ? "Saved!" : "Save Log"}</span>
+              <span className="inline sm:hidden">{justSaved ? "✓" : "Log"}</span>
             </button>
           </div>
         </div>

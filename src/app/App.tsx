@@ -12,7 +12,6 @@ import VoiceDock from "./components/shell/VoiceDock";
 import BottomStatusRail from "./components/shell/BottomStatusRail";
 import SignalStack from "./components/signals/SignalStack";
 import SignalsDrawer from "./components/signals/SignalsDrawer";
-import { TurnstileWidget } from "./components/TurnstileWidget";
 
 declare global {
   interface Window {
@@ -82,12 +81,9 @@ function App() {
     loading: authLoading,
     signOut: authSignOut,
     sendMagicLink,
-    turnstileToken,
-    setTurnstileToken,
   } = useAuth();
 
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
-  const [turnstileRefreshKey, setTurnstileRefreshKey] = useState(0);
 
   const [sessionIdentity, setSessionIdentity] = useState<DexterSessionSummary>(createGuestIdentity);
   const [mcpStatus, setMcpStatus] = useState<McpStatusState>(getMcpStatusSnapshot());
@@ -206,37 +202,17 @@ function App() {
   const signalData = useSignalData();
   const toolCatalog = useToolCatalog();
 
-  const handleSignIn = useCallback(async () => {
-    if (typeof window === "undefined") return;
-
-    const email = window.prompt("Enter your email to receive a Dexter magic link:")?.trim();
-    if (!email) {
-      console.info("Magic-link sign-in cancelled or no email provided.");
-      return;
-    }
-
-    if (turnstileSiteKey && !turnstileToken) {
-      alert("Please complete the security check first.");
-      return;
-    }
-
+  const handleSignIn = useCallback(async (email: string, captchaToken: string | null): Promise<{ success: boolean; message: string }> => {
     try {
       const result = await sendMagicLink(email, {
-        captchaToken: turnstileToken ?? undefined,
+        captchaToken: captchaToken ?? undefined,
       });
-      if (!result.success) {
-        alert(result.message || "Unable to send magic link. Please try again.");
-      } else {
-        alert("Magic link sent! Check your email and open the link on this device.");
-      }
+      return result;
     } catch (err) {
       console.error("Sign-in error:", err);
-      alert("Something went wrong sending the magic link.");
-    } finally {
-      setTurnstileToken(null);
-      setTurnstileRefreshKey((key) => key + 1);
+      return { success: false, message: "Something went wrong sending the magic link." };
     }
-  }, [sendMagicLink, turnstileToken, setTurnstileToken, turnstileSiteKey]);
+  }, [sendMagicLink]);
 
   const sendClientEvent = (eventObj: any, eventNameSuffix = "") => {
     try {
@@ -714,17 +690,7 @@ function App() {
           activeWalletKey={signalData.wallet.summary.activeWallet ?? null}
           onSignIn={handleSignIn}
           onSignOut={handleSignOut}
-          turnstileSlot={
-            turnstileSiteKey ? (
-              <TurnstileWidget
-                siteKey={turnstileSiteKey}
-                action="magic_link"
-                refreshKey={turnstileRefreshKey}
-                className="mt-1"
-                onToken={setTurnstileToken}
-              />
-            ) : null
-          }
+          turnstileSiteKey={turnstileSiteKey}
         />
       }
       conversation={conversationContent}

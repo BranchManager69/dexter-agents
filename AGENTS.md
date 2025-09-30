@@ -50,3 +50,5 @@ Dexchat / pumpstream harness executions
 - Add `--guest` to Dexchat or the pumpstream harness to bypass stored auth without scrubbing env files.
 
 See `scripts/README.md` for full command examples and troubleshooting notes.
+
+Someday, when robust automatic cookie refresh is needed, review: `/home/branchmanager/websites/dexter-agents/CDP_SUPPORT.md`

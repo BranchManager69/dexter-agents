@@ -1,7 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import type { RealtimeAgent } from "@openai/agents/realtime";
 import { SessionStatus } from "@/app/types";
+import { AuthMenu } from "@/app/components/AuthMenu";
+import { DebugInfoModal } from "@/app/components/DebugInfoModal";
 
 interface SessionIdentitySummary {
   type: "guest" | "user";
@@ -31,22 +33,48 @@ interface TopRibbonProps {
   sessionIdentity: SessionIdentitySummary;
   mcpStatus: McpStatusProps;
   activeWalletKey?: string | null;
-  onSignIn?: () => void;
+  onSignIn?: (email: string, captchaToken: string | null) => Promise<{ success: boolean; message: string }>;
   onSignOut?: () => void;
-  turnstileSlot?: React.ReactNode;
+  turnstileSiteKey?: string;
 }
 
 function getStatusAccent(sessionStatus: SessionStatus) {
   switch (sessionStatus) {
     case "CONNECTED":
-      return { label: "Live", tone: "bg-flux/20 text-flux" };
+      return { label: "Live", tone: "bg-flux/20 text-flux border-flux/30" };
     case "CONNECTING":
-      return { label: "Linking", tone: "bg-accent-info/10 text-accent-info" };
+      return { label: "Linking", tone: "bg-accent-info/10 text-accent-info border-accent-info/30" };
     case "ERROR":
-      return { label: "Fault", tone: "bg-accent-critical/20 text-accent-critical" };
+      return { label: "Fault", tone: "bg-accent-critical/20 text-accent-critical border-accent-critical/30" };
     default:
-      return { label: "Offline", tone: "bg-neutral-800 text-neutral-300" };
+      return { label: "Offline", tone: "bg-neutral-800/60 text-neutral-400 border-neutral-800" };
   }
+}
+
+function getMcpAccent(state: McpStatusProps['state']) {
+  switch (state) {
+    case 'user':
+      return 'border-flux/40 bg-flux/10 text-flux';
+    case 'fallback':
+      return 'border-amber-600/40 bg-amber-500/10 text-amber-200';
+    case 'guest':
+    case 'none':
+      return 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300';
+    case 'error':
+      return 'border-accent-critical/40 bg-accent-critical/10 text-accent-critical';
+    default:
+      return 'border-neutral-800/60 bg-surface-glass/60 text-neutral-400';
+  }
+}
+
+function formatWalletAddress(address?: string | null) {
+  if (!address || address === 'Auto' || address.trim().length === 0) {
+    return 'Auto';
+  }
+  if (address.length <= 10) {
+    return address;
+  }
+  return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
 export function TopRibbon({
@@ -61,38 +89,40 @@ export function TopRibbon({
   activeWalletKey,
   onSignIn,
   onSignOut,
-  turnstileSlot,
+  turnstileSiteKey,
 }: TopRibbonProps) {
+  const [debugModalOpen, setDebugModalOpen] = useState(false);
+
   const statusChip = getStatusAccent(sessionStatus);
-
-  const sessionLabel = sessionIdentity.type === "user"
-    ? sessionIdentity.user?.email || sessionIdentity.user?.id || "Authenticated"
-    : sessionIdentity.guestProfile?.label || "Demo Session";
-
-  const accountLabel = authState.loading
-    ? "Checking..."
-    : authState.isAuthenticated
-      ? authState.email || "Signed in"
-      : "Guest";
-
-  const mcpChip = getMcpAccent(mcpStatus.state);
+  const mcpTone = getMcpAccent(mcpStatus.state);
   const mcpLabel = mcpStatus.label || (mcpStatus.state === 'loading' ? 'Checking…' : 'Unavailable');
   const walletLabel = formatWalletAddress(activeWalletKey);
 
-  const showSignOut = authState.isAuthenticated && !authState.loading && Boolean(onSignOut);
-  const showSignIn = !authState.isAuthenticated && !authState.loading && Boolean(onSignIn);
+  const sessionLabel = sessionIdentity.type === "user"
+    ? sessionIdentity.user?.email?.split("@")[0] || "User"
+    : "Demo";
+
+  const handleAuthSignIn = async (email: string, captchaToken: string | null) => {
+    if (!onSignIn) return { success: false, message: "Sign-in not available" };
+    return onSignIn(email, captchaToken);
+  };
+
+  const handleAuthSignOut = () => {
+    if (onSignOut) onSignOut();
+  };
 
   return (
-    <div className="flex w-full flex-wrap items-center gap-4 px-6 py-3">
+    <div className="flex w-full items-center gap-2 overflow-hidden px-6 py-3 sm:gap-3 md:gap-4">
+      {/* Logo */}
       <button
         type="button"
         onClick={onReloadBrand}
-        className="group flex items-center gap-2 text-left"
+        className="group flex flex-shrink-0 items-center gap-2 text-left"
       >
         <div className="relative h-7 w-7 overflow-hidden rounded-lg bg-surface-glass/70 ring-1 ring-neutral-800/60 transition group-hover:ring-flux/40">
           <Image src="/assets/logos/logo_orange.png" alt="Dexter" fill sizes="28px" priority />
         </div>
-        <div className="leading-tight">
+        <div className="hidden leading-tight sm:block">
           <div className="font-display text-sm font-semibold tracking-[0.18em] uppercase text-foreground/90">
             Dexter
           </div>
@@ -102,218 +132,119 @@ export function TopRibbon({
         </div>
       </button>
 
-      <span className="hidden h-4 w-px bg-neutral-800/60 sm:inline-block" aria-hidden="true" />
+      <span className="hidden h-4 w-px flex-shrink-0 bg-neutral-800/60 sm:inline-block" aria-hidden="true" />
 
-      <div className="flex flex-1 flex-wrap items-center gap-4">
-        <div className="flex flex-wrap items-center gap-4 flex-shrink-0">
-          <HeaderChip label="Status">
-            <span className={`inline-flex items-center rounded-pill px-2.5 py-0.5 text-[11px] font-semibold ${statusChip.tone}`}>
-              {statusChip.label}
-            </span>
-          </HeaderChip>
+      {/* Status Indicator */}
+      <span
+        className={`flex-shrink-0 ${
+          sessionStatus === "CONNECTED" ? "bg-flux" :
+          sessionStatus === "CONNECTING" ? "bg-accent-info" :
+          sessionStatus === "ERROR" ? "bg-accent-critical" :
+          "bg-neutral-600"
+        } h-2 w-2 rounded-full`}
+        title={`Connection status: ${statusChip.label}`}
+      />
 
-          <HeaderChip label="Scenario">
-            <span className="inline-flex rounded-md border border-neutral-800/70 bg-surface-glass/60 px-2.5 py-1 text-xs text-neutral-200">
-              Dexter Trading Desk
-            </span>
-          </HeaderChip>
+      {/* Agent Selector */}
+      <div className="relative inline-flex flex-shrink min-w-0">
+        <select
+          value={selectedAgentName}
+          onChange={(event) => onAgentChange(event.target.value)}
+          className="appearance-none rounded-md border border-neutral-800/80 bg-surface-glass/80 px-2 py-1.5 pr-7 text-xs text-neutral-100 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30 sm:px-3 sm:pr-8"
+          title="Select agent"
+        >
+          {agents.map((agent) => (
+            <option key={agent.name} value={agent.name}>
+              {agent.name}
+            </option>
+          ))}
+        </select>
+        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-neutral-500">
+          <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+            <path
+              fillRule="evenodd"
+              d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
+              clipRule="evenodd"
+            />
+          </svg>
+        </span>
+      </div>
 
-          <HeaderChip label="Agent">
-            <div className="relative inline-flex">
-              <select
-                value={selectedAgentName}
-                onChange={(event) => onAgentChange(event.target.value)}
-                className="appearance-none rounded-md border border-neutral-800/80 bg-surface-glass/80 px-3 py-1.5 pr-8 text-xs text-neutral-100 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30"
-              >
-                {agents.map((agent) => (
-                  <option key={agent.name} value={agent.name}>
-                    {agent.name}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-neutral-500">
-                <svg
-                  className="h-3.5 w-3.5"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </span>
-            </div>
-          </HeaderChip>
-        </div>
+      <div className="ml-auto flex min-w-0 flex-shrink items-center gap-2 sm:gap-3">
+        {/* Session Badge */}
+        <span
+          className={`hidden flex-shrink-0 rounded-md border px-2 py-1 text-[11px] font-medium md:inline-flex md:px-2.5 ${
+            sessionIdentity.type === 'user'
+              ? 'border-flux/40 bg-flux/10 text-flux'
+              : 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300'
+          }`}
+          title={sessionIdentity.type === "user" ? `Session: ${sessionIdentity.user?.email || "Authenticated"}` : "Demo session"}
+        >
+          {sessionLabel}
+        </span>
 
-        <span className="hidden h-4 w-px bg-neutral-800/60 lg:inline-block" aria-hidden="true" />
+        {/* MCP Badge */}
+        <span
+          className={`hidden flex-shrink-0 rounded-md border px-2 py-1 text-[11px] font-medium lg:inline-flex lg:px-2.5 ${mcpTone}`}
+          title={mcpStatus.detail || `MCP: ${mcpLabel}`}
+        >
+          {mcpLabel}
+        </span>
 
-        <div className="flex flex-wrap items-center gap-4 mx-auto">
-          <HeaderChip label="Session">
-            <span
-              className={`inline-flex rounded-md border px-2.5 py-1.5 text-[11px] font-medium ${
-                sessionIdentity.type === 'user'
-                  ? 'border-flux/40 bg-flux/10 text-flux'
-                  : 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300'
-              }`}
-            >
-              {sessionLabel}
-            </span>
-          </HeaderChip>
+        {/* Wallet Badge */}
+        <span
+          className="hidden flex-shrink-0 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-1 text-[11px] text-neutral-200 lg:inline-flex lg:px-2.5"
+          title={`Active wallet: ${activeWalletKey || 'Auto (Dexter selects)'}`}
+        >
+          {walletLabel}
+        </span>
 
-          <HeaderChip label="MCP">
-            <span
-              className={`inline-flex rounded-md border px-2.5 py-1.5 text-[11px] font-medium ${mcpChip.tone}`}
-              title={mcpStatus.detail || undefined}
-            >
-              {mcpLabel}
-            </span>
-          </HeaderChip>
+        {/* Debug Info Icon (mobile only) */}
+        <button
+          type="button"
+          onClick={() => setDebugModalOpen(true)}
+          className="flex-shrink-0 text-neutral-500 transition hover:text-neutral-300 md:hidden"
+          title="Debug info"
+          aria-label="Show debug info"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M8 7V11" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <circle cx="8" cy="5" r="0.75" fill="currentColor" />
+          </svg>
+        </button>
 
-          <HeaderChip label="Wallet">
-            <span className="inline-flex rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2.5 py-1.5 text-[11px] text-neutral-200">
-              {walletLabel}
-            </span>
-          </HeaderChip>
+        <span className="hidden h-4 w-px flex-shrink-0 bg-neutral-800/60 md:inline-block" aria-hidden="true" />
+
+        {/* Auth Menu */}
+        <div className="flex-shrink-0">
+          <AuthMenu
+            isAuthenticated={authState.isAuthenticated}
+            loading={authState.loading}
+            email={authState.email}
+            onSignIn={handleAuthSignIn}
+            onSignOut={handleAuthSignOut}
+            turnstileSiteKey={turnstileSiteKey}
+          />
         </div>
       </div>
 
-      <div className="ml-auto flex items-center gap-2">
-        {turnstileSlot && showSignIn && (
-          <div className="hidden flex-col gap-1 text-[10px] uppercase tracking-[0.18em] text-neutral-500 sm:flex">
-            <span>Security Check</span>
-            <div>{turnstileSlot}</div>
-          </div>
-        )}
-        <AccountMenu
-          label={accountLabel}
-          onSignOut={showSignOut ? onSignOut : undefined}
-          onSignIn={showSignIn ? onSignIn : undefined}
-        />
-      </div>
+      {/* Debug Modal */}
+      <DebugInfoModal
+        open={debugModalOpen}
+        onClose={() => setDebugModalOpen(false)}
+        sessionStatus={sessionLabel}
+        mcpStatus={mcpLabel}
+        walletStatus={walletLabel}
+      />
     </div>
   );
 }
 
 export default TopRibbon;
-
-function HeaderChip({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1 text-xs text-neutral-200">
-      <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">{label}</div>
-      <div>{children}</div>
-    </div>
-  );
-}
-
-interface AccountMenuProps {
-  label: string;
-  onSignOut?: () => void;
-  onSignIn?: () => void;
-}
-
-function AccountMenu({ label, onSignOut, onSignIn }: AccountMenuProps) {
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handleClick(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    window.addEventListener('mousedown', handleClick);
-    return () => window.removeEventListener('mousedown', handleClick);
-  }, [open]);
-
-  if (!onSignOut) {
-    return (
-      <div className="inline-flex items-center gap-2">
-        <span className="inline-flex rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-1.5 text-[11px] text-neutral-200">
-          {label}
-        </span>
-        {onSignIn && (
-          <button
-            type="button"
-            onClick={onSignIn}
-            className="inline-flex items-center justify-center rounded-md border border-flux/40 bg-flux/10 px-2.5 py-1 text-[11px] uppercase tracking-[0.18em] text-flux transition hover:bg-flux/20"
-          >
-            Send magic link
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((prev) => !prev)}
-        className={`inline-flex items-center gap-2 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-1.5 text-[11px] text-neutral-200 transition ${open ? 'border-flux/40 text-flux' : 'hover:border-flux/40 hover:text-flux'}`}
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        <span>{label}</span>
-        <svg className={`h-3.5 w-3.5 transition-transform ${open ? 'rotate-90 text-flux' : 'text-neutral-400'}`} viewBox="0 0 20 20" fill="currentColor">
-          <path
-            fillRule="evenodd"
-            d="M3 10a.75.75 0 01.75-.75h10.69l-2.72-2.72a.75.75 0 111.06-1.06l4 4a.75.75 0 010 1.06l-4 4a.75.75 0 01-1.06-1.06l2.72-2.72H3.75A.75.75 0 013 10z"
-            clipRule="evenodd"
-          />
-        </svg>
-      </button>
-      {open && (
-        <div className="absolute right-0 z-30 mt-2 w-36 rounded-md border border-neutral-800/60 bg-surface-glass/90 p-2 text-xs text-neutral-200 shadow-lg backdrop-blur">
-          <button
-            type="button"
-            onClick={() => {
-              setOpen(false);
-              onSignOut();
-            }}
-            className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left transition hover:bg-neutral-800/40 hover:text-flux"
-          >
-            <span>Sign out</span>
-            <svg className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M3 10a.75.75 0 01.75-.75h7.69l-2.22-2.22a.75.75 0 111.06-1.06l3.5 3.5a.75.75 0 010 1.06l-3.5 3.5a.75.75 0 11-1.06-1.06l2.22-2.22H3.75A.75.75 0 013 10z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-
-function getMcpAccent(state: McpStatusProps['state']) {
-  switch (state) {
-    case 'user':
-      return { tone: 'border-flux/40 bg-flux/10 text-flux' };
-    case 'fallback':
-      return { tone: 'border-amber-600/40 bg-amber-500/10 text-amber-200' };
-    case 'guest':
-    case 'none':
-      return { tone: 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300' };
-    case 'error':
-      return { tone: 'border-accent-critical/40 bg-accent-critical/10 text-accent-critical' };
-    default:
-      return { tone: 'border-neutral-800/60 bg-surface-glass/60 text-neutral-400' };
-  }
-}
-
-function formatWalletAddress(address?: string | null) {
-  if (!address || address === 'Auto' || address.trim().length === 0) {
-    return 'Auto (Dexter selects)';
-  }
-  if (address.length <= 10) {
-    return address;
-  }
-  return `${address.slice(0, 4)}…${address.slice(-4)}`;
-}
