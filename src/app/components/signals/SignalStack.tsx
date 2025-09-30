@@ -20,6 +20,9 @@ interface SignalStackProps {
   toolCatalog: ToolCatalogSnapshot;
 }
 
+const STORAGE_KEY_TOOLS_EXPANDED = 'dexter:toolsExpanded';
+const STORAGE_KEY_LOGS_EXPANDED = 'dexter:logsExpanded';
+
 function changeToneClass(tone: "positive" | "negative" | "neutral") {
   if (tone === "positive") return "text-flux";
   if (tone === "negative") return "text-accent-critical";
@@ -42,6 +45,30 @@ export function SignalStack({
   wallet,
   toolCatalog,
 }: SignalStackProps) {
+  const [isToolsExpanded, setIsToolsExpanded] = React.useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    const stored = localStorage.getItem(STORAGE_KEY_TOOLS_EXPANDED);
+    return stored ? stored === 'true' : false;
+  });
+
+  const [isLogsExpanded, setIsLogsExpanded] = React.useState<boolean>(() => {
+    if (typeof window === 'undefined') return true;
+    const stored = localStorage.getItem(STORAGE_KEY_LOGS_EXPANDED);
+    return stored ? stored === 'true' : true;
+  });
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_TOOLS_EXPANDED, isToolsExpanded.toString());
+    }
+  }, [isToolsExpanded]);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_LOGS_EXPANDED, isLogsExpanded.toString());
+    }
+  }, [isLogsExpanded]);
+
   return (
     <div className="flex h-full flex-col gap-4 p-5">
       <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
@@ -173,6 +200,9 @@ export function SignalStack({
             <h3 className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
               Available Tools
             </h3>
+            <span className="rounded-pill border border-neutral-800/60 bg-surface-glass/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-300">
+              {toolCatalog.tools.length}
+            </span>
             {toolCatalog.source === 'cache' && (
               <span className="rounded-pill border border-accent-warning/40 bg-accent-warning/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-accent-warning">
                 Cached
@@ -201,7 +231,8 @@ export function SignalStack({
             </button>
           </div>
         </div>
-        <div className="mt-3 space-y-2 text-sm text-neutral-200">
+        <div className={`relative mt-3 overflow-hidden rounded-lg transition-all duration-300 ${isToolsExpanded ? 'max-h-96' : 'max-h-60'}`}>
+          <div className="space-y-2 text-sm text-neutral-200">
           {toolCatalog.error && (
             <div className="rounded-md border border-accent-critical/40 bg-accent-critical/10 px-3 py-2 text-xs text-accent-critical">
               {toolCatalog.error}
@@ -236,12 +267,62 @@ export function SignalStack({
               ))}
             </div>
           )}
+          </div>
+          {!isToolsExpanded && (
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-28 items-end justify-center bg-gradient-fade-dark pb-4">
+              <button
+                type="button"
+                onClick={() => setIsToolsExpanded(true)}
+                className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
+              >
+                Show {toolCatalog.tools.length} tool{toolCatalog.tools.length === 1 ? '' : 's'}
+              </button>
+            </div>
+          )}
+          {isToolsExpanded && (
+            <div className="flex items-end justify-center pb-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsToolsExpanded(false)}
+                className="rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
+              >
+                Hide tools
+              </button>
+            </div>
+          )}
         </div>
       </section>
 
       {showLogs && (
-        <section className="flex-1 rounded-lg border border-neutral-800/60 bg-surface-base/80">
-          {logs}
+        <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
+          <h3 className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
+            Event Logs
+          </h3>
+          <div className={`relative mt-3 overflow-hidden rounded-lg transition-all duration-300 ${isLogsExpanded ? 'max-h-96' : 'max-h-60'}`}>
+            {logs}
+            {!isLogsExpanded && (
+              <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-28 items-end justify-center bg-gradient-fade-dark pb-4">
+                <button
+                  type="button"
+                  onClick={() => setIsLogsExpanded(true)}
+                  className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
+                >
+                  Show event logs
+                </button>
+              </div>
+            )}
+            {isLogsExpanded && (
+              <div className="flex items-end justify-center pb-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsLogsExpanded(false)}
+                  className="rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
+                >
+                  Hide event logs
+                </button>
+              </div>
+            )}
+          </div>
         </section>
       )}
     </div>

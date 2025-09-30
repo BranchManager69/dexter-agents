@@ -42,13 +42,8 @@ function Events({ isExpanded }: EventsProps) {
   return (
     <div
       ref={eventLogsContainerRef}
-      className="flex h-full flex-col overflow-hidden rounded-lg"
+      className="flex h-full flex-col overflow-hidden"
     >
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-800/60 bg-surface-base/90 px-5 py-3">
-        <span className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
-          Event Logs
-        </span>
-      </div>
       <div className="flex-1 overflow-y-auto">
         {loggedEvents.map((log, idx) => {
           const arrowInfo = getDirectionArrow(log.direction);

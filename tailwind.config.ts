@@ -64,6 +64,9 @@ export default {
         9: "72px",
         11: "88px",
       },
+      backgroundImage: {
+        'gradient-fade-dark': 'linear-gradient(180deg, rgba(8, 14, 26, 0) 0%, rgba(8, 14, 26, 0.9) 45%, rgba(6, 12, 24, 0.96) 100%)',
+      },
     },
   },
   plugins: [],
