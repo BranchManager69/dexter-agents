@@ -2,11 +2,21 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { TranscriptItem } from "@/app/types";
+import { TranscriptItem, SessionStatus } from "@/app/types";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { GuardrailChip } from "./GuardrailChip";
 
-export function TranscriptMessages() {
+interface TranscriptMessagesProps {
+  sessionStatus?: SessionStatus;
+  hasActivatedSession?: boolean;
+  onSendMessage?: (message: string) => void;
+}
+
+export function TranscriptMessages({
+  sessionStatus,
+  hasActivatedSession,
+  onSendMessage,
+}: TranscriptMessagesProps = {}) {
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
@@ -34,12 +44,45 @@ export function TranscriptMessages() {
     setPrevLogs(transcriptItems);
   }, [transcriptItems, prevLogs]);
 
+  // Only show empty state if there are no user or assistant messages (filter out debug/system items)
+  const hasRealMessages = transcriptItems.some(item =>
+    item.role === 'user' || item.role === 'assistant'
+  );
+  const showEmptyState = sessionStatus === 'CONNECTED' && !hasActivatedSession && !hasRealMessages;
+
+  const suggestedPrompts = [
+    "What's trending on Pump.fun right now?",
+    "Show me my wallet balance",
+    "Help me find a promising new token",
+  ];
+
   return (
     <div
       ref={transcriptRef}
       data-transcript-messages
       className="flex h-full flex-1 flex-col gap-y-4 overflow-auto p-6"
     >
+      {showEmptyState && (
+        <div className="flex h-full flex-1 items-center justify-center animate-in fade-in duration-500">
+          <div className="max-w-md text-center">
+            <p className="mb-6 text-sm text-neutral-400">
+              Start typing to begin, or try one of these:
+            </p>
+            <div className="flex flex-col gap-2">
+              {suggestedPrompts.map((prompt, index) => (
+                <button
+                  key={index}
+                  onClick={() => onSendMessage?.(prompt)}
+                  className="rounded-md border border-neutral-800/60 bg-surface-glass/40 px-4 py-2.5 text-sm text-neutral-300 transition hover:border-flux/40 hover:bg-surface-glass/60 hover:text-flux"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {[...transcriptItems]
         .sort((a, b) => a.createdAtMs - b.createdAtMs)
         .map((item) => {

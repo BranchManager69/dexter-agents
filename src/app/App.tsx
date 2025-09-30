@@ -434,12 +434,6 @@ function App() {
     return;
   }
 
-  const handleStartConversation = () => {
-    if (sessionStatus !== 'CONNECTED' || hasActivatedSession) return;
-    updateSession(true);
-    setHasActivatedSession(true);
-  };
-
   const handleSendTextMessage = async () => {
     if (!userText.trim()) return;
 
@@ -644,8 +638,6 @@ function App() {
   const hero = (
     <Hero
       sessionStatus={sessionStatus}
-      hasActivatedSession={hasActivatedSession}
-      onStartConversation={handleStartConversation}
       onOpenSignals={() => setIsMobileSignalsOpen(true)}
       onCopyTranscript={handleCopyTranscript}
       onDownloadAudio={downloadRecording}
@@ -666,7 +658,16 @@ function App() {
     />
   ) : null;
 
-  const messages = <TranscriptMessages />;
+  const messages = (
+    <TranscriptMessages
+      sessionStatus={sessionStatus}
+      hasActivatedSession={hasActivatedSession}
+      onSendMessage={(message) => {
+        setUserText(message);
+        setTimeout(() => handleSendTextMessage(), 0);
+      }}
+    />
+  );
 
   const inputBar = (
     <InputBar
