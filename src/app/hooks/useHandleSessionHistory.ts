@@ -214,11 +214,21 @@ export function useHandleSessionHistory() {
   ) {
     // History updates don't reliably end in a completed item, 
     // so we need to handle finishing up when the transcription is completed.
-    const itemId = item.item_id;
+    const itemId = item.item_id || item.id || item?.message_id;
     const finalTranscript =
-        !item.transcript || item.transcript === "\n"
-        ? "[inaudible]"
-        : item.transcript;
+      typeof item.transcript === 'string' && item.transcript.trim().length > 0
+        ? item.transcript
+        : (() => {
+            // Some transports tuck the transcript inside a content array
+            const content = Array.isArray(item?.content) ? item.content : [];
+            for (const c of content) {
+              if (c && typeof c === 'object' && (c.type === 'input_audio' || c.type === 'audio')) {
+                const t = (c as any).transcript;
+                if (typeof t === 'string' && t.trim().length > 0) return t;
+              }
+            }
+            return "[inaudible]";
+          })();
     if (itemId) {
       if (role === 'user') {
         ensureUserTranscriptMessage(itemId);

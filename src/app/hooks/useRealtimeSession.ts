@@ -76,6 +76,14 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
         break;
       }
+      case "conversation.item.input_audio_transcription.done": {
+        historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
+        break;
+      }
+      case "input_audio_transcription.done": {
+        historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
+        break;
+      }
       case "conversation.item.created": {
         // Ensure user voice messages show up immediately when items are created
         try {
