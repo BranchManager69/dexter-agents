@@ -72,7 +72,9 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         try {
           const item = event?.item;
           if (item && item.type === 'message') {
-            historyHandlersRef.current.handleHistoryAdded(item);
+            // Map transport shape { id, type, role, content } -> handler shape expects itemId
+            const mapped = { ...item, itemId: item.id };
+            historyHandlersRef.current.handleHistoryAdded(mapped);
           }
         } catch {}
         logServerEvent(event);
@@ -109,9 +111,21 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       case "response.output_item.done": {
         // Some transports signal completion here; honor both
         const item = event?.item;
-        if (item && item.type === 'mcp_call' && item.id && pendingMcpCallsRef.current.has(item.id)) {
-          pendingMcpCallsRef.current.delete(item.id);
-          tryAdvanceAfterMcp();
+        if (item && item.type === 'mcp_call') {
+          // Surface tool usage inline in transcript (compact + note)
+          try {
+            const toolCall = {
+              name: item.name,
+              arguments: item.arguments,
+              output: item.output,
+            };
+            historyHandlersRef.current.handleMcpToolCallCompleted(null, null, toolCall);
+          } catch {}
+
+          if (item.id && pendingMcpCallsRef.current.has(item.id)) {
+            pendingMcpCallsRef.current.delete(item.id);
+            tryAdvanceAfterMcp();
+          }
         }
         logServerEvent(event);
         break;
