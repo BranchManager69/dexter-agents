@@ -88,6 +88,7 @@ export function useHandleSessionHistory() {
         if (!c || typeof c !== "object") return "";
         if (c.type === "input_text") return c.text ?? "";
         if (c.type === "audio") return c.transcript ?? "";
+        if (c.type === "input_audio") return c.transcript ?? "";
         return "";
       })
       .filter(Boolean)
@@ -288,6 +289,9 @@ export function useHandleSessionHistory() {
     }
 
     addTranscriptToolNote(toolName, Object.keys(noteData).length ? noteData : undefined);
+
+    // Compact breadcrumb to surface tool usage inline, in order
+    addTranscriptBreadcrumb(`Used ${toolName}`);
 
     const toolIdentifier = toolCall?.id || toolCall?.call_id || toolCall?.name;
     const safeOutput = parsedOutput && typeof parsedOutput === 'object'
