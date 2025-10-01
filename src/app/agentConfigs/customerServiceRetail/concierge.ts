@@ -1,8 +1,8 @@
 import { RealtimeAgent } from '@openai/agents/realtime';
 
-import { loadDexterVoiceTools } from './tools';
-
-const conciergeTools = await loadDexterVoiceTools();
+// IMPORTANT: Backend-native MCP tools are attached by Dexter API during
+// realtime session creation. We deliberately avoid loading client-side
+// tool wrappers here so the Realtime backend can call MCP directly.
 
 export const conciergeAgent = new RealtimeAgent({
   name: 'dexterVoice',
@@ -31,7 +31,7 @@ You are the Dexter voice concierge. Welcome the caller, understand their goal, a
 - If \`auth_info\` shows missing tokens, explain that only public data is available until they reconnect through Dexter.
 - Attribute Codex or market data so the caller knows the source.
 `,
-  tools: conciergeTools,
+  tools: [],
   handoffs: [],
 });
 

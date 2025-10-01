@@ -78,15 +78,10 @@ export async function GET(request: Request) {
       sessionType,
       supabaseUserId: data?.dexter_session?.user?.id ?? null,
     });
-    const { tools: _ignoredTools, ...sanitized } = data ?? {};
-    void _ignoredTools;
-    sanitized.tools = [];
-    sanitized.tool_choice = 'none';
-    if (sanitized.instructions) {
-      sanitized.instructions = `${sanitized.instructions}\n\n# MCP
-Use the local tools provided by the client to call MCP endpoints. Do not expect server-provided tools.`;
-    }
-    return NextResponse.json(sanitized);
+    // IMPORTANT: Preserve backend-native tools and configuration returned by Dexter API.
+    // Do not strip tools or override tool_choice/instructions so the Realtime backend
+    // can call MCP directly using the bearer provided server-side.
+    return NextResponse.json(data);
   } catch (error) {
     console.error("Error in /session:", error);
     return NextResponse.json(

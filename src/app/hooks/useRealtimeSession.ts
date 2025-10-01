@@ -43,6 +43,11 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
 
   const historyHandlersRef = useHandleSessionHistory();
 
+  // Track MCP chaining for backend-native tools
+  const pendingMcpCallsRef = useRef<Set<string>>(new Set());
+  const stepActiveRef = useRef<boolean>(false);
+  const currentResponseIdRef = useRef<string | null>(null);
+
   function handleTransportEvent(event: any) {
     // Handle additional server events that aren't managed by the session
     switch (event.type) {
@@ -62,11 +67,87 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         historyHandlersRef.current.handleTranscriptionDelta(event, 'assistant');
         break;
       }
+      case "response.created": {
+        // New step begins
+        const rid = event?.response?.id || null;
+        currentResponseIdRef.current = typeof rid === 'string' ? rid : null;
+        pendingMcpCallsRef.current.clear();
+        stepActiveRef.current = true;
+        logServerEvent(event);
+        break;
+      }
+      case "response.output_item.added": {
+        // Collect MCP calls for this step
+        const item = event?.item;
+        if (item && item.type === 'mcp_call' && item.id) {
+          pendingMcpCallsRef.current.add(item.id);
+        }
+        logServerEvent(event);
+        break;
+      }
+      case "response.mcp_call.completed": {
+        // Mark MCP call finished; if all done for this step and still active, advance
+        const itemId = event?.item_id;
+        if (itemId && pendingMcpCallsRef.current.has(itemId)) {
+          pendingMcpCallsRef.current.delete(itemId);
+          tryAdvanceAfterMcp();
+        }
+        logServerEvent(event);
+        break;
+      }
+      case "response.output_item.done": {
+        // Some transports signal completion here; honor both
+        const item = event?.item;
+        if (item && item.type === 'mcp_call' && item.id && pendingMcpCallsRef.current.has(item.id)) {
+          pendingMcpCallsRef.current.delete(item.id);
+          tryAdvanceAfterMcp();
+        }
+        logServerEvent(event);
+        break;
+      }
+      case "response.done": {
+        // If no MCP calls were queued this step, and we're still active, advance immediately
+        const resp = event?.response;
+        const rid = resp?.id || null;
+        const outputs: any[] = Array.isArray(resp?.output) ? resp.output : [];
+        const hasAssistantMessage = outputs.some((o) => o?.type === 'message');
+        const hasMcpCalls = outputs.some((o) => o?.type === 'mcp_call');
+
+        if (typeof rid === 'string') {
+          currentResponseIdRef.current = rid;
+        }
+
+        if (hasAssistantMessage && !hasMcpCalls) {
+          // Natural termination of step with an assistant message
+          pendingMcpCallsRef.current.clear();
+          stepActiveRef.current = false;
+        } else if (!hasMcpCalls && stepActiveRef.current) {
+          // No tools emitted and nothing pending — model likely wants to continue
+          safeCreateFollowupResponse();
+          stepActiveRef.current = false;
+        }
+        logServerEvent(event);
+        break;
+      }
       default: {
         logServerEvent(event);
         break;
       } 
     }
+  }
+
+  function safeCreateFollowupResponse() {
+    try {
+      sessionRef.current?.transport.sendEvent({ type: 'response.create' } as any);
+    } catch { /* ignore */ }
+  }
+
+  function tryAdvanceAfterMcp() {
+    if (!stepActiveRef.current) return;
+    if (pendingMcpCallsRef.current.size > 0) return;
+    // All MCP calls for this step have completed; request the next reasoning step
+    safeCreateFollowupResponse();
+    stepActiveRef.current = false;
   }
 
   const codecParamRef = useRef<string>(
@@ -109,31 +190,40 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
   };
 
   useEffect(() => {
-    if (sessionRef.current) {
-      // Log server errors
-      sessionRef.current.on("error", (...args: any[]) => {
-        logServerEvent({
-          type: "error",
-          message: args[0],
-        });
-      });
+    if (!sessionRef.current) return;
+    const s = sessionRef.current;
+    // Log server errors
+    s.on("error", (...args: any[]) => {
+      logServerEvent({ type: "error", message: args[0] });
+    });
 
-      // history events
-      sessionRef.current.on("agent_handoff", handleAgentHandoff);
-      sessionRef.current.on("agent_tool_start", historyHandlersRef.current.handleAgentToolStart);
-      sessionRef.current.on("agent_tool_end", (context: any, agent: any, tool: any, result: any) => {
-        historyHandlersRef.current.handleAgentToolEnd(context, agent, tool, result);
-      });
-      sessionRef.current.on("history_updated", historyHandlersRef.current.handleHistoryUpdated);
-      sessionRef.current.on("history_added", historyHandlersRef.current.handleHistoryAdded);
-      sessionRef.current.on("guardrail_tripped", historyHandlersRef.current.handleGuardrailTripped);
-      sessionRef.current.on("mcp_tool_call_completed", (context: any, agent: any, toolCall: any) => {
-        historyHandlersRef.current.handleMcpToolCallCompleted(context, agent, toolCall);
-      });
+    // history events
+    s.on("agent_handoff", handleAgentHandoff);
+    s.on("agent_tool_start", historyHandlersRef.current.handleAgentToolStart);
+    s.on("agent_tool_end", (context: any, agent: any, tool: any, result: any) => {
+      historyHandlersRef.current.handleAgentToolEnd(context, agent, tool, result);
+    });
+    s.on("history_updated", historyHandlersRef.current.handleHistoryUpdated);
+    s.on("history_added", historyHandlersRef.current.handleHistoryAdded);
+    s.on("guardrail_tripped", historyHandlersRef.current.handleGuardrailTripped);
+    s.on("mcp_tool_call_completed", (context: any, agent: any, toolCall: any) => {
+      historyHandlersRef.current.handleMcpToolCallCompleted(context, agent, toolCall);
+    });
 
-      // additional transport events
-      sessionRef.current.on("transport_event", handleTransportEvent);
-    }
+    // additional transport events
+    s.on("transport_event", handleTransportEvent);
+
+    return () => {
+      try { s.off?.("agent_handoff", handleAgentHandoff as any); } catch {}
+      try { s.off?.("agent_tool_start", historyHandlersRef.current.handleAgentToolStart as any); } catch {}
+      try { s.off?.("agent_tool_end", historyHandlersRef.current.handleAgentToolEnd as any); } catch {}
+      try { s.off?.("history_updated", historyHandlersRef.current.handleHistoryUpdated as any); } catch {}
+      try { s.off?.("history_added", historyHandlersRef.current.handleHistoryAdded as any); } catch {}
+      try { s.off?.("guardrail_tripped", historyHandlersRef.current.handleGuardrailTripped as any); } catch {}
+      try { s.off?.("mcp_tool_call_completed", historyHandlersRef.current.handleMcpToolCallCompleted as any); } catch {}
+      try { s.off?.("transport_event", handleTransportEvent as any); } catch {}
+      try { s.off?.("error", (() => {}) as any); } catch {}
+    };
   }, [sessionRef.current]);
 
   const connect = useCallback(
