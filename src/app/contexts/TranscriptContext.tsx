@@ -27,7 +27,11 @@ type TranscriptContextValue = {
   ) => void;
   updateTranscriptMessage: (itemId: string, text: string, isDelta: boolean) => void;
   addTranscriptBreadcrumb: (title: string, data?: Record<string, any>) => void;
-  addTranscriptToolNote: (toolName: string, data?: Record<string, any>) => void;
+  addTranscriptToolNote: (
+    toolName: string,
+    data?: Record<string, any>,
+    options?: { itemId?: string; status?: 'IN_PROGRESS' | 'DONE' }
+  ) => void;
   toggleTranscriptItemExpand: (itemId: string) => void;
   updateTranscriptItem: (itemId: string, updatedProperties: Partial<TranscriptItem>) => void;
 };
@@ -113,11 +117,14 @@ export const TranscriptProvider: FC<PropsWithChildren> = ({ children }) => {
     ]);
   };
 
-  const addTranscriptToolNote: TranscriptContextValue['addTranscriptToolNote'] = (toolName, data) => {
+  const addTranscriptToolNote: TranscriptContextValue['addTranscriptToolNote'] = (toolName, data, options) => {
+    const providedId = options?.itemId;
+    const status = options?.status ?? 'DONE';
+    const newId = providedId && providedId.trim().length > 0 ? providedId : `tool-${uuidv4()}`;
     setTranscriptItems((prev) => [
       ...prev,
       {
-        itemId: `tool-${uuidv4()}`,
+        itemId: newId,
         type: 'TOOL_NOTE',
         role: 'assistant',
         title: toolName,
@@ -125,7 +132,7 @@ export const TranscriptProvider: FC<PropsWithChildren> = ({ children }) => {
         expanded: false,
         timestamp: newTimestampPretty(),
         createdAtMs: Date.now(),
-        status: 'DONE',
+        status,
         isHidden: false,
       },
     ]);
