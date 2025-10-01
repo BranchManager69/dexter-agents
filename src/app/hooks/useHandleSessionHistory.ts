@@ -142,7 +142,11 @@ export function useHandleSessionHistory() {
     );    
     const displayName = function_name ?? functionCall?.name ?? 'tool_call';
     const parsedArgs = maybeParseJson(function_args ?? functionCall?.arguments ?? {});
-    addTranscriptToolNote(displayName, parsedArgs);
+    // Start a TOOL_NOTE in progress so UI shows a live "processing" chip
+    const toolItemId = `tool-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    addTranscriptToolNote(displayName, parsedArgs, { itemId: toolItemId, status: 'IN_PROGRESS' });
+    // Stash the synthetic tool item id on the functionCall so end can resolve it
+    (functionCall as any).__transcript_tool_item_id = toolItemId;
   }
   function handleAgentToolEnd(details: any, _agent: any, _functionCall: any, result: any) {
     const lastFunctionCall = extractFunctionCallByName(_functionCall.name, details?.context?.history);
@@ -150,6 +154,13 @@ export function useHandleSessionHistory() {
       `function call result: ${lastFunctionCall?.name}`,
       maybeParseJson(result)
     );
+    // Finalize the in-progress TOOL_NOTE if we created one at start
+    const noteId = (_functionCall as any).__transcript_tool_item_id as string | undefined;
+    if (noteId && typeof noteId === 'string') {
+      try {
+        updateTranscriptItem(noteId, { status: 'DONE' });
+      } catch {}
+    }
   }
 
   function handleHistoryAdded(item: any) {
@@ -298,7 +309,13 @@ export function useHandleSessionHistory() {
       noteData.output = parsedOutput;
     }
 
-    addTranscriptToolNote(toolName, Object.keys(noteData).length ? noteData : undefined);
+    // If a start note was created earlier, finish it; otherwise create a DONE note
+    const existingId = (toolCall as any)?.__transcript_tool_item_id as string | undefined;
+    if (existingId) {
+      try { updateTranscriptItem(existingId, { status: 'DONE' }); } catch {}
+    } else {
+      addTranscriptToolNote(toolName, Object.keys(noteData).length ? noteData : undefined, { status: 'DONE' });
+    }
 
     // Compact breadcrumb to surface tool usage inline, in order
     addTranscriptBreadcrumb(`Used ${toolName}`);
