@@ -67,6 +67,17 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         historyHandlersRef.current.handleTranscriptionDelta(event, 'assistant');
         break;
       }
+      case "conversation.item.created": {
+        // Ensure user voice messages show up immediately when items are created
+        try {
+          const item = event?.item;
+          if (item && item.type === 'message') {
+            historyHandlersRef.current.handleHistoryAdded(item);
+          }
+        } catch {}
+        logServerEvent(event);
+        break;
+      }
       case "response.created": {
         // New step begins
         const rid = event?.response?.id || null;
@@ -301,8 +312,27 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
   }, [historyHandlersRef]);
 
   const sendEvent = useCallback((ev: any) => {
+    try {
+      if (
+        ev &&
+        ev.type === 'session.update' &&
+        ev.session &&
+        typeof ev.session === 'object' &&
+        Object.prototype.hasOwnProperty.call(ev.session, 'type')
+      ) {
+        // Surface invalid param usage to logs without mutating the payload
+        const offendingKeys = Object.keys(ev.session || {});
+        logClientEvent({
+          type: 'client.session_update_invalid_param',
+          offendingKeys,
+          valueType: typeof (ev.session as any).type,
+        }, '(invalid param)');
+        // eslint-disable-next-line no-console
+        console.warn('[session.update] Invalid param "session.type" present; keys:', offendingKeys);
+      }
+    } catch {}
     sessionRef.current?.transport.sendEvent(ev);
-  }, []);
+  }, [logClientEvent]);
 
   const mute = useCallback((m: boolean) => {
     sessionRef.current?.mute(m);
