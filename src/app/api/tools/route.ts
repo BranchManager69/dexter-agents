@@ -1,31 +1,19 @@
 import { NextResponse } from "next/server";
-import { CONFIG, getDexterApiRoute } from "../../../app/config/env";
+import { getConnectedMcpServer, resolveMcpAuth, summarizeIdentity } from "../../api/mcp/auth";
 
 export async function GET() {
   try {
-    const url = new URL(getDexterApiRoute("/tools"));
-    const fetchOptions: RequestInit = {
-      method: "GET",
-      headers: {},
-      credentials: "include",
-    };
+    const auth = await resolveMcpAuth();
+    const server = await getConnectedMcpServer(auth);
+    const result = await server.listTools();
 
-    if (CONFIG.mcpToken) {
-      (fetchOptions.headers as Record<string, string>).Authorization = `Bearer ${CONFIG.mcpToken}`;
-    }
-
-    const response = await fetch(url, fetchOptions);
-    const contentType = response.headers.get("content-type") || "application/json";
-    const text = await response.text();
-
-    return new NextResponse(text, {
-      status: response.status,
-      headers: {
-        "content-type": contentType,
-      },
-    });
+    const summary = summarizeIdentity(auth);
+    const response = NextResponse.json({ tools: Array.isArray((result as any)?.tools) ? (result as any).tools : result });
+    response.headers.set('x-dexter-mcp-state', summary.state);
+    if (summary.detail) response.headers.set('x-dexter-mcp-detail', summary.detail);
+    return response;
   } catch (error) {
-    console.error("Error in /api/tools:", error);
+    console.error("Error in /api/tools:", error instanceof Error ? error.message : error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

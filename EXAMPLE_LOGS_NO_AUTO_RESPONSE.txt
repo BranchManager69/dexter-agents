@@ -1,0 +1,1152 @@
+▲
+fetch_session_token_request
+8:26:55 PM
+{
+  "url": "/session"
+}
+▼
+fetch_session_token_response
+8:26:55 PM
+{
+  "object": "realtime.session",
+  "id": "sess_CLeyCRCfKlhZhdgTKR41S",
+  "model": "gpt-realtime",
+  "modalities": [
+    "audio",
+    "text"
+  ],
+  "instructions": "You are Dexter Voice. Be concise and helpful. Use hosted MCP tools to execute wallet, trading, and market actions without extra confirmations.\n\nYou are currently operating in demo mode for unauthenticated visitors. Operate only in read-only or low-risk flows and encourage the user to sign in for persistent, personalized sessions.",
+  "voice": "alloy",
+  "output_audio_format": "pcm16",
+  "tools": [
+    {
+      "type": "mcp",
+      "server_label": "dexter",
+      "server_url": "<redacted>",
+      "connector_id": null,
+      "authorization": null,
+      "headers": {
+        "Authorization": "<redacted>"
+      },
+      "allowed_tools": null,
+      "require_approval": "never"
+    }
+  ],
+  "tool_choice": "auto",
+  "temperature": 0.8,
+  "max_response_output_tokens": "inf",
+  "turn_detection": {
+    "type": "server_vad",
+    "threshold": 0.5,
+    "prefix_padding_ms": 300,
+    "silence_duration_ms": 200,
+    "idle_timeout_ms": null,
+    "create_response": true,
+    "interrupt_response": true
+  },
+  "speed": 1,
+  "tracing": null,
+  "truncation": "auto",
+  "prompt": null,
+  "expires_at": 0,
+  "input_audio_noise_reduction": null,
+  "input_audio_format": "pcm16",
+  "input_audio_transcription": null,
+  "client_secret": {
+    "value": "ek_68dc754ca2288191873d46a9b994a3e5",
+    "expires_at": 1759279012
+  },
+  "include": null,
+  "dexter_session": {
+    "type": "guest",
+    "user": null,
+    "guest_profile": {
+      "label": "Dexter Demo Wallet",
+      "instructions": "Operate only in read-only or low-risk flows and encourage the user to sign in for persistent, personalized sessions."
+    },
+    "wallet": null
+  }
+}
+▲
+CONNECTING
+8:26:55 PM
+{}
+▲
+CONNECTED
+8:26:57 PM
+{}
+▼
+session.created
+8:26:57 PM
+{
+  "type": "session.created",
+  "event_id": "event_CLeyDLLk466ciUTqgUGub",
+  "session": {
+    "object": "realtime.session",
+    "id": "sess_CLeyCRCfKlhZhdgTKR41S",
+    "model": "gpt-realtime",
+    "modalities": [
+      "audio",
+      "text"
+    ],
+    "instructions": "You are Dexter Voice. Be concise and helpful. Use hosted MCP tools to execute wallet, trading, and market actions without extra confirmations.\n\nYou are currently operating in demo mode for unauthenticated visitors. Operate only in read-only or low-risk flows and encourage the user to sign in for persistent, personalized sessions.",
+    "voice": "alloy",
+    "output_audio_format": "pcm16",
+    "tools": [
+      {
+        "type": "mcp",
+        "server_label": "dexter",
+        "server_url": "<redacted>",
+        "connector_id": null,
+        "authorization": null,
+        "headers": {
+          "Authorization": "<redacted>"
+        },
+        "allowed_tools": null,
+        "require_approval": "never"
+      }
+    ],
+    "tool_choice": "auto",
+    "temperature": 0.8,
+    "max_response_output_tokens": "inf",
+    "turn_detection": {
+      "type": "server_vad",
+      "threshold": 0.5,
+      "prefix_padding_ms": 300,
+      "silence_duration_ms": 200,
+      "idle_timeout_ms": null,
+      "create_response": true,
+      "interrupt_response": true
+    },
+    "speed": 1,
+    "tracing": null,
+    "truncation": "auto",
+    "prompt": null,
+    "expires_at": 1759282013,
+    "input_audio_noise_reduction": null,
+    "input_audio_format": "pcm16",
+    "input_audio_transcription": null,
+    "client_secret": null,
+    "include": null
+  }
+}
+▼
+conversation.item.created
+8:26:57 PM
+{
+  "type": "conversation.item.created",
+  "event_id": "event_CLeyD8Pw2qSKSi95uQkmk",
+  "previous_item_id": null,
+  "item": {
+    "id": "item_CLeyDpvGsMYlCYkikCAlE",
+    "object": "realtime.item",
+    "type": "mcp_list_tools",
+    "server_label": "dexter",
+    "tools": []
+  }
+}
+▼
+mcp_list_tools.in_progress
+8:26:57 PM
+{
+  "type": "mcp_list_tools.in_progress",
+  "event_id": "event_CLeyDqjBuaflpsJI0bUoP",
+  "item_id": "item_CLeyDpvGsMYlCYkikCAlE"
+}
+▼
+error
+8:26:57 PM
+{
+  "type": "error",
+  "event_id": "event_CLeyE8D34DoFetOw1CbBu",
+  "error": {
+    "type": "invalid_request_error",
+    "code": "unknown_parameter",
+    "message": "Unknown parameter: 'session.type'.",
+    "param": "session.type",
+    "event_id": null
+  }
+}
+▼
+error
+8:26:57 PM
+{
+  "type": "error",
+  "message": {
+    "type": "error",
+    "error": {
+      "type": "error",
+      "event_id": "event_CLeyE8D34DoFetOw1CbBu",
+      "error": {
+        "type": "invalid_request_error",
+        "code": "unknown_parameter",
+        "message": "Unknown parameter: 'session.type'.",
+        "param": "session.type",
+        "event_id": null
+      }
+    }
+  }
+}
+▼
+session.updated
+8:26:57 PM
+{
+  "type": "session.updated",
+  "event_id": "event_CLeyEZYItDpz7hC2RUYPo",
+  "session": {
+    "object": "realtime.session",
+    "id": "sess_CLeyCRCfKlhZhdgTKR41S",
+    "model": "gpt-realtime",
+    "modalities": [
+      "audio",
+      "text"
+    ],
+    "instructions": "You are Dexter Voice. Be concise and helpful. Use hosted MCP tools to execute wallet, trading, and market actions without extra confirmations.\n\nYou are currently operating in demo mode for unauthenticated visitors. Operate only in read-only or low-risk flows and encourage the user to sign in for persistent, personalized sessions.",
+    "voice": "alloy",
+    "output_audio_format": "pcm16",
+    "tools": [
+      {
+        "type": "mcp",
+        "server_label": "dexter",
+        "server_url": "<redacted>",
+        "connector_id": null,
+        "authorization": null,
+        "headers": {
+          "Authorization": "<redacted>"
+        },
+        "allowed_tools": null,
+        "require_approval": "never"
+      }
+    ],
+    "tool_choice": "auto",
+    "temperature": 0.8,
+    "max_response_output_tokens": "inf",
+    "turn_detection": {
+      "type": "server_vad",
+      "threshold": 0.9,
+      "prefix_padding_ms": 300,
+      "silence_duration_ms": 500,
+      "idle_timeout_ms": null,
+      "create_response": true,
+      "interrupt_response": true
+    },
+    "speed": 1,
+    "tracing": null,
+    "truncation": "auto",
+    "prompt": null,
+    "expires_at": 1759282013,
+    "input_audio_noise_reduction": null,
+    "input_audio_format": "pcm16",
+    "input_audio_transcription": null,
+    "client_secret": null,
+    "include": null
+  }
+}
+▼
+conversation.item.created
+8:26:57 PM
+{
+  "type": "conversation.item.created",
+  "event_id": "event_CLeyE5vmHNL2F7E9SClBe",
+  "previous_item_id": "item_CLeyDpvGsMYlCYkikCAlE",
+  "item": {
+    "id": "item_CLeyE1ROrUNrrNJN1B9mJ",
+    "object": "realtime.item",
+    "type": "mcp_list_tools",
+    "server_label": "dexter",
+    "tools": []
+  }
+}
+▼
+mcp_list_tools.in_progress
+8:26:57 PM
+{
+  "type": "mcp_list_tools.in_progress",
+  "event_id": "event_CLeyEBMf8uoyO6ULlh4Ul",
+  "item_id": "item_CLeyE1ROrUNrrNJN1B9mJ"
+}
+▼
+error
+8:26:57 PM
+{
+  "type": "error",
+  "event_id": "event_CLeyEbLBvXQ4wSBuxbn6N",
+  "error": {
+    "type": "invalid_request_error",
+    "code": "unknown_parameter",
+    "message": "Unknown parameter: 'session.type'.",
+    "param": "session.type",
+    "event_id": null
+  }
+}
+▼
+error
+8:26:57 PM
+{
+  "type": "error",
+  "message": {
+    "type": "error",
+    "error": {
+      "type": "error",
+      "event_id": "event_CLeyEbLBvXQ4wSBuxbn6N",
+      "error": {
+        "type": "invalid_request_error",
+        "code": "unknown_parameter",
+        "message": "Unknown parameter: 'session.type'.",
+        "param": "session.type",
+        "event_id": null
+      }
+    }
+  }
+}
+▼
+conversation.item.retrieved
+8:26:57 PM
+{
+  "type": "conversation.item.retrieved",
+  "event_id": "event_CLeyEMqhiuYMfzs97zZ4g",
+  "item": {
+    "id": "item_CLeyDpvGsMYlCYkikCAlE",
+    "type": "mcp_list_tools",
+    "server_label": "dexter",
+    "tools": [],
+    "object": "realtime.item"
+  }
+}
+▼
+conversation.item.retrieved
+8:26:57 PM
+{
+  "type": "conversation.item.retrieved",
+  "event_id": "event_CLeyEegg0TMz0SHNaPak3",
+  "item": {
+    "id": "item_CLeyE1ROrUNrrNJN1B9mJ",
+    "type": "mcp_list_tools",
+    "server_label": "dexter",
+    "tools": [],
+    "object": "realtime.item"
+  }
+}
+▼
+mcp_list_tools.completed
+8:26:59 PM
+{
+  "type": "mcp_list_tools.completed",
+  "event_id": "event_CLeyFeuMSKJAf7g3j2JwW",
+  "item_id": "item_CLeyDpvGsMYlCYkikCAlE"
+}
+▼
+mcp_list_tools.completed
+8:26:59 PM
+{
+  "type": "mcp_list_tools.completed",
+  "event_id": "event_CLeyGA02dKkfRzzIogoAF",
+  "item_id": "item_CLeyE1ROrUNrrNJN1B9mJ"
+}
+▼
+input_audio_buffer.speech_started
+8:27:01 PM
+{
+  "type": "input_audio_buffer.speech_started",
+  "event_id": "event_CLeyIXDSVbgomYWJnyR5G",
+  "item_id": "item_CLeyIElbi6McSL4Jmgd4W",
+  "audio_start_ms": 3636
+}
+▼
+input_audio_buffer.speech_stopped
+8:27:03 PM
+{
+  "type": "input_audio_buffer.speech_stopped",
+  "event_id": "event_CLeyKRtKj4t734OrNGeIL",
+  "item_id": "item_CLeyIElbi6McSL4Jmgd4W",
+  "audio_end_ms": 6272
+}
+▼
+input_audio_buffer.committed
+8:27:03 PM
+{
+  "type": "input_audio_buffer.committed",
+  "event_id": "event_CLeyKs7T8fGgrahY6yY5N",
+  "item_id": "item_CLeyIElbi6McSL4Jmgd4W",
+  "previous_item_id": "item_CLeyE1ROrUNrrNJN1B9mJ"
+}
+▼
+conversation.item.created
+8:27:03 PM
+{
+  "type": "conversation.item.created",
+  "event_id": "event_CLeyKCjRA070ZNhYwhdUn",
+  "previous_item_id": "item_CLeyE1ROrUNrrNJN1B9mJ",
+  "item": {
+    "id": "item_CLeyIElbi6McSL4Jmgd4W",
+    "object": "realtime.item",
+    "type": "message",
+    "status": "completed",
+    "role": "user",
+    "content": [
+      {
+        "type": "input_audio",
+        "transcript": null
+      }
+    ]
+  }
+}
+▼
+response.created
+8:27:03 PM
+{
+  "type": "response.created",
+  "event_id": "event_CLeyKegkwQHttqLonQ5Hp",
+  "response": {
+    "id": "resp_CLeyKO3yztkaiipwSrOfX",
+    "conversation_id": "conv_CLeyDCnah10fO14K4CuLv",
+    "max_output_tokens": "inf",
+    "metadata": null,
+    "object": "realtime.response",
+    "output": [],
+    "status": "in_progress",
+    "status_details": null,
+    "usage": null
+  }
+}
+▼
+response.output_item.added
+8:27:04 PM
+{
+  "type": "response.output_item.added",
+  "event_id": "event_CLeyLo8i5Mx4hFKPH7dsC",
+  "item": {
+    "id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+    "arguments": "",
+    "name": "pumpstream_live_summary",
+    "output": null,
+    "type": "mcp_call",
+    "approval_request_id": null,
+    "server_label": "dexter",
+    "error": null,
+    "object": "realtime.item"
+  },
+  "output_index": 0,
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX"
+}
+▼
+conversation.item.created
+8:27:04 PM
+{
+  "type": "conversation.item.created",
+  "event_id": "event_CLeyLa2kFmhl2bTUmKuQ7",
+  "previous_item_id": "item_CLeyIElbi6McSL4Jmgd4W",
+  "item": {
+    "id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+    "object": "realtime.item",
+    "type": "mcp_call",
+    "approval_request_id": null,
+    "server_label": "dexter",
+    "name": "pumpstream_live_summary",
+    "arguments": "",
+    "output": null,
+    "error": null
+  }
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLIHqVZhZyqqoOnXAy",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "{",
+  "obfuscation": "ZYGDkHXMdH32Z77"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLLQygI6CuWBGlZlNk",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "  \n",
+  "obfuscation": "flu9MYXaMp86S"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLXMOLYJbB25p07LUp",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " ",
+  "obfuscation": "KikH54ECFyWwjKj"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyL1SbGvWQnVNaD66BC",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " \"",
+  "obfuscation": "9kaYQlvnSVSfWq"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLBn6q7hkxoQ9eze7p",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "page",
+  "obfuscation": "bFjGohUfPZSw"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLXcQHHMn9W0a1ToEm",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "Size",
+  "obfuscation": "gLllf578vwCd"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyL0BZqR2k5g5TjuFwH",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "\":",
+  "obfuscation": "WVQ8xS7tuYELco"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyL7ZHxzXuhiDilu1qX",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " ",
+  "obfuscation": "n91tIezTmREldC4"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLEMxyqfc4fmH8qZrl",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "5",
+  "obfuscation": "gy5xvU0UMWTAx7l"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLlU0DpzLKH5qm43dD",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": ",",
+  "obfuscation": "eMb9VY6WBxb9pp1"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyL1aakemUL9UXkDcYK",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "  \n",
+  "obfuscation": "kP2EfMCCulzt6"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLoSFcUhvomPu2ZS5t",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " ",
+  "obfuscation": "hWwmRU3rBxZnXs3"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLhDJ27cdbdkFme7X1",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " \"",
+  "obfuscation": "Xa4izh48Murtt4"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLkSmWHrnHjcPfbZLA",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "sort",
+  "obfuscation": "tw41vWcz7yNN"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLgGIDGBMUXNPgfFgJ",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "\":",
+  "obfuscation": "tli2MvIFuE3qJh"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLbwL0GXlvrj8umxLe",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " \"",
+  "obfuscation": "gmA1c3mQ33COZ4"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLDhvB1AIvCZ4Ow2vo",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "view",
+  "obfuscation": "9DVHKmMifS4a"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyL1CJsddpiua3KvwtW",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "ers",
+  "obfuscation": "R0Er4ajopLJAf"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLmmicIkeJHVFVfOn0",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "\",",
+  "obfuscation": "xFPBG2KV3PlXnK"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLIlxqBZQQK6MOnheo",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "  \n",
+  "obfuscation": "zG5wuO27Gw9SA"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLAbP7IXtFhW5KW4ps",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " ",
+  "obfuscation": "A0IPnmwBvbPV1a8"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLKNGS4zrmn6tFNAIl",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " \"",
+  "obfuscation": "2qnA4bAHlDtMZK"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLnOAdID69kq86CJRo",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "status",
+  "obfuscation": "tm3NXjOiMN"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLua1m4AzIEhEUGTHz",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "\":",
+  "obfuscation": "JMAC7Ge3H686wT"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLu6hbQrX4lvsiNkQ9",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " \"",
+  "obfuscation": "DBhWqXo3i5nAGi"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLGngjTk8K3x5PMWW3",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "live",
+  "obfuscation": "8EcqvF0uNVL2"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLPxMRcKuRTVWS8QvR",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "\"",
+  "obfuscation": "Hr7LPMRb4EYhBZf"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLw0x3Rh3mPRR9UKuy",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": " \n",
+  "obfuscation": "U5n484hEsgrVe9"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLCiwhy9bqmr3hNf5f",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "}",
+  "obfuscation": "CGcHezQlXeTHK8g"
+}
+▼
+response.mcp_call_arguments.delta
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.delta",
+  "event_id": "event_CLeyLrc4GjUXMvYXJxsyZ",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "delta": "  \n",
+  "obfuscation": "zttJwA4UwQbf3"
+}
+▼
+response.mcp_call_arguments.done
+8:27:04 PM
+{
+  "type": "response.mcp_call_arguments.done",
+  "event_id": "event_CLeyL1NZf2jcQHdOjbpdV",
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX",
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "output_index": 0,
+  "arguments": "{  \n  \"pageSize\": 5,  \n  \"sort\": \"viewers\",  \n  \"status\": \"live\" \n}  \n"
+}
+▼
+response.done
+8:27:04 PM
+{
+  "type": "response.done",
+  "event_id": "event_CLeyLX0IzwGnkzMubaetT",
+  "response": {
+    "id": "resp_CLeyKO3yztkaiipwSrOfX",
+    "conversation_id": "conv_CLeyDCnah10fO14K4CuLv",
+    "max_output_tokens": "inf",
+    "metadata": null,
+    "object": "realtime.response",
+    "output": [
+      {
+        "id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+        "object": "realtime.item",
+        "type": "mcp_call",
+        "approval_request_id": null,
+        "server_label": "dexter",
+        "name": "pumpstream_live_summary",
+        "arguments": "{  \n  \"pageSize\": 5,  \n  \"sort\": \"viewers\",  \n  \"status\": \"live\" \n}  \n",
+        "output": null,
+        "error": null
+      }
+    ],
+    "status": "completed",
+    "status_details": null,
+    "usage": {
+      "input_tokens": 1009,
+      "output_tokens": 46
+    }
+  }
+}
+▼
+response.mcp_call.in_progress
+8:27:05 PM
+{
+  "type": "response.mcp_call.in_progress",
+  "event_id": "event_CLeyL8VFP7U6ahTrfqCQF",
+  "output_index": 0,
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq"
+}
+▼
+rate_limits.updated
+8:27:05 PM
+{
+  "type": "rate_limits.updated",
+  "event_id": "event_CLeyLZ7GB2R78Wl57e2y2",
+  "rate_limits": [
+    {
+      "limit": 15000000,
+      "name": "tokens",
+      "remaining": 14999384,
+      "reset_seconds": 0.002
+    }
+  ]
+}
+▼
+conversation.item.retrieved
+8:27:05 PM
+{
+  "type": "conversation.item.retrieved",
+  "event_id": "event_CLeyLyYfKGP55J1j2ksvZ",
+  "item": {
+    "id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+    "arguments": "{  \n  \"pageSize\": 5,  \n  \"sort\": \"viewers\",  \n  \"status\": \"live\" \n}  \n",
+    "name": "pumpstream_live_summary",
+    "output": null,
+    "type": "mcp_call",
+    "approval_request_id": null,
+    "server_label": "dexter",
+    "error": null,
+    "object": "realtime.item"
+  }
+}
+▼
+response.mcp_call.completed
+8:27:06 PM
+{
+  "type": "response.mcp_call.completed",
+  "event_id": "event_CLeyNkw9j0bnGzj5hQlKv",
+  "output_index": 0,
+  "item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq"
+}
+▼
+response.output_item.done
+8:27:06 PM
+{
+  "type": "response.output_item.done",
+  "event_id": "event_CLeyNjzZCZ1LCcVs0OkSX",
+  "item": {
+    "id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+    "arguments": "{  \n  \"pageSize\": 5,  \n  \"sort\": \"viewers\",  \n  \"status\": \"live\" \n}  \n",
+    "name": "pumpstream_live_summary",
+    "output": "{\"generatedAt\":\"2025-10-01T00:27:02.889Z\",\"windowMinutes\":180,\"totalAvailable\":100,\"totalAfterFilter\":100,\"totalReturned\":5,\"appliedSort\":\"viewers\",\"appliedFilters\":{\"status\":\"live\",\"minMarketCapUsd\":null,\"minViewers\":null,\"search\":null,\"symbols\":null,\"mintIds\":null},\"paging\":{\"pageSize\":5,\"offset\":0,\"currentPage\":1,\"totalPages\":20,\"requestedPage\":null,\"hasMore\":true,\"nextOffset\":5,\"previousOffset\":null,\"remainingAfterPage\":95},\"totals\":{\"totalStreams\":100,\"liveStreams\":100,\"disconnectingStreams\":0,\"totalLiveViewers\":1999,\"totalLiveMarketCapUsd\":30023230.154965255},\"streams\":[{\"mintId\":\"2z1p8xCEjRzpBHjXWrx4tJnz7BFL6z7NnvbCxH7bpump\",\"name\":\"San Chan\",\"symbol\":\"San\",\"status\":\"live\",\"currentViewers\":24,\"marketCapUsd\":12364948.799999999,\"marketCapSol\":59310,\"latestAt\":\"2025-10-01T00:26:57.173Z\",\"lastSnapshotAgeSeconds\":5,\"thumbnail\":\"https://thumbnails.pump.fun/1048106/1759278395148.jpeg\"},{\"mintId\":\"CboMcTUYUcy9E6B3yGdFn6aEsGUnYV6yWeoeukw6pump\",\"name\":\"Butthole Coin\",\"symbol\":\"Butthole\",\"status\":\"live\",\"currentViewers\":8,\"marketCapUsd\":3179320,\"marketCapSol\":15250,\"latestAt\":\"2025-10-01T00:26:57.173Z\",\"lastSnapshotAgeSeconds\":5,\"thumbnail\":\"https://thumbnails.pump.fun/936979/1759278387178.jpeg\"},{\"mintId\":\"E3oEF6TZb5DssCqwyXRt31AUEnGqvcHeVcyGvLiqpump\",\"name\":\"ROY\",\"symbol\":\"ROY\",\"status\":\"live\",\"currentViewers\":12,\"marketCapUsd\":1939593.0304401768,\"marketCapSol\":9303.496884306298,\"latestAt\":\"2025-10-01T00:26:57.173Z\",\"lastSnapshotAgeSeconds\":5,\"thumbnail\":\"https://thumbnails.pump.fun/1040793/1759278388005.jpeg\"},{\"mintId\":\"V5cCiSixPLAiEDX2zZquT5VuLm4prr5t35PWmjNpump\",\"name\":\"KindnessCoin\",\"symbol\":\"KIND\",\"status\":\"live\",\"currentViewers\":23,\"marketCapUsd\":1232142.9260576502,\"marketCapSol\":5910.125316853657,\"latestAt\":\"2025-10-01T00:26:57.173Z\",\"lastSnapshotAgeSeconds\":5,\"thumbnail\":\"https://thumbnails.pump.fun/986134/1759278371484.jpeg\"},{\"mintId\":\"2EYvskXTncMS11vejJcWHh8fPaCFy6bzDcVnmofEpump\",\"name\":\"streamdotfun\",\"symbol\":\"STREAM\",\"status\":\"live\",\"currentViewers\":9,\"marketCapUsd\":1153593.9753405312,\"marketCapSol\":5533.355599292648,\"latestAt\":\"2025-10-01T00:26:57.173Z\",\"lastSnapshotAgeSeconds\":5,\"thumbnail\":\"https://thumbnails.pump.fun/1000314/1759278346328.jpeg\"}]}",
+    "type": "mcp_call",
+    "approval_request_id": null,
+    "server_label": "dexter",
+    "error": null
+  },
+  "output_index": 0,
+  "response_id": "resp_CLeyKO3yztkaiipwSrOfX"
+}
+▼
+input_audio_buffer.speech_started
+8:27:09 PM
+{
+  "type": "input_audio_buffer.speech_started",
+  "event_id": "event_CLeyQDVnIJmACxYyYjEKa",
+  "item_id": "item_CLeyQRtSAceWxFI8ln6T8",
+  "audio_start_ms": 12244
+}
+▼
+input_audio_buffer.speech_stopped
+8:27:11 PM
+{
+  "type": "input_audio_buffer.speech_stopped",
+  "event_id": "event_CLeySKcvmavzzgHpcG6fq",
+  "item_id": "item_CLeyQRtSAceWxFI8ln6T8",
+  "audio_end_ms": 14112
+}
+▼
+input_audio_buffer.committed
+8:27:11 PM
+{
+  "type": "input_audio_buffer.committed",
+  "event_id": "event_CLeySpfpAvgnyh8EcmeGA",
+  "item_id": "item_CLeyQRtSAceWxFI8ln6T8",
+  "previous_item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq"
+}
+▼
+conversation.item.created
+8:27:11 PM
+{
+  "type": "conversation.item.created",
+  "event_id": "event_CLeySFM6LTNBPp3tg0XvX",
+  "previous_item_id": "mcp_CLeyL0mXC2D4XCBGuTKTq",
+  "item": {
+    "id": "item_CLeyQRtSAceWxFI8ln6T8",
+    "object": "realtime.item",
+    "type": "message",
+    "status": "completed",
+    "role": "user",
+    "content": [
+      {
+        "type": "input_audio",
+        "transcript": null
+      }
+    ]
+  }
+}
+▼
+response.created
+8:27:11 PM
+{
+  "type": "response.created",
+  "event_id": "event_CLeySUpfq79yUOuIVi3S9",
+  "response": {
+    "id": "resp_CLeySmZ0u90ShdsFNHKzk",
+    "conversation_id": "conv_CLeyDCnah10fO14K4CuLv",
+    "max_output_tokens": "inf",
+    "metadata": null,
+    "object": "realtime.response",
+    "output": [],
+    "status": "in_progress",
+    "status_details": null,
+    "usage": null
+  }
+}
+▼
+response.output_item.added
+8:27:11 PM
+{
+  "type": "response.output_item.added",
+  "event_id": "event_CLeySKz4gu0qp9tlD2l2J",
+  "item": {
+    "id": "item_CLeySp1qiQxhS27osey7S",
+    "content": [],
+    "role": "assistant",
+    "status": "in_progress",
+    "type": "message",
+    "object": "realtime.item"
+  },
+  "output_index": 0,
+  "response_id": "resp_CLeySmZ0u90ShdsFNHKzk"
+}
+▼
+conversation.item.created
+8:27:11 PM
+{
+  "type": "conversation.item.created",
+  "event_id": "event_CLeySvlBlaixZNzWRA595",
+  "previous_item_id": "item_CLeyQRtSAceWxFI8ln6T8",
+  "item": {
+    "id": "item_CLeySp1qiQxhS27osey7S",
+    "object": "realtime.item",
+    "type": "message",
+    "status": "in_progress",
+    "role": "assistant",
+    "content": []
+  }
+}
+▼
+response.content_part.added
+8:27:11 PM
+{
+  "type": "response.content_part.added",
+  "event_id": "event_CLeySNL74LX8mZjHKNBXt",
+  "item_id": "item_CLeySp1qiQxhS27osey7S",
+  "content_index": 0,
+  "output_index": 0,
+  "response_id": "resp_CLeySmZ0u90ShdsFNHKzk",
+  "part": {
+    "transcript": "",
+    "type": "audio"
+  }
+}
+▼
+output_audio_buffer.started
+8:27:11 PM
+{
+  "type": "output_audio_buffer.started",
+  "event_id": "event_36f0ebf824a34b79",
+  "response_id": "resp_CLeySmZ0u90ShdsFNHKzk"
+}
+▼
+response.audio.done
+8:27:19 PM
+{
+  "type": "response.audio.done",
+  "event_id": "event_CLeyaRA4obsI9qLSa9Ewo",
+  "response_id": "resp_CLeySmZ0u90ShdsFNHKzk",
+  "item_id": "item_CLeySp1qiQxhS27osey7S",
+  "output_index": 0,
+  "content_index": 0
+}
+▼
+response.content_part.done
+8:27:20 PM
+{
+  "type": "response.content_part.done",
+  "event_id": "event_CLeyatWsnxmfDqjEjgWox",
+  "item_id": "item_CLeySp1qiQxhS27osey7S",
+  "content_index": 0,
+  "output_index": 0,
+  "response_id": "resp_CLeySmZ0u90ShdsFNHKzk",
+  "part": {
+    "transcript": "Sure! Here’s what’s trending on Pump.fun right now, based on live viewers. \n\nThe top trending token is “San Chan” (symbol: San), with 24 viewers and about $12.36 million market cap. \n\nNext is “KindnessCoin” (KIND) with 23 viewers and a market cap around $1.23 million. \n\nThen there’s “ROY” (ROY) with 12 viewers and a market cap of about $1.94 million. \n\n“streamdotfun” (STREAM) has 9 viewers and a market cap of around $1.15 million. \n\nAnd “Butthole Coin” (Butthole) has 8 viewers with a market cap of about $3.18 million. \n\nThese are the top 5 by live viewers right now.",
+    "type": "audio"
+  }
+}
+▼
+response.output_item.done
+8:27:20 PM
+{
+  "type": "response.output_item.done",
+  "event_id": "event_CLeyafJ7FM86oIVIk0LVl",
+  "response_id": "resp_CLeySmZ0u90ShdsFNHKzk",
+  "output_index": 0,
+  "item": {
+    "id": "item_CLeySp1qiQxhS27osey7S",
+    "object": "realtime.item",
+    "type": "message",
+    "status": "completed",
+    "role": "assistant",
+    "content": [
+      {
+        "type": "audio",
+        "transcript": "Sure! Here’s what’s trending on Pump.fun right now, based on live viewers. \n\nThe top trending token is “San Chan” (symbol: San), with 24 viewers and about $12.36 million market cap. \n\nNext is “KindnessCoin” (KIND) with 23 viewers and a market cap around $1.23 million. \n\nThen there’s “ROY” (ROY) with 12 viewers and a market cap of about $1.94 million. \n\n“streamdotfun” (STREAM) has 9 viewers and a market cap of around $1.15 million. \n\nAnd “Butthole Coin” (Butthole) has 8 viewers with a market cap of about $3.18 million. \n\nThese are the top 5 by live viewers right now."
+      }
+    ]
+  }
+}
+▼
+response.done
+8:27:20 PM
+{
+  "type": "response.done",
+  "event_id": "event_CLeyaoPLg60XtL4tLkdPm",
+  "response": {
+    "id": "resp_CLeySmZ0u90ShdsFNHKzk",
+    "conversation_id": "conv_CLeyDCnah10fO14K4CuLv",
+    "max_output_tokens": "inf",
+    "metadata": null,
+    "object": "realtime.response",
+    "output": [
+      {
+        "id": "item_CLeySp1qiQxhS27osey7S",
+        "object": "realtime.item",
+        "type": "message",
+        "status": "completed",
+        "role": "assistant",
+        "content": [
+          {
+            "type": "audio",
+            "transcript": "Sure! Here’s what’s trending on Pump.fun right now, based on live viewers. \n\nThe top trending token is “San Chan” (symbol: San), with 24 viewers and about $12.36 million market cap. \n\nNext is “KindnessCoin” (KIND) with 23 viewers and a market cap around $1.23 million. \n\nThen there’s “ROY” (ROY) with 12 viewers and a market cap of about $1.94 million. \n\n“streamdotfun” (STREAM) has 9 viewers and a market cap of around $1.15 million. \n\nAnd “Butthole Coin” (Butthole) has 8 viewers with a market cap of about $3.18 million. \n\nThese are the top 5 by live viewers right now."
+          }
+        ]
+      }
+    ],
+    "status": "completed",
+    "status_details": null,
+    "usage": {
+      "input_tokens": 1857,
+      "output_tokens": 1012
+    }
+  }
+}
+▼
+rate_limits.updated
+8:27:20 PM
+{
+  "type": "rate_limits.updated",
+  "event_id": "event_CLeyabB4EI1oq7KpKfFBV",
+  "rate_limits": [
+    {
+      "limit": 15000000,
+      "name": "tokens",
+      "remaining": 14998417,
+      "reset_seconds": 0.006
+    }
+  ]
+}
+▼
+output_audio_buffer.stopped
+8:27:51 PM
+{
+  "type": "output_audio_buffer.stopped",
+  "event_id": "event_a311ae110451480c",
+  "response_id": "resp_CLeySmZ0u90ShdsFNHKzk"
+}
