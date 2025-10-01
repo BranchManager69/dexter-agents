@@ -67,6 +67,15 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         historyHandlersRef.current.handleTranscriptionDelta(event, 'assistant');
         break;
       }
+      // Some runtimes emit user ASR without the conversation.item.* prefix
+      case "input_audio_transcription.delta": {
+        historyHandlersRef.current.handleTranscriptionDelta(event, 'user');
+        break;
+      }
+      case "input_audio_transcription.completed": {
+        historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
+        break;
+      }
       case "conversation.item.created": {
         // Ensure user voice messages show up immediately when items are created
         try {
