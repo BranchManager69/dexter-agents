@@ -34,13 +34,16 @@ export const EventProvider: FC<PropsWithChildren> = ({ children }) => {
   }, [loggedEvents]);
 
   function addLoggedEvent(direction: "client" | "server", eventName: string, eventData: Record<string, any>) {
+    // Hard filter noisy streaming deltas from logs
+    const name = String(eventName || '').trim();
+    if (name.endsWith('.delta')) return;
     const id = eventData.event_id || uuidv4();
     setLoggedEvents((prev) => [
       ...prev,
       {
         id,
         direction,
-        eventName,
+        eventName: name,
         eventData,
         timestamp: new Date().toLocaleTimeString(),
         expanded: false,
