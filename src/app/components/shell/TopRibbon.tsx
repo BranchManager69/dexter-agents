@@ -25,6 +25,13 @@ interface WalletPortfolioSummary {
   lastUpdatedLabel: string | null;
   lastUpdatedIso: string | null;
   error?: string | null;
+  balances: Array<{
+    mint: string | null;
+    symbol: string | null;
+    label: string | null;
+    amountUi: number | null;
+    usdValue: number | null;
+  }>;
 }
 
 interface McpStatusProps {

@@ -64,31 +64,46 @@ export async function resolveMcpAuth(): Promise<McpAuthDetails> {
     data: { session },
   } = await supabase.auth.getSession();
 
-  const cookieStore = await cookieStorePromise;
-  const refreshToken = getRefreshToken(session) || extractRefreshTokenFromCookies(cookieStore.getAll());
-  const sessionId = (session as Session & { session_id?: string | null })?.session_id ?? null;
+  if (!session) {
+    console.warn('[mcp] resolve auth: no supabase session');
+  }
+  console.log('[mcp] resolve auth: session present', Boolean(session), 'has refresh', Boolean(session?.refresh_token));
 
-  if (session && refreshToken && sessionId) {
-    const minted = await resolveMintedBearer(sessionId, refreshToken);
+  const cookieStore = await cookieStorePromise;
+  try {
+    const cookieNames = cookieStore.getAll().map((entry) => entry.name);
+    console.log('[mcp] resolve auth: cookie names', cookieNames);
+  } catch (error) {
+    console.warn('[mcp] resolve auth: failed to read cookie names', error instanceof Error ? error.message : error);
+  }
+  const refreshToken = getRefreshToken(session) || extractRefreshTokenFromCookies(cookieStore.getAll());
+  const sessionStruct = session as Session & { session_id?: string | null };
+  const cacheKey = sessionStruct?.session_id ?? session?.user?.id ?? null;
+  console.log('[mcp] resolve auth: cacheKey candidate', cacheKey);
+
+  if (session && refreshToken && cacheKey) {
+    const minted = await resolveMintedBearer(cacheKey, refreshToken);
     if (minted) {
+      console.log('[mcp] resolve auth: minted per-user bearer', { cacheKey });
       return {
         bearer: minted,
-        cacheKey: `user:${sessionId}`,
+        cacheKey: `user:${cacheKey}`,
         identity: 'user',
         minted: true,
-        sessionId,
+        sessionId: cacheKey,
         user: session.user
           ? { id: session.user.id, email: session.user.email ?? null }
           : null,
       };
     }
+    console.warn('[mcp] resolve auth: mint returned null, falling back to shared', { cacheKey });
     if (SHARED_BEARER) {
       return {
         bearer: SHARED_BEARER,
         cacheKey: 'shared',
         identity: 'fallback',
         minted: false,
-        sessionId,
+        sessionId: cacheKey,
         user: session.user
           ? { id: session.user.id, email: session.user.email ?? null }
           : null,
@@ -97,24 +112,26 @@ export async function resolveMcpAuth(): Promise<McpAuthDetails> {
   }
 
   if (SHARED_BEARER) {
+    console.warn('[mcp] resolve auth: using shared bearer (no session or minted token)');
     return {
       bearer: SHARED_BEARER,
       cacheKey: 'shared',
       identity: session ? 'fallback' : 'guest',
       minted: false,
-      sessionId,
+      sessionId: cacheKey,
       user: session?.user
         ? { id: session.user.id, email: session.user.email ?? null }
         : null,
     };
   }
 
+  console.warn('[mcp] resolve auth: no bearer available');
   return {
     bearer: null,
     cacheKey: 'shared',
     identity: 'none',
     minted: false,
-    sessionId,
+    sessionId: cacheKey,
     user: session?.user
       ? { id: session.user.id, email: session.user.email ?? null }
       : null,
@@ -218,12 +235,18 @@ async function mintDexterMcpJwt(refreshToken: string): Promise<MintCacheEntry | 
     });
 
     if (!response.ok) {
+      const body = await response.text().catch(() => '');
+      console.warn('[mcp] mint failed', {
+        status: response.status,
+        body: body.slice(0, 200),
+      });
       return null;
     }
 
     const data = await response.json().catch(() => null);
     const bearerValue = typeof data?.dexter_mcp_jwt === 'string' ? data.dexter_mcp_jwt.trim() : '';
     if (!bearerValue) {
+      console.warn('[mcp] mint missing dexter_mcp_jwt', data ?? null);
       return null;
     }
 

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ClipboardCopyIcon, DownloadIcon } from "@radix-ui/react-icons";
 import { SessionStatus } from "@/app/types";
 
-interface HeroControlsProps {
+export interface HeroControlsProps {
   sessionStatus: SessionStatus;
   onOpenSignals: () => void;
   onCopyTranscript: () => Promise<void>;
