@@ -54,9 +54,9 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 
 ## Environment
 - `.env.sample` documents required variables (`OPENAI_API_KEY`, `NEXT_PUBLIC_OPENAI_*_MODEL`, `NEXT_PUBLIC_SITE_URL`).
-- **Supabase** – set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` so the browser can sync auth state via `/auth/callback`.
+- **Supabase** – set `NEXT_PUBLIC_SUPABASE_URL` for client fetches and keep `SUPABASE_ANON_KEY` server-side; the `/auth/config` proxy hands the anon key to the browser when needed.
 - **Cloudflare Turnstile** – set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (same value the main site uses) to render the security challenge before sending a magic link.
-- Set `NEXT_PUBLIC_TOKEN_AI_MCP_TOKEN` for local MCP tool runs; production uses `TOKEN_AI_MCP_TOKEN` via PM2.
+- Set `TOKEN_AI_MCP_TOKEN` for local MCP tool runs (or `HARNESS_MCP_TOKEN` when using the harness CLI); production keeps it in PM2 env.
 - When deployed through `dexter-ops/ops/ecosystem.config.cjs`, `npm run deploy` builds the app and restarts the PM2 process with updated env.
 
 ### Supabase Redirect Allowlist

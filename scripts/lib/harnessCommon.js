@@ -125,13 +125,13 @@ async function mintMcpBearerFromCookie(cookieHeader) {
 
 function resolveStaticBearer() {
   return ensureBearerPrefix(
-    process.env.HARNESS_MCP_TOKEN || process.env.TOKEN_AI_MCP_TOKEN || process.env.NEXT_PUBLIC_TOKEN_AI_MCP_TOKEN || '',
+    process.env.HARNESS_MCP_TOKEN || process.env.TOKEN_AI_MCP_TOKEN || '',
   );
 }
 
 async function resolveMcpBearer({ guest } = {}) {
   const demoBearer = guest
-    ? ensureBearerPrefix(process.env.TOKEN_AI_MCP_TOKEN || process.env.NEXT_PUBLIC_TOKEN_AI_MCP_TOKEN || '')
+    ? ensureBearerPrefix(process.env.TOKEN_AI_MCP_TOKEN || '')
     : resolveStaticBearer();
 
   if (guest) {

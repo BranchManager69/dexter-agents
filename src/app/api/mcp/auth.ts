@@ -15,7 +15,7 @@ const MCP_URL = (
 ).replace(/\/$/, '');
 
 const SHARED_BEARER = ensureBearerPrefix(
-  process.env.TOKEN_AI_MCP_TOKEN || process.env.NEXT_PUBLIC_TOKEN_AI_MCP_TOKEN || ''
+  process.env.HARNESS_MCP_TOKEN || process.env.TOKEN_AI_MCP_TOKEN || ''
 );
 
 const TOKEN_EXPIRY_GRACE_MS = 30_000;
