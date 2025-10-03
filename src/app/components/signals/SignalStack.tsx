@@ -102,7 +102,7 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
   };
 
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
+    <>
       <section className="rounded-lg border border-neutral-800/60 bg-surface-base/85 p-4 shadow-inner-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
       </section>
 
       {showLogs && (
-        <section className="rounded-lg border border-neutral-800/60 bg-surface-base/85 p-4 shadow-inner-sm">
+        <section className="mt-4 rounded-lg border border-neutral-800/60 bg-surface-base/85 p-4 shadow-inner-sm">
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-display text-sm uppercase tracking-[0.28em] text-neutral-400">
               Event Logs
@@ -204,7 +204,7 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
           </div>
         </section>
       )}
-    </div>
+    </>
   );
 }
 
