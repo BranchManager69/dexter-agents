@@ -230,6 +230,40 @@ function extractStructuredPayload(result: any): any {
 }
 
 function deriveActiveWalletMeta(payload: any): { address: string | null; label: string | null } {
+  const attemptFromString = (value: unknown): string | null => {
+    if (typeof value !== 'string') return null;
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    if (/^[1-9A-HJ-NP-Za-km-z]{20,60}$/.test(trimmed)) {
+      return trimmed;
+    }
+    return null;
+  };
+
+  if (Array.isArray(payload)) {
+    for (const entry of payload) {
+      const fromArray = attemptFromString(entry);
+      if (fromArray) {
+        return { address: fromArray, label: null };
+      }
+      if (entry && typeof entry === 'object') {
+        const maybeText = attemptFromString((entry as any).text);
+        if (maybeText) {
+          return { address: maybeText, label: null };
+        }
+        const maybeValue = attemptFromString((entry as any).value);
+        if (maybeValue) {
+          return { address: maybeValue, label: null };
+        }
+      }
+    }
+  }
+
+  const stringCandidate = attemptFromString(payload);
+  if (stringCandidate) {
+    return { address: stringCandidate, label: null };
+  }
+
   if (!payload || typeof payload !== 'object') {
     return { address: null, label: null };
   }
@@ -631,21 +665,53 @@ export function useDexterAppController(): DexterAppController {
     setWalletPortfolioError(null);
 
     try {
-      const resolveResult = await callMcpTool('resolve_wallet');
-      const resolvePayload = extractStructuredPayload(resolveResult);
-      const meta = deriveActiveWalletMeta(resolvePayload);
-      const effectiveAddress = meta.address ?? lastKnownAddress;
-      const effectiveLabel = meta.label ?? lastKnownLabel;
-      console.log('[wallet] resolve_wallet meta', { meta, effectiveAddress, effectiveLabel });
+      let effectiveAddress: string | null = lastKnownAddress ?? null;
+      let effectiveLabel: string | null = lastKnownLabel ?? null;
+
+      try {
+        const resolveResult = await callMcpTool('resolve_wallet');
+        const resolvePayload = extractStructuredPayload(resolveResult);
+        const meta = deriveActiveWalletMeta(resolvePayload);
+        if (meta.address && typeof meta.address === 'string') {
+          effectiveAddress = meta.address;
+        }
+        if (meta.label && typeof meta.label === 'string') {
+          effectiveLabel = meta.label;
+        }
+      } catch (resolveError) {
+        console.warn('resolve_wallet failed or returned unexpected payload', resolveError);
+      }
 
       if (!effectiveAddress) {
-        const snapshot = buildPortfolioSnapshot({ address: null, label: effectiveLabel }, []);
-        if (walletFetchIdRef.current === requestId) {
-          setWalletPortfolio(snapshot);
-          setWalletPortfolioStatus('ready');
-          console.log('[wallet] portfolio snapshot empty', snapshot);
+        try {
+          const walletsResult = await callMcpTool('list_my_wallets');
+          const walletsPayload = extractStructuredPayload(walletsResult);
+          const walletsArray = Array.isArray((walletsPayload as any)?.wallets)
+            ? (walletsPayload as any).wallets
+            : Array.isArray(walletsPayload)
+              ? walletsPayload
+              : [];
+          const preferredWallet = walletsArray.find((entry: any) => entry?.is_default) || walletsArray[0];
+          const addressCandidate = typeof preferredWallet?.address === 'string'
+            ? preferredWallet.address
+            : typeof preferredWallet?.public_key === 'string'
+              ? preferredWallet.public_key
+              : typeof preferredWallet?.wallet_address === 'string'
+                ? preferredWallet.wallet_address
+                : null;
+          if (addressCandidate) {
+            effectiveAddress = addressCandidate;
+          }
+          if (!effectiveLabel && typeof preferredWallet?.label === 'string') {
+            effectiveLabel = preferredWallet.label;
+          }
+        } catch (listError) {
+          console.warn('list_my_wallets fallback failed', listError);
         }
-        return;
+      }
+
+      if (!effectiveAddress) {
+        throw new Error('No wallet address available for balance fetch.');
       }
 
       const balancesResult = await callMcpTool('solana_list_balances', {
@@ -654,7 +720,6 @@ export function useDexterAppController(): DexterAppController {
       });
 
       const snapshot = buildPortfolioSnapshot({ address: effectiveAddress, label: effectiveLabel }, balancesResult);
-      console.log('[wallet] portfolio snapshot', snapshot);
 
       if (walletFetchIdRef.current === requestId) {
         setWalletPortfolio(snapshot);
