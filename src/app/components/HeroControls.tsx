@@ -142,6 +142,12 @@ export function HeroControls({
   ]
     .filter(Boolean)
     .join(" ");
+  const mobileConsoleButtonTone = [
+    adminButtonTone,
+    "relative ml-auto flex lg:hidden",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const rootClassName = [
     "flex flex-wrap items-start gap-3",
@@ -167,6 +173,13 @@ export function HeroControls({
   const adminConsole = isAdminConsoleOpen && renderAdminConsole
     ? renderAdminConsole()
     : null;
+
+  const handleMobileSignals = useCallback(() => {
+    if (isAdminConsoleOpen) {
+      setIsAdminConsoleOpen(false);
+    }
+    onOpenSignals();
+  }, [isAdminConsoleOpen, onOpenSignals]);
 
   const adminConsolePortal =
     typeof window !== "undefined" && isAdminConsoleOpen && adminConsole ? (
@@ -341,11 +354,17 @@ export function HeroControls({
       {canUseAdminTools && (
         <button
           type="button"
-          onClick={onOpenSignals}
-          className="ml-auto inline-flex items-center gap-2 rounded-pill border border-neutral-800/60 bg-surface-glass/70 px-4 py-1 text-xs uppercase tracking-[0.28em] text-neutral-300 transition hover:border-flux/50 hover:text-flux lg:hidden"
+          onClick={handleMobileSignals}
+          className={mobileConsoleButtonTone}
+          aria-label="Open signals"
         >
-          <span className="h-2 w-2 rounded-full bg-flux shadow-glow-flux" />
-          Signals
+          <MixerHorizontalIcon className="h-3.5 w-3.5" />
+          {typeof adminConsoleMetadata?.toolCount === "number" && (
+            <span className="absolute -top-1 -right-1 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full border border-rose-500/50 bg-rose-500/40 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-rose-50">
+              {adminConsoleMetadata.toolCount}
+            </span>
+          )}
+          <span className="sr-only">Open signals</span>
         </button>
       )}
 
