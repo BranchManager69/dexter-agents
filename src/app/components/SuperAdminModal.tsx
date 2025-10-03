@@ -451,40 +451,41 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
         aria-hidden="true"
       />
 
-      <div className="fixed inset-0 z-[10999] flex items-center justify-center px-4 py-8">
+      <div className="fixed inset-0 z-[10999] flex items-center justify-center px-2 py-6 sm:px-4 sm:py-8">
         <div
-          className="w-full max-w-5xl overflow-hidden rounded-xl border border-amber-400/60 bg-neutral-950/95 p-6 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl"
+          className="relative flex h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-amber-400/60 bg-neutral-950/95 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:h-[90vh]"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.28em] text-amber-200/80">
-                Superadmin Tools
-              </p>
-              <h2 className="mt-2 font-display text-lg text-amber-100">
-                Prompt Segment Workbench
-              </h2>
-              <p className="mt-1 text-xs text-amber-100/70">
-                Inspect, edit, and publish backend prompt modules live.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="self-start rounded-full border border-amber-300/40 p-1 text-amber-200 transition hover:border-amber-200/60 hover:text-amber-50"
-              aria-label="Close superadmin panel"
-            >
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 5l10 10" />
-                <path d="M15 5l-10 10" />
-              </svg>
-            </button>
-          </div>
-
-          <div className="mt-6 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
-            <aside className="flex flex-col gap-4">
+          <div className="flex flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <label className="text-[11px] uppercase tracking-[0.22em] text-amber-200/70">
+                <p className="text-[11px] uppercase tracking-[0.28em] text-amber-200/80">
+                  Superadmin Tools
+                </p>
+                <h2 className="mt-2 font-display text-lg text-amber-100">
+                  Prompt Segment Workbench
+                </h2>
+                <p className="mt-1 text-xs text-amber-100/70">
+                  Inspect, edit, and publish backend prompt modules live.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="self-start rounded-full border border-amber-300/40 p-1 text-amber-200 transition hover:border-amber-200/60 hover:text-amber-50"
+                aria-label="Close superadmin panel"
+              >
+                <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 5l10 10" />
+                  <path d="M15 5l-10 10" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mt-6 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
+              <aside className="flex flex-col gap-4">
+                <div>
+                  <label className="text-[11px] uppercase tracking-[0.22em] text-amber-200/70">
                   Modules
                 </label>
                 <input
@@ -779,6 +780,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                 </button>
               </div>
             </section>
+          </div>
           </div>
         </div>
       </div>

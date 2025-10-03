@@ -1527,9 +1527,6 @@ export function useDexterAppController(): DexterAppController {
 
   const topRibbonProps: TopRibbonProps = {
     sessionStatus,
-    selectedAgentName,
-    agents: scenarioAgents,
-    onAgentChange: handleSelectedAgentChange,
     onToggleConnection,
     onReloadBrand: () => window.location.reload(),
     authState: {
@@ -1564,6 +1561,10 @@ export function useDexterAppController(): DexterAppController {
     codec: urlCodec,
     onCodecChange: handleCodecChange,
     buildTag: process.env.NEXT_PUBLIC_BUILD_TAG ?? "dev",
+    agents: scenarioAgents,
+    selectedAgentName,
+    onAgentChange: handleSelectedAgentChange,
+    canManageAgents: canUseAdminTools,
   };
 
   const superAdminModalProps: SuperAdminModalProps = {
