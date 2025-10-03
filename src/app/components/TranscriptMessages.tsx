@@ -10,16 +10,19 @@ import { getToolNoteRenderer } from "./toolNotes/renderers";
 interface TranscriptMessagesProps {
   hasActivatedSession?: boolean;
   onSendMessage?: (message: string) => void;
+  canViewDebugPayloads?: boolean;
 }
 
 export function TranscriptMessages({
   hasActivatedSession,
   onSendMessage,
+  canViewDebugPayloads = false,
 }: TranscriptMessagesProps = {}) {
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
-  const showDebugPayloads = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
+  const debugEnvEnabled = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
+  const showDebugPayloads = debugEnvEnabled && canViewDebugPayloads;
   const [visibleTimestamps, setVisibleTimestamps] = useState<Record<string, boolean>>({});
   const timestampTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
