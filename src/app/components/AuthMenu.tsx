@@ -4,6 +4,16 @@ import { resolveEmailProvider } from "@/app/lib/emailProviders";
 import { TurnstileWidget } from "./TurnstileWidget";
 import { HashBadge } from "@/app/components/toolNotes/renderers/helpers";
 
+interface WalletPortfolioSummary {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  solBalanceFormatted: string | null;
+  totalUsdFormatted: string | null;
+  tokenCount: number;
+  lastUpdatedLabel: string | null;
+  lastUpdatedIso: string | null;
+  error?: string | null;
+}
+
 interface AuthMenuProps {
   isAuthenticated: boolean;
   loading: boolean;
@@ -16,6 +26,7 @@ interface AuthMenuProps {
   buttonToneClass?: string;
   buttonTitle?: string;
   activeWalletKey?: string | null;
+  walletPortfolio?: WalletPortfolioSummary;
 }
 
 export function AuthMenu({
@@ -29,6 +40,7 @@ export function AuthMenu({
   buttonToneClass,
   buttonTitle,
   activeWalletKey,
+  walletPortfolio,
 }: AuthMenuProps) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -256,6 +268,34 @@ export function AuthMenu({
                   <div className="mt-2">
                     <HashBadge value={activeWalletKey} ariaLabel="wallet address" />
                   </div>
+                  {walletPortfolio && (
+                    <div className="mt-3 space-y-1 text-[11px] text-neutral-300">
+                      <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">Balances</div>
+                      {walletPortfolio.status === 'loading' && !walletPortfolio.solBalanceFormatted && !walletPortfolio.totalUsdFormatted ? (
+                        <div className="text-neutral-500">Loading…</div>
+                      ) : walletPortfolio.status === 'error' ? (
+                        <div className="text-accent-critical">
+                          {walletPortfolio.error || 'Unable to load balances'}
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-2 text-neutral-100">
+                          {walletPortfolio.solBalanceFormatted && <span>{walletPortfolio.solBalanceFormatted}</span>}
+                          {walletPortfolio.solBalanceFormatted && walletPortfolio.totalUsdFormatted && (
+                            <span className="text-neutral-600">•</span>
+                          )}
+                          {walletPortfolio.totalUsdFormatted && <span>{walletPortfolio.totalUsdFormatted}</span>}
+                          {walletPortfolio.tokenCount > 0 && (
+                            <span className="text-neutral-500">({walletPortfolio.tokenCount} tokens)</span>
+                          )}
+                        </div>
+                      )}
+                      {walletPortfolio.lastUpdatedLabel && walletPortfolio.status === 'ready' && (
+                        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                          Updated {walletPortfolio.lastUpdatedLabel}
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <div className="mt-2 flex gap-2">
                     <button
                       type="button"

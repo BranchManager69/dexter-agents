@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 
 // UI components
 import Hero from "./components/Hero";
+import HeroControls from "./components/HeroControls";
 import TranscriptMessages from "./components/TranscriptMessages";
 import InputBar from "./components/InputBar";
 import Events from "./components/Events";
@@ -49,6 +50,26 @@ export type DexterSessionSummary = {
   wallet?: { public_key: string | null; label?: string | null } | null;
 };
 
+type WalletBalanceEntry = {
+  mint: string | null;
+  symbol: string | null;
+  decimals: number | null;
+  amountUi: number | null;
+  usdValue: number | null;
+};
+
+type WalletPortfolioSnapshot = {
+  address: string | null;
+  label?: string | null;
+  solBalance: number | null;
+  solBalanceFormatted: string | null;
+  totalUsd: number | null;
+  totalUsdFormatted: string | null;
+  tokenCount: number;
+  balances: WalletBalanceEntry[];
+  fetchedAt: string;
+};
+
 type McpStatusState = {
   state: "loading" | "user" | "fallback" | "guest" | "none" | "error";
   label: string;
@@ -64,6 +85,276 @@ const createGuestIdentity = (): DexterSessionSummary => ({
   guestProfile: { label: "Dexter Demo Wallet", instructions: GUEST_SESSION_INSTRUCTIONS },
   wallet: null,
 });
+
+const SOLANA_NATIVE_MINT = 'So11111111111111111111111111111111111111112';
+
+const USD_COMPACT_FORMATTER = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 0,
+});
+
+const USD_PRECISE_FORMATTER = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  maximumFractionDigits: 2,
+});
+
+const SOL_LARGE_FORMATTER = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 4,
+});
+
+const SOL_SMALL_FORMATTER = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 4,
+  maximumFractionDigits: 6,
+});
+
+function formatUsdDisplay(value: number | null | undefined): string | null {
+  if (value === null || value === undefined || Number.isNaN(value)) return null;
+  const abs = Math.abs(value);
+  if (abs >= 1000) {
+    return USD_COMPACT_FORMATTER.format(value);
+  }
+  return USD_PRECISE_FORMATTER.format(value);
+}
+
+function formatSolDisplay(value: number | null | undefined): string | null {
+  if (value === null || value === undefined || Number.isNaN(value)) return null;
+  const abs = Math.abs(value);
+  const formatter = abs >= 1 ? SOL_LARGE_FORMATTER : SOL_SMALL_FORMATTER;
+  return `${formatter.format(value)} SOL`;
+}
+
+function pickNumber(...values: Array<unknown>): number | undefined {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return undefined;
+}
+
+function pickString(...values: Array<unknown>): string | undefined {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
+function extractStructuredPayload(result: any): any {
+  if (result === null || result === undefined) return undefined;
+  if (Array.isArray(result)) return result;
+  if (typeof result !== 'object') return result;
+
+  if ('structuredContent' in result && result.structuredContent) {
+    return extractStructuredPayload(result.structuredContent);
+  }
+  if ('structured_content' in result && (result as any).structured_content) {
+    return extractStructuredPayload((result as any).structured_content);
+  }
+  if ('structured' in result && (result as any).structured) {
+    return extractStructuredPayload((result as any).structured);
+  }
+  if ('output' in result && (result as any).output) {
+    return extractStructuredPayload((result as any).output);
+  }
+  if ('result' in result && (result as any).result) {
+    return extractStructuredPayload((result as any).result);
+  }
+  if ('data' in result && (result as any).data) {
+    return extractStructuredPayload((result as any).data);
+  }
+
+  if (Array.isArray((result as any).content)) {
+    for (const entry of (result as any).content) {
+      if (!entry || typeof entry !== 'object') continue;
+      if ('json' in entry && entry.json) {
+        const unwrapped = extractStructuredPayload(entry.json);
+        if (unwrapped !== undefined) return unwrapped;
+      }
+      if ('object' in entry && entry.object) {
+        const unwrapped = extractStructuredPayload(entry.object);
+        if (unwrapped !== undefined) return unwrapped;
+      }
+      if ('data' in entry && entry.data) {
+        const unwrapped = extractStructuredPayload(entry.data);
+        if (unwrapped !== undefined) return unwrapped;
+      }
+      if ('result' in entry && entry.result) {
+        const unwrapped = extractStructuredPayload(entry.result);
+        if (unwrapped !== undefined) return unwrapped;
+      }
+      if ('text' in entry && typeof entry.text === 'string') {
+        try {
+          const parsed = JSON.parse(entry.text);
+          const unwrapped = extractStructuredPayload(parsed);
+          if (unwrapped !== undefined) return unwrapped;
+        } catch {
+          // ignore
+        }
+      }
+    }
+  }
+
+  return result;
+}
+
+function deriveActiveWalletMeta(payload: any): { address: string | null; label: string | null } {
+  if (!payload || typeof payload !== 'object') {
+    return { address: null, label: null };
+  }
+
+  const active =
+    (typeof (payload as any).active_wallet === 'object' && (payload as any).active_wallet) ||
+    (typeof (payload as any).wallet === 'object' && (payload as any).wallet) ||
+    undefined;
+
+  const address =
+    pickString(
+      active?.address,
+      active?.public_key,
+      (payload as any).wallet_address,
+      (payload as any).public_key,
+      (payload as any).address,
+      (payload as any).active_wallet_address,
+    ) ?? null;
+
+  const label =
+    pickString(
+      active?.label,
+      (payload as any).wallet_label,
+      (payload as any).label,
+    ) ?? null;
+
+  return { address, label };
+}
+
+function normalizeBalancesPayload(payload: any): { balances: WalletBalanceEntry[]; solBalance: number | null; totalUsd: number | null } {
+  const root = extractStructuredPayload(payload);
+
+  let sourceList: any[] = [];
+  if (Array.isArray(root?.balances)) {
+    sourceList = root.balances as any[];
+  } else if (Array.isArray(root)) {
+    sourceList = root as any[];
+  } else if (Array.isArray(root?.data)) {
+    sourceList = root.data as any[];
+  } else if (Array.isArray(root?.items)) {
+    sourceList = root.items as any[];
+  }
+
+  const normalized: WalletBalanceEntry[] = [];
+  let solBalance: number | null = null;
+  let totalUsd = 0;
+  let hasUsdValues = false;
+
+  sourceList.slice(0, 30).forEach((entry) => {
+    if (!entry || typeof entry !== 'object') return;
+
+    const mint = pickString(entry.mint, entry.mintAddress, entry.publicKey, entry.address, entry.id) ?? null;
+    const tokenMeta = typeof entry.token === 'object' && entry.token ? entry.token : undefined;
+    const symbol =
+      pickString(
+        entry.symbol,
+        entry.ticker,
+        entry.asset_symbol,
+        tokenMeta?.symbol,
+        tokenMeta?.ticker,
+      ) || (mint ? `${mint.slice(0, 4)}…${mint.slice(-4)}` : null);
+    const decimals = pickNumber(entry.decimals, tokenMeta?.decimals) ?? null;
+
+    const lamports = pickNumber(entry.lamports, entry.amountLamports, entry.amount_lamports, entry.balanceLamports);
+    let amountUi =
+      pickNumber(
+        entry.amountUi,
+        entry.amount_ui,
+        entry.uiAmount,
+        entry.ui_amount,
+        entry.balanceUi,
+        entry.balance_ui,
+      ) ?? null;
+    if (amountUi === null && lamports !== undefined && lamports !== null) {
+      amountUi = lamports / 1_000_000_000;
+    }
+
+    let usdValue = pickNumber(
+      entry.usdValue,
+      entry.usd_value,
+      entry.valueUsd,
+      entry.totalUsd,
+      entry.total_value_usd,
+    );
+    const priceUsd = pickNumber(entry.priceUsd, entry.price_usd, tokenMeta?.priceUsd, tokenMeta?.price_usd);
+    if ((usdValue === undefined || usdValue === null) && amountUi !== null && priceUsd !== undefined) {
+      usdValue = amountUi * priceUsd;
+    }
+
+    if (usdValue !== undefined && usdValue !== null && Number.isFinite(usdValue)) {
+      totalUsd += usdValue;
+      hasUsdValues = true;
+    }
+
+    const normalizedEntry: WalletBalanceEntry = {
+      mint,
+      symbol,
+      decimals,
+      amountUi,
+      usdValue: usdValue !== undefined && usdValue !== null && Number.isFinite(usdValue) ? usdValue : null,
+    };
+    normalized.push(normalizedEntry);
+
+    const candidateMint = mint ?? '';
+    const candidateSymbol = symbol ? symbol.toUpperCase() : null;
+    const isNative = Boolean(entry.isNative || entry.native || entry.is_sol);
+    if (solBalance === null) {
+      if (isNative || candidateSymbol === 'SOL' || candidateMint === SOLANA_NATIVE_MINT) {
+        if (amountUi !== null) {
+          solBalance = amountUi;
+        } else if (lamports !== undefined && lamports !== null) {
+          solBalance = lamports / 1_000_000_000;
+        }
+      }
+    }
+  });
+
+  const totalUsdValue = normalized.length === 0
+    ? null
+    : hasUsdValues
+      ? totalUsd
+      : 0;
+
+  return {
+    balances: normalized,
+    solBalance,
+    totalUsd: totalUsdValue,
+  };
+}
+
+function buildPortfolioSnapshot(
+  meta: { address: string | null; label: string | null },
+  balancesPayload: any,
+): WalletPortfolioSnapshot {
+  const normalized = normalizeBalancesPayload(balancesPayload);
+  const solFormatted = formatSolDisplay(normalized.solBalance ?? null);
+  const totalUsdFormatted = formatUsdDisplay(normalized.totalUsd ?? null);
+
+  return {
+    address: meta.address,
+    label: meta.label ?? undefined,
+    solBalance: normalized.solBalance ?? null,
+    solBalanceFormatted: solFormatted,
+    totalUsd: normalized.totalUsd ?? null,
+    totalUsdFormatted,
+    tokenCount: normalized.balances.length,
+    balances: normalized.balances,
+    fetchedAt: new Date().toISOString(),
+  };
+}
 
 // Agent configs
 import { scenarioLoaders, defaultAgentSetKey } from "@/app/agentConfigs";
@@ -93,6 +384,9 @@ function App() {
   const [sessionIdentity, setSessionIdentity] = useState<DexterSessionSummary>(createGuestIdentity);
   const [mcpStatus, setMcpStatus] = useState<McpStatusState>(getMcpStatusSnapshot());
   const [isSuperAdminModalOpen, setIsSuperAdminModalOpen] = useState(false);
+  const [walletPortfolio, setWalletPortfolio] = useState<WalletPortfolioSnapshot | null>(null);
+  const [walletPortfolioStatus, setWalletPortfolioStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [walletPortfolioError, setWalletPortfolioError] = useState<string | null>(null);
 
   const authEmail = useMemo(() => {
     if (!authSession) return null;
@@ -153,6 +447,30 @@ function App() {
     });
   }, [authSession, resetSessionIdentity]);
 
+  const callMcpTool = useCallback(async (toolName: string, args: Record<string, unknown> = {}) => {
+    try {
+      const response = await fetch('/api/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ tool: toolName, arguments: args ?? {} }),
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`MCP ${toolName} failed (${response.status}): ${text.slice(0, 200)}`);
+      }
+
+      return await response.json();
+    } catch (error: any) {
+      throw new Error(error?.message || `MCP ${toolName} failed`);
+    }
+  }, []);
+
+  const walletFetchIdRef = useRef(0);
+  const lastFetchedWalletRef = useRef<string | null>(null);
+  const walletSignalRefreshRef = useRef<string | undefined>(undefined);
+
   const fetchActiveWallet = useCallback(async () => {
     try {
       const response = await fetch('/api/wallet/active', {
@@ -176,6 +494,69 @@ function App() {
     return null;
   }, []);
 
+  const fetchWalletPortfolio = useCallback(async (reason: 'initial' | 'refresh' = 'initial') => {
+    if (sessionIdentity.type !== 'user') {
+      setWalletPortfolio(null);
+      setWalletPortfolioStatus('idle');
+      setWalletPortfolioError(null);
+      return;
+    }
+
+    const lastKnownAddress = sessionIdentity.wallet?.public_key;
+    const lastKnownLabel = sessionIdentity.wallet?.label ?? null;
+    if (!lastKnownAddress) {
+      setWalletPortfolio(null);
+      setWalletPortfolioStatus('idle');
+      setWalletPortfolioError(null);
+      return;
+    }
+
+    walletFetchIdRef.current += 1;
+    const requestId = walletFetchIdRef.current;
+
+    if (reason === 'initial') {
+      setWalletPortfolioStatus('loading');
+    } else {
+      setWalletPortfolioStatus((prev) => (prev === 'idle' ? 'loading' : prev));
+    }
+    setWalletPortfolioError(null);
+
+    try {
+      const resolveResult = await callMcpTool('resolve_wallet');
+      const resolvePayload = extractStructuredPayload(resolveResult);
+      const meta = deriveActiveWalletMeta(resolvePayload);
+      const effectiveAddress = meta.address ?? lastKnownAddress;
+      const effectiveLabel = meta.label ?? lastKnownLabel;
+
+      if (!effectiveAddress) {
+        const snapshot = buildPortfolioSnapshot({ address: null, label: effectiveLabel }, []);
+        if (walletFetchIdRef.current === requestId) {
+          setWalletPortfolio(snapshot);
+          setWalletPortfolioStatus('ready');
+        }
+        return;
+      }
+
+      const balancesResult = await callMcpTool('solana_list_balances', {
+        wallet_address: effectiveAddress,
+        limit: 30,
+      });
+
+      const snapshot = buildPortfolioSnapshot({ address: effectiveAddress, label: effectiveLabel }, balancesResult);
+
+      if (walletFetchIdRef.current === requestId) {
+        setWalletPortfolio(snapshot);
+        setWalletPortfolioStatus('ready');
+      }
+    } catch (error: any) {
+      console.error('Failed to load wallet portfolio', error);
+      if (walletFetchIdRef.current === requestId) {
+        setWalletPortfolioStatus('error');
+        setWalletPortfolioError(error?.message || 'Unable to load wallet balances.');
+      }
+    }
+  }, [callMcpTool, sessionIdentity.type, sessionIdentity.wallet?.label, sessionIdentity.wallet?.public_key]);
+
   useEffect(() => {
     let cancelled = false;
 
@@ -197,6 +578,32 @@ function App() {
       cancelled = true;
     };
   }, [authSession, fetchActiveWallet, resetSessionIdentity, syncIdentityToAuthSession]);
+
+  useEffect(() => {
+    if (sessionIdentity.type !== 'user') {
+      lastFetchedWalletRef.current = null;
+      setWalletPortfolio(null);
+      setWalletPortfolioStatus('idle');
+      setWalletPortfolioError(null);
+      return;
+    }
+
+    const activeAddress = sessionIdentity.wallet?.public_key;
+    if (!activeAddress) {
+      lastFetchedWalletRef.current = null;
+      setWalletPortfolio(null);
+      setWalletPortfolioStatus('idle');
+      setWalletPortfolioError(null);
+      return;
+    }
+
+    if (lastFetchedWalletRef.current === activeAddress) {
+      return;
+    }
+
+    lastFetchedWalletRef.current = activeAddress;
+    fetchWalletPortfolio('initial');
+  }, [sessionIdentity.type, sessionIdentity.wallet?.public_key, fetchWalletPortfolio]);
 
   useEffect(() => {
     const unsubscribe = subscribeMcpStatus((snapshot) => {
@@ -337,6 +744,46 @@ function App() {
 
   const signalData = useSignalData();
   const toolCatalog = useToolCatalog();
+
+  useEffect(() => {
+    const lastUpdated = signalData.wallet.lastUpdated;
+    if (!lastUpdated || sessionIdentity.type !== 'user') {
+      return;
+    }
+
+    if (walletSignalRefreshRef.current === lastUpdated) {
+      return;
+    }
+
+    walletSignalRefreshRef.current = lastUpdated;
+    fetchWalletPortfolio('refresh');
+  }, [signalData.wallet.lastUpdated, sessionIdentity.type, fetchWalletPortfolio]);
+
+  const walletPortfolioSummary = useMemo(() => {
+    if (!walletPortfolio && walletPortfolioStatus === 'idle') {
+      return null;
+    }
+
+    let lastUpdatedLabel: string | null = null;
+    const lastUpdatedIso = walletPortfolio?.fetchedAt ?? null;
+    if (lastUpdatedIso) {
+      try {
+        lastUpdatedLabel = new Date(lastUpdatedIso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      } catch {
+        lastUpdatedLabel = null;
+      }
+    }
+
+    return {
+      status: walletPortfolioStatus,
+      solBalanceFormatted: walletPortfolio?.solBalanceFormatted ?? null,
+      totalUsdFormatted: walletPortfolio?.totalUsdFormatted ?? null,
+      tokenCount: walletPortfolio?.tokenCount ?? 0,
+      lastUpdatedLabel,
+      lastUpdatedIso,
+      error: walletPortfolioError,
+    };
+  }, [walletPortfolio, walletPortfolioStatus, walletPortfolioError]);
 
   const handleSignIn = useCallback(async (email: string, captchaToken: string | null): Promise<{ success: boolean; message: string }> => {
     try {
@@ -819,18 +1266,22 @@ function App() {
   const canUseAdminTools = sessionIdentity.type === 'user' && (isSuperAdmin || normalizedRoles.includes('admin'));
 
   const hero = (
-    <Hero
-      sessionStatus={sessionStatus}
-      onOpenSignals={() => setIsMobileSignalsOpen(true)}
-      onCopyTranscript={handleCopyTranscript}
-      onDownloadAudio={downloadRecording}
-      onSaveLog={handleSaveLog}
-      isVoiceDockExpanded={isVoiceDockExpanded}
-      onToggleVoiceDock={() => setIsVoiceDockExpanded(!isVoiceDockExpanded)}
-      canUseAdminTools={canUseAdminTools}
-      showSuperAdminTools={isSuperAdmin}
-      onOpenSuperAdmin={() => setIsSuperAdminModalOpen(true)}
-    />
+    <div className="border-b border-neutral-800/60 px-7 py-7">
+      <Hero />
+      <HeroControls
+        className="mt-5"
+        sessionStatus={sessionStatus}
+        onOpenSignals={() => setIsMobileSignalsOpen(true)}
+        onCopyTranscript={handleCopyTranscript}
+        onDownloadAudio={downloadRecording}
+        onSaveLog={handleSaveLog}
+        isVoiceDockExpanded={isVoiceDockExpanded}
+        onToggleVoiceDock={() => setIsVoiceDockExpanded(!isVoiceDockExpanded)}
+        canUseAdminTools={canUseAdminTools}
+        showSuperAdminTools={isSuperAdmin}
+        onOpenSuperAdmin={() => setIsSuperAdminModalOpen(true)}
+      />
+    </div>
   );
 
   const voiceDock = sessionStatus === "CONNECTED" && isVoiceDockExpanded ? (
@@ -886,6 +1337,8 @@ function App() {
     </SignalsDrawer>
   );
 
+  const activeWalletAddress = walletPortfolio?.address ?? sessionIdentity.wallet?.public_key ?? signalData.wallet.summary.activeWallet ?? null;
+
   return (
     <>
       <DexterShell
@@ -904,7 +1357,8 @@ function App() {
             }}
             sessionIdentity={sessionIdentity}
             mcpStatus={mcpStatus}
-            activeWalletKey={signalData.wallet.summary.activeWallet ?? null}
+            activeWalletKey={activeWalletAddress}
+            walletPortfolio={walletPortfolioSummary}
             onSignIn={handleSignIn}
             onSignOut={handleSignOut}
             turnstileSiteKey={turnstileSiteKey}
