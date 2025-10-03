@@ -93,11 +93,16 @@ export function useHandleSessionHistory() {
     const toolId = typeof rawToolId === 'string' && rawToolId.trim().length > 0
       ? rawToolId.trim()
       : undefined;
-    const synthesizedId = toolId
-      ? `tool-${toolId}`
-      : `tool-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-    if (toolId) {
+    if (!toolId) {
+      // Without a stable tool identifier we can't safely track the note lifecycle.
+      return undefined;
+    }
+
+    let synthesizedId = toolNoteIdMapRef.current.get(toolId);
+
+    if (!synthesizedId) {
+      synthesizedId = `tool-${toolId}`;
       toolNoteIdMapRef.current.set(toolId, synthesizedId);
     }
 
@@ -378,9 +383,6 @@ export function useHandleSessionHistory() {
         : undefined;
 
     ensureToolNote(toolId, toolName, 'DONE', Object.keys(noteData).length ? noteData : undefined);
-    if (toolId) {
-      toolNoteIdMapRef.current.delete(toolId);
-    }
 
     // Compact breadcrumb to surface tool usage inline, in order
     if (showDebugTranscript) {
