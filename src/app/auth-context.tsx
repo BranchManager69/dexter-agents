@@ -4,6 +4,42 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@supabase/supabase-js";
 
+const HOST_REDIRECT_OVERRIDES: Record<string, string> = {
+  "beta.branch.bet": "https://beta.dexter.cash",
+  "www.beta.branch.bet": "https://beta.dexter.cash",
+  "branch.bet": "https://dexter.cash",
+  "www.branch.bet": "https://dexter.cash",
+};
+
+const stripTrailingSlash = (value?: string | null) => (value ? value.replace(/\/+$/, "") : undefined);
+
+const toAbsoluteUrl = (raw?: string | null, base?: string) => {
+  if (!raw) return undefined;
+  try {
+    return new URL(raw).toString();
+  } catch {
+    if (!base) return undefined;
+    try {
+      return new URL(raw, `${base}/`).toString();
+    } catch {
+      return undefined;
+    }
+  }
+};
+
+const deriveRedirectBase = () => {
+  if (typeof window !== "undefined") {
+    try {
+      const current = new URL(window.location.href);
+      const override = HOST_REDIRECT_OVERRIDES[current.hostname];
+      return stripTrailingSlash(override ?? current.origin);
+    } catch {
+      // Ignore and fall through to env fallback
+    }
+  }
+  return stripTrailingSlash(process.env.NEXT_PUBLIC_SITE_URL ?? undefined);
+};
+
 function apiUrl(path: string) {
   return path;
 }
@@ -107,20 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
   };
 
-  const normalizeRedirectTo = (raw?: string): string | undefined => {
-    if (!raw) return undefined;
-    try {
-      if (typeof window !== "undefined") {
-        return new URL(raw, window.location.origin).toString();
-      }
-      if (process.env.NEXT_PUBLIC_SITE_URL) {
-        return new URL(raw, process.env.NEXT_PUBLIC_SITE_URL).toString();
-      }
-      return new URL(raw).toString();
-    } catch {
-      return raw;
-    }
-  };
+  const normalizeRedirectTo = (raw?: string): string | undefined => toAbsoluteUrl(raw, deriveRedirectBase());
 
   const deriveRedirectTo = (explicit?: string): string | undefined => {
     const normalizedExplicit = normalizeRedirectTo(explicit);
@@ -137,12 +160,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const normalizedParam = normalizeRedirectTo(param.trim());
           if (normalizedParam) return normalizedParam;
         }
-        return `${current.origin}/`;
+        const base = deriveRedirectBase();
+        if (base) return base;
+        return `${current.origin}`;
       } catch {
         // ignore and fall through to env fallback
       }
     }
 
+    const base = deriveRedirectBase();
+    if (base) return base;
     return normalizeRedirectTo(process.env.NEXT_PUBLIC_SITE_URL);
   };
 

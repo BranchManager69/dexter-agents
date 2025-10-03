@@ -35,7 +35,14 @@ function parseAuthorizationHeader() {
 
 function parseCookieHeader() {
   const value = typeof process.env.HARNESS_COOKIE === 'string' ? process.env.HARNESS_COOKIE.trim() : '';
-  return value || null;
+  if (!value) return null;
+  try {
+    const decoded = decodeURIComponent(value);
+    if (/sb-[^=]+=/.test(decoded)) {
+      return decoded;
+    }
+  } catch {}
+  return value;
 }
 
 function parsePlaywrightCookies() {
@@ -169,9 +176,34 @@ function buildSupabaseToken() {
     try {
       const match = cookieHeader.match(/sb-[^=]+=([^;]+)/);
       if (match && match[1]) {
-        const decoded = decodeURIComponent(match[1]);
-        const arr = JSON.parse(decoded);
-        if (Array.isArray(arr) && typeof arr[0] === 'string') return arr[0];
+        let candidate = match[1];
+        let parsed = null;
+        for (let attempts = 0; attempts < 3 && candidate; attempts += 1) {
+          try {
+            parsed = JSON.parse(candidate);
+            break;
+          } catch {
+            const decodedNext = decodeURIComponent(candidate);
+            if (decodedNext === candidate) break;
+            candidate = decodedNext;
+          }
+        }
+        if (parsed) {
+          if (Array.isArray(parsed) && typeof parsed[0] === 'string') {
+            return parsed[0];
+          }
+          if (typeof parsed === 'object') {
+            const accessToken =
+              typeof parsed.access_token === 'string'
+                ? parsed.access_token
+                : typeof parsed.session?.access_token === 'string'
+                  ? parsed.session.access_token
+                  : typeof parsed.currentSession?.access_token === 'string'
+                    ? parsed.currentSession.access_token
+                    : null;
+            if (accessToken) return accessToken;
+          }
+        }
       }
     } catch {}
   }
