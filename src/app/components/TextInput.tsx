@@ -15,7 +15,7 @@ export function TextInput({
   value,
   onChange,
   onSubmit,
-  placeholder = "Type a question or directive",
+  placeholder = "Ask Dexter anything",
   disabled = false,
   autoFocus = false,
 }: TextInputProps) {

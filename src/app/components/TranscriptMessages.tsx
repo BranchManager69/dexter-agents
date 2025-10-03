@@ -88,7 +88,7 @@ export function TranscriptMessages({
         <div className="flex h-full flex-1 items-center justify-center animate-in fade-in duration-500">
           <div className="max-w-md text-center">
             <p className="mb-6 text-sm text-neutral-400">
-              Start typing to begin, or try one of these:
+              Need a spark? Try one of these:
             </p>
             <div className="flex flex-col gap-2">
               {suggestedPrompts.map((prompt, index) => (
