@@ -148,6 +148,8 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
           // Surface tool usage inline in transcript (compact + note)
           try {
             const toolCall = {
+              id: item.id,
+              call_id: item.id,
               name: item.name,
               arguments: item.arguments,
               output: item.output,
