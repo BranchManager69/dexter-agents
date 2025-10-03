@@ -77,10 +77,10 @@ def main() -> None:
     if not value:
         raise SystemExit('Empty value provided for HARNESS_COOKIE.')
 
-    if '-refresh-token=' not in value:
+    check_value = value.lower()
+    if '-refresh-token=' not in check_value and 'refresh-token%3d' not in check_value:
         print('WARNING: HARNESS_COOKIE value does not include an sb-...-refresh-token entry.\n'
               'Per-user MCP JWT minting will fail until the refresh token is present.', file=sys.stderr)
-
     update_env_file(AGENTS_ENV, value)
     update_env_file(MCP_ENV, value)
     ensure_storage_state_line(MCP_ENV, STATE_FILE)

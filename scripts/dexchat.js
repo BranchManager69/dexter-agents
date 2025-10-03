@@ -202,7 +202,7 @@ async function runRefreshCommand(argv) {
 
 (async () => {
   const [{ default: yargsFactory }, { hideBin }] = await Promise.all([
-    import('yargs/yargs'),
+    import('yargs'),
     import('yargs/helpers'),
   ]);
 
