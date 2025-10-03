@@ -314,7 +314,7 @@ function Transcript({
             }
           }}
           className="flex-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-4 py-2 text-sm text-neutral-100 outline-none transition focus:border-flux/50 focus:ring-2 focus:ring-flux/30"
-          placeholder="Type a question or directive"
+          placeholder="Ask Dexter anything"
         />
         <button
           onClick={onSendMessage}

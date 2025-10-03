@@ -171,7 +171,7 @@ async function runHarness({
     }
 
     async function sendMessage(text) {
-      const input = await page.waitForSelector('input[placeholder="Type a question or directive"], input[placeholder="Type a message..."]', { timeout: 30000 });
+      const input = await page.waitForSelector('input[placeholder="Ask Dexter anything"], input[placeholder="Type a question or directive"], input[placeholder="Type a message..."]', { timeout: 30000 });
       await input.fill(text);
       const sendButton = page.locator('button:has(img[alt="Send"])');
       await sendButton.waitFor({ state: 'visible', timeout: 30000 });
