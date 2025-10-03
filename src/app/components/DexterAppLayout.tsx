@@ -43,30 +43,43 @@ export function DexterAppLayout({
     />
   );
 
-  const heroSection = (
-    <div className={heroContainerClassName}>
-      <Hero />
-      <HeroControls {...heroControlsProps} />
-    </div>
+  const heroSection = <Hero />;
+
+  const heroControlsSection = (
+    <HeroControls
+      {...heroControlsProps}
+      renderAdminConsole={heroControlsProps.canUseAdminTools ? renderSignalStack : undefined}
+      adminConsoleMetadata={{
+        toolCount: toolCatalog.tools.length,
+        lastUpdated: toolCatalog.lastUpdated,
+        source: toolCatalog.source,
+      }}
+    />
   );
 
   const voiceDockSection = voiceDockProps ? <VoiceDock {...voiceDockProps} /> : null;
+
+  const mobileSignalsOverlay = heroControlsProps.canUseAdminTools ? (
+    <SignalsDrawer {...signalsDrawerProps}>
+      {renderSignalStack()}
+    </SignalsDrawer>
+  ) : null;
+
+  const desktopSignalsPanel = null;
 
   return (
     <>
       <DexterShell
         topBar={<TopRibbon {...topRibbonProps} />}
         hero={heroSection}
+        heroControls={heroControlsSection}
+        heroWrapperClassName={heroContainerClassName}
         messages={<TranscriptMessages {...transcriptProps} />}
         inputBar={<InputBar {...inputBarProps} />}
-        signals={renderSignalStack()}
+        signals={desktopSignalsPanel}
         statusBar={<BottomStatusRail {...bottomStatusProps} />}
         voiceDock={voiceDockSection}
-        mobileOverlay={
-          <SignalsDrawer {...signalsDrawerProps}>
-            {renderSignalStack()}
-          </SignalsDrawer>
-        }
+        mobileOverlay={mobileSignalsOverlay}
       />
 
       <DebugInfoModal {...debugModalProps} />

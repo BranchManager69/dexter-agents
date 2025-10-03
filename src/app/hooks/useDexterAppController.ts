@@ -1440,8 +1440,12 @@ export function useDexterAppController(): DexterAppController {
   };
 
   const normalizedRoles = (sessionIdentity.user?.roles ?? []).map((role) => (typeof role === 'string' ? role.toLowerCase() : String(role || '').toLowerCase()));
+  const isAdminRole = normalizedRoles.includes('admin');
   const isSuperAdmin = Boolean(sessionIdentity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
-  const canUseAdminTools = sessionIdentity.type === 'user' && (isSuperAdmin || normalizedRoles.includes('admin'));
+  const canUseAdminTools = sessionIdentity.type === 'user' && (isSuperAdmin || isAdminRole);
+  const canViewDebugPayloads = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true'
+    && sessionIdentity.type === 'user'
+    && (isSuperAdmin || isAdminRole);
 
   const heroContainerClassName = "border-b border-neutral-800/60 px-7 py-7";
   const heroControlsProps: HeroControlsProps = {
@@ -1474,6 +1478,7 @@ export function useDexterAppController(): DexterAppController {
     onSendMessage: (message: string) => {
       void handleSendTextMessage(message);
     },
+    canViewDebugPayloads,
   };
 
   const inputBarProps: InputBarProps = {

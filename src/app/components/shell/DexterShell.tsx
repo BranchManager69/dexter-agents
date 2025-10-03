@@ -3,9 +3,11 @@ import React from "react";
 interface DexterShellProps {
   topBar: React.ReactNode;
   hero: React.ReactNode;
+  heroControls?: React.ReactNode;
+  heroWrapperClassName?: string;
   messages: React.ReactNode;
   inputBar: React.ReactNode;
-  signals: React.ReactNode;
+  signals?: React.ReactNode | null;
   statusBar: React.ReactNode;
   voiceDock?: React.ReactNode;
   mobileOverlay?: React.ReactNode;
@@ -14,6 +16,8 @@ interface DexterShellProps {
 export function DexterShell({
   topBar,
   hero,
+  heroControls,
+  heroWrapperClassName,
   messages,
   inputBar,
   signals,
@@ -21,6 +25,13 @@ export function DexterShell({
   voiceDock,
   mobileOverlay,
 }: DexterShellProps) {
+  const heroSectionClasses = [
+    heroWrapperClassName,
+    "flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
       <div className="absolute inset-0 pointer-events-none">
@@ -40,16 +51,26 @@ export function DexterShell({
       <main className="z-10 flex flex-1 flex-col overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
           <div className="flex w-full flex-1 flex-col overflow-hidden">
-            {hero}
+            <div className={heroSectionClasses}>
+              <div className="flex-1">
+                {hero}
+              </div>
+              {heroControls ? (
+                <div className="max-w-full lg:w-80 lg:flex-shrink-0">
+                  {heroControls}
+                </div>
+              ) : null}
+            </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {messages}
             </div>
             {inputBar}
           </div>
-
-          <aside className="hidden w-full max-w-sm flex-col lg:flex">
-            {signals}
-          </aside>
+          {signals ? (
+            <aside className="hidden w-full max-w-sm flex-col lg:flex">
+              {signals}
+            </aside>
+          ) : null}
         </div>
       </main>
 
