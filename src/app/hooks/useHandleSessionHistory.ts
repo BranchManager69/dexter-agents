@@ -18,6 +18,7 @@ export function useHandleSessionHistory() {
 
   const transcriptItemsRef = useRef(transcriptItems);
   const shouldLogServerSide = process.env.NEXT_PUBLIC_LOG_TRANSCRIPTS === 'true';
+  const showDebugTranscript = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
   const messageLogStateRef = useRef(new Map<string, string>());
   const toolLogSetRef = useRef(new Set<string>());
 
@@ -136,10 +137,12 @@ export function useHandleSessionHistory() {
     const function_name = lastFunctionCall?.name;
     const function_args = lastFunctionCall?.arguments;
 
-    addTranscriptBreadcrumb(
-      `function call: ${function_name}`,
-      function_args
-    );    
+    if (showDebugTranscript) {
+      addTranscriptBreadcrumb(
+        `function call: ${function_name}`,
+        function_args
+      );
+    }
     const displayName = function_name ?? functionCall?.name ?? 'tool_call';
     const parsedArgs = maybeParseJson(function_args ?? functionCall?.arguments ?? {});
     // Start a TOOL_NOTE in progress so UI shows a live "processing" chip
@@ -150,10 +153,12 @@ export function useHandleSessionHistory() {
   }
   function handleAgentToolEnd(details: any, _agent: any, _functionCall: any, result: any) {
     const lastFunctionCall = extractFunctionCallByName(_functionCall.name, details?.context?.history);
-    addTranscriptBreadcrumb(
-      `function call result: ${lastFunctionCall?.name}`,
-      maybeParseJson(result)
-    );
+    if (showDebugTranscript) {
+      addTranscriptBreadcrumb(
+        `function call result: ${lastFunctionCall?.name}`,
+        maybeParseJson(result)
+      );
+    }
     // Finalize the in-progress TOOL_NOTE if we created one at start
     const noteId = (_functionCall as any).__transcript_tool_item_id as string | undefined;
     if (noteId && typeof noteId === 'string') {
@@ -318,7 +323,9 @@ export function useHandleSessionHistory() {
     }
 
     // Compact breadcrumb to surface tool usage inline, in order
-    addTranscriptBreadcrumb(`Used ${toolName}`);
+    if (showDebugTranscript) {
+      addTranscriptBreadcrumb(`Used ${toolName}`);
+    }
 
     const toolIdentifier = toolCall?.id || toolCall?.call_id || toolCall?.name;
     const safeOutput = parsedOutput && typeof parsedOutput === 'object'

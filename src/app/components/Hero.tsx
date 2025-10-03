@@ -12,6 +12,9 @@ interface HeroProps {
   onSaveLog: () => void;
   isVoiceDockExpanded: boolean;
   onToggleVoiceDock: () => void;
+  canUseAdminTools: boolean;
+  showSuperAdminTools: boolean;
+  onOpenSuperAdmin?: () => void;
 }
 
 export function Hero({
@@ -22,6 +25,9 @@ export function Hero({
   onSaveLog,
   isVoiceDockExpanded,
   onToggleVoiceDock,
+  canUseAdminTools,
+  showSuperAdminTools,
+  onOpenSuperAdmin,
 }: HeroProps) {
   const [justCopied, setJustCopied] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
@@ -39,6 +45,7 @@ export function Hero({
   };
 
   const isConnected = sessionStatus === "CONNECTED";
+  const adminButtonTone = "flex flex-shrink-0 items-center justify-center rounded border border-rose-500/60 bg-rose-500/10 p-1.5 text-rose-200 transition hover:border-rose-400/80 hover:text-rose-50";
 
   return (
     <div className="border-b border-neutral-800/60 px-7 py-7">
@@ -49,33 +56,62 @@ export function Hero({
         Dexter synchronises research, trade execution, wallet management, and Solana-specific feeds through a single multimodal agent. Speak or type—every insight rolls in with receipts.
       </p>
       <div className="mt-5 flex flex-wrap items-start gap-3">
-        <button
-          onClick={handleCopy}
-          className="flex flex-shrink-0 items-center justify-center rounded border border-neutral-800/60 bg-surface-glass/60 p-1.5 text-neutral-300 transition hover:border-flux/50 hover:text-flux"
-          title={justCopied ? "Copied!" : "Copy transcript"}
-        >
-          <ClipboardCopyIcon className="h-3.5 w-3.5" />
-        </button>
+        {canUseAdminTools && (
+          <>
+            <button
+              onClick={handleCopy}
+              className={`${adminButtonTone} ${justCopied ? 'ring-2 ring-rose-500/30' : ''}`}
+              title={justCopied ? "Copied!" : "Copy transcript"}
+            >
+              <ClipboardCopyIcon className="h-3.5 w-3.5" />
+            </button>
 
-        <button
-          onClick={onDownloadAudio}
-          className="flex flex-shrink-0 items-center justify-center rounded border border-neutral-800/60 bg-surface-glass/60 p-1.5 text-neutral-300 transition hover:border-iris/50 hover:text-iris"
-          title="Download audio recording"
-        >
-          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 18V5l12-2v13" />
-            <circle cx="6" cy="18" r="3" />
-            <circle cx="18" cy="16" r="3" />
-          </svg>
-        </button>
+            <button
+              onClick={onDownloadAudio}
+              className={adminButtonTone}
+              title="Download audio recording"
+            >
+              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 18V5l12-2v13" />
+                <circle cx="6" cy="18" r="3" />
+                <circle cx="18" cy="16" r="3" />
+              </svg>
+            </button>
 
-        <button
-          onClick={handleSave}
-          className="flex flex-shrink-0 items-center justify-center rounded border border-neutral-800/60 bg-surface-glass/60 p-1.5 text-neutral-300 transition hover:border-amber-400/60 hover:text-amber-300"
-          title={justSaved ? "Saved!" : "Save conversation log"}
-        >
-          <DownloadIcon className="h-3.5 w-3.5" />
-        </button>
+            <button
+              onClick={handleSave}
+              className={`${adminButtonTone} ${justSaved ? 'ring-2 ring-rose-500/30' : ''}`}
+              title={justSaved ? "Saved!" : "Save conversation log"}
+            >
+              <DownloadIcon className="h-3.5 w-3.5" />
+            </button>
+          </>
+        )}
+
+        {showSuperAdminTools && (
+          <button
+            type="button"
+            onClick={onOpenSuperAdmin}
+            className="flex flex-shrink-0 items-center justify-center rounded border border-amber-400/70 bg-amber-400/10 p-1.5 text-amber-100 shadow-[0_0_12px_rgba(255,200,92,0.25)] transition hover:border-amber-300 hover:text-amber-50"
+            title="Open superadmin panel"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M5 7l2 11h10l2-11" />
+              <path d="M8 7l4-4 4 4" />
+              <path d="M9 13h6" />
+              <path d="M10 16h4" />
+            </svg>
+          </button>
+        )}
 
         {/* Voice Control Button - icon only, matches other buttons */}
         <button

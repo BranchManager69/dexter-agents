@@ -11,6 +11,7 @@ import Events from "./components/Events";
 import DexterShell from "./components/shell/DexterShell";
 import TopRibbon from "./components/shell/TopRibbon";
 import VoiceDock from "./components/shell/VoiceDock";
+import SuperAdminModal from "./components/SuperAdminModal";
 import BottomStatusRail from "./components/shell/BottomStatusRail";
 import SignalStack from "./components/signals/SignalStack";
 import SignalsDrawer from "./components/signals/SignalsDrawer";
@@ -34,9 +35,16 @@ import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 import { useSignalData } from "./hooks/useSignalData";
 import { useAuth } from "./auth-context";
 
+type DexterSessionUser = {
+  id?: string | null;
+  email?: string | null;
+  roles?: string[];
+  isSuperAdmin?: boolean;
+};
+
 export type DexterSessionSummary = {
   type: "guest" | "user";
-  user: { id?: string | null; email?: string | null } | null;
+  user: DexterSessionUser | null;
   guestProfile?: { label?: string; instructions?: string } | null;
   wallet?: { public_key: string | null; label?: string | null } | null;
 };
@@ -58,14 +66,8 @@ const createGuestIdentity = (): DexterSessionSummary => ({
 });
 
 // Agent configs
-import { allAgentSets, defaultAgentSetKey } from "@/app/agentConfigs";
-import { dexterTradingScenario } from "@/app/agentConfigs/customerServiceRetail";
+import { scenarioLoaders, defaultAgentSetKey } from "@/app/agentConfigs";
 import { dexterTradingCompanyName } from "@/app/agentConfigs/customerServiceRetail";
-
-// Map used by connect logic for scenarios defined via the SDK.
-const sdkScenarioMap: Record<string, RealtimeAgent[]> = {
-  dexterTrading: dexterTradingScenario,
-};
 
 import useAudioDownload from "./hooks/useAudioDownload";
 import { useHandleSessionHistory } from "./hooks/useHandleSessionHistory";
@@ -90,6 +92,7 @@ function App() {
 
   const [sessionIdentity, setSessionIdentity] = useState<DexterSessionSummary>(createGuestIdentity);
   const [mcpStatus, setMcpStatus] = useState<McpStatusState>(getMcpStatusSnapshot());
+  const [isSuperAdminModalOpen, setIsSuperAdminModalOpen] = useState(false);
 
   const authEmail = useMemo(() => {
     if (!authSession) return null;
@@ -103,6 +106,49 @@ function App() {
   const resetSessionIdentity = useCallback(() => {
     setSessionIdentity(createGuestIdentity());
   }, []);
+
+  const syncIdentityToAuthSession = useCallback(() => {
+    if (!authSession) {
+      resetSessionIdentity();
+      return;
+    }
+
+    const rawRoles = authSession.user.app_metadata?.roles as unknown;
+    const roles = Array.isArray(rawRoles)
+      ? rawRoles.map((value) => String(value))
+      : typeof rawRoles === 'string'
+        ? [rawRoles]
+        : [];
+    const isSuperAdmin = roles.map((r) => r.toLowerCase()).includes('superadmin');
+
+    setSessionIdentity((current) => {
+      if (
+        current.type === 'user' &&
+        current.user?.id === authSession.user.id &&
+        current.user?.email === authSession.user.email &&
+        JSON.stringify(current.user?.roles ?? []) === JSON.stringify(roles) &&
+        Boolean(current.user?.isSuperAdmin) === isSuperAdmin
+      ) {
+        return current;
+      }
+
+      return {
+        type: 'user',
+        user: {
+          id: authSession.user.id,
+          email: authSession.user.email ?? null,
+          roles,
+          isSuperAdmin,
+        },
+        guestProfile: null,
+        wallet: current.type === 'user' ? current.wallet ?? null : null,
+      };
+    });
+  }, [authSession, resetSessionIdentity]);
+
+  useEffect(() => {
+    syncIdentityToAuthSession();
+  }, [syncIdentityToAuthSession]);
 
   useEffect(() => {
     const unsubscribe = subscribeMcpStatus((snapshot) => {
@@ -145,10 +191,40 @@ function App() {
   } = useTranscript();
   const { logClientEvent, logServerEvent } = useEvent();
 
-  const scenarioAgents = allAgentSets[defaultAgentSetKey] ?? [];
-  const [selectedAgentName, setSelectedAgentName] = useState<string>(
-    scenarioAgents[0]?.name || ""
-  );
+  const [scenarioMap, setScenarioMap] = useState<Record<string, RealtimeAgent[]>>({});
+  const scenarioCacheRef = useRef<Record<string, RealtimeAgent[]>>({});
+
+  const ensureScenarioLoaded = useCallback(async (key: string) => {
+    if (scenarioCacheRef.current[key]) {
+      return scenarioCacheRef.current[key];
+    }
+    const loader = scenarioLoaders[key];
+    if (!loader) {
+      throw new Error(`Unknown agent set: ${key}`);
+    }
+    const agents = await loader();
+    scenarioCacheRef.current = { ...scenarioCacheRef.current, [key]: agents };
+    setScenarioMap((prev) => {
+      if (prev[key]) return prev;
+      return { ...prev, [key]: agents };
+    });
+    return agents;
+  }, []);
+
+  const scenarioAgents = scenarioMap[defaultAgentSetKey] ?? [];
+  const [selectedAgentName, setSelectedAgentName] = useState<string>("");
+
+  useEffect(() => {
+    ensureScenarioLoaded(defaultAgentSetKey).catch((error) => {
+      console.error('Failed to preload agent scenario', error);
+    });
+  }, [ensureScenarioLoaded]);
+
+  useEffect(() => {
+    if (!selectedAgentName && scenarioAgents.length > 0) {
+      setSelectedAgentName(scenarioAgents[0].name);
+    }
+  }, [scenarioAgents, selectedAgentName]);
 
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
   // Ref to identify whether the latest agent switch came from an automatic handoff
@@ -245,7 +321,10 @@ function App() {
       const currentAgent = scenarioAgents.find(
         (a) => a.name === selectedAgentName
       );
-      addTranscriptBreadcrumb(`Agent: ${selectedAgentName}`, currentAgent);
+      addTranscriptBreadcrumb(
+        `Session started with ${selectedAgentName}`,
+        currentAgent ? { name: currentAgent.name } : undefined,
+      );
       const isHandoff = handoffTriggeredRef.current;
       updateSession(false);
       if (!isHandoff) {
@@ -292,6 +371,10 @@ function App() {
     logServerEvent(data, "fetch_session_token_response");
 
     const dexterSession = data?.dexter_session;
+    const authRolesRaw = authSession?.user?.app_metadata?.roles as unknown;
+    const authRoles = Array.isArray(authRolesRaw) ? authRolesRaw.map((value) => String(value)) : [];
+    const userIsSuperAdmin = authRoles.includes('superadmin');
+
     if (dexterSession) {
       if (dexterSession.type === "user") {
         setSessionIdentity({
@@ -299,8 +382,11 @@ function App() {
           user: {
             id: dexterSession.user?.id ?? null,
             email: dexterSession.user?.email ?? null,
+            roles: authRoles,
+            isSuperAdmin: userIsSuperAdmin,
           },
           guestProfile: null,
+          wallet: dexterSession.wallet ?? null,
         });
       } else {
         setSessionIdentity({
@@ -310,6 +396,7 @@ function App() {
             label: "Dexter Demo Wallet",
             instructions: GUEST_SESSION_INSTRUCTIONS,
           },
+          wallet: dexterSession.wallet ?? null,
         });
       }
     } else {
@@ -328,18 +415,25 @@ function App() {
 
   const connectToRealtime = async () => {
     const agentSetKey = defaultAgentSetKey;
-    const scenario = sdkScenarioMap[agentSetKey];
-    if (!scenario || sessionStatus !== "DISCONNECTED") return;
+    if (sessionStatus !== "DISCONNECTED") return;
     setHasActivatedSession(false);
     setSessionStatus("CONNECTING");
 
     try {
+      const scenario = await ensureScenarioLoaded(agentSetKey);
+      if (!scenario?.length) {
+        throw new Error(`No agents configured for scenario ${agentSetKey}`);
+      }
       const EPHEMERAL_KEY = await fetchEphemeralKey();
       if (!EPHEMERAL_KEY) return;
 
       // Ensure the selectedAgentName is first so that it becomes the root
+      const activeAgentName = selectedAgentName || scenario[0]?.name || '';
+      if (!selectedAgentName && activeAgentName) {
+        setSelectedAgentName(activeAgentName);
+      }
       const reorderedAgents = [...scenario];
-      const idx = reorderedAgents.findIndex((a) => a.name === selectedAgentName);
+      const idx = reorderedAgents.findIndex((a) => a.name === activeAgentName);
       if (idx > 0) {
         const [agent] = reorderedAgents.splice(idx, 1);
         reorderedAgents.unshift(agent);
@@ -365,7 +459,7 @@ function App() {
     disconnect();
     setSessionStatus("DISCONNECTED");
     setIsPTTUserSpeaking(false);
-    resetSessionIdentity();
+    syncIdentityToAuthSession();
     setHasActivatedSession(false);
     setPendingAutoConnect(false);
   };
@@ -670,6 +764,10 @@ function App() {
     }
   };
 
+  const normalizedRoles = (sessionIdentity.user?.roles ?? []).map((role) => (typeof role === 'string' ? role.toLowerCase() : String(role || '').toLowerCase()));
+  const isSuperAdmin = Boolean(sessionIdentity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
+  const canUseAdminTools = sessionIdentity.type === 'user' && (isSuperAdmin || normalizedRoles.includes('admin'));
+
   const hero = (
     <Hero
       sessionStatus={sessionStatus}
@@ -679,6 +777,9 @@ function App() {
       onSaveLog={handleSaveLog}
       isVoiceDockExpanded={isVoiceDockExpanded}
       onToggleVoiceDock={() => setIsVoiceDockExpanded(!isVoiceDockExpanded)}
+      canUseAdminTools={canUseAdminTools}
+      showSuperAdminTools={isSuperAdmin}
+      onOpenSuperAdmin={() => setIsSuperAdminModalOpen(true)}
     />
   );
 
@@ -785,6 +886,11 @@ function App() {
         codec={urlCodec}
         onCodecChange={handleCodecChange}
         buildTag={process.env.NEXT_PUBLIC_BUILD_TAG ?? "dev"}
+      />
+
+      <SuperAdminModal
+        open={isSuperAdminModalOpen}
+        onClose={() => setIsSuperAdminModalOpen(false)}
       />
     </>
   );

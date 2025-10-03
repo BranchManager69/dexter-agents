@@ -24,10 +24,16 @@ export function DexterShell({
   return (
     <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute inset-0 opacity-70 bg-gradient-to-br from-[#0C1220] via-transparent to-[#04060A]" />
+        <div
+          className="absolute inset-0 opacity-70"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 12% 18%, rgb(var(--color-gradient-warm) / 0.22), transparent 55%), radial-gradient(circle at 86% 14%, rgb(var(--color-gradient-ember) / 0.18), transparent 52%)",
+          }}
+        />
       </div>
 
-      <header className="relative z-30 flex-shrink-0 border-b border-neutral-800/60 bg-background/70 backdrop-blur-xl">
+      <header className="relative z-30 flex-shrink-0 border-b border-header-border/50 bg-header/90 backdrop-blur-xl">
         {topBar}
       </header>
 
@@ -47,7 +53,7 @@ export function DexterShell({
         </div>
       </main>
 
-      <footer className="relative z-10 flex-shrink-0 border-t border-neutral-800/60 bg-background/70 backdrop-blur-xl">
+      <footer className="relative z-10 flex-shrink-0 border-t border-footer-border/50 bg-footer/90 backdrop-blur-xl">
         {statusBar}
       </footer>
 

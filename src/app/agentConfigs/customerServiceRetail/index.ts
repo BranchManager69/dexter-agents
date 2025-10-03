@@ -1,16 +1,15 @@
 import type { RealtimeAgent } from '@openai/agents/realtime';
 
-import conciergeAgent from './concierge';
+import { buildConciergeAgent } from './concierge';
 
-export const dexterTradingScenario: RealtimeAgent[] = [conciergeAgent];
+export async function loadDexterTradingScenario(): Promise<RealtimeAgent[]> {
+  const concierge = await buildConciergeAgent();
+  return [concierge];
+}
 
 // Name of the company represented by this agent set. Used by guardrails
 export const dexterTradingCompanyName = 'Dexter Trading Desk';
 
-export const allAgentSets: Record<string, RealtimeAgent[]> = {
-  dexterTrading: dexterTradingScenario,
-};
-
 export const defaultAgentSetKey = 'dexterTrading';
 
-export default dexterTradingScenario;
+export default loadDexterTradingScenario;
