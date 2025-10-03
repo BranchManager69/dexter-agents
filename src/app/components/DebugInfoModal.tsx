@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import type { RealtimeAgent } from "@openai/agents/realtime";
 import { createPortal } from "react-dom";
 
 interface DebugInfoModalProps {
@@ -17,6 +18,10 @@ interface DebugInfoModalProps {
   codec: string;
   onCodecChange: (codec: string) => void;
   buildTag: string;
+  agents: RealtimeAgent[];
+  selectedAgentName: string;
+  onAgentChange: (agentName: string) => void;
+  canManageAgents: boolean;
 }
 
 export function DebugInfoModal({
@@ -33,6 +38,10 @@ export function DebugInfoModal({
   codec,
   onCodecChange,
   buildTag,
+  agents,
+  selectedAgentName,
+  onAgentChange,
+  canManageAgents,
 }: DebugInfoModalProps) {
   // Close on Escape key
   useEffect(() => {
@@ -45,6 +54,15 @@ export function DebugInfoModal({
   }, [open, onClose]);
 
   if (!open) return null;
+
+  const shouldShowAgentSelector = canManageAgents && agents.length > 0;
+
+  const getAgentDisplayName = (agentName: string) => {
+    const displayNames: Record<string, string> = {
+      dexterVoice: "Dexter Voice",
+    };
+    return displayNames[agentName] || agentName;
+  };
 
   const modalContent = (
     <>
@@ -168,6 +186,23 @@ export function DebugInfoModal({
                 <option value="pcma">PCMA (8k)</option>
               </select>
             </div>
+
+            {shouldShowAgentSelector && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-neutral-400">Agent</span>
+                <select
+                  value={selectedAgentName}
+                  onChange={(e) => onAgentChange(e.target.value)}
+                  className="rounded-md border border-neutral-800/80 bg-surface-glass/60 px-3 py-1.5 text-xs text-neutral-200 outline-none transition focus:border-rose-400/60 focus:ring-2 focus:ring-rose-300/30"
+                >
+                  {agents.map((agent) => (
+                    <option key={agent.name} value={agent.name} className="bg-neutral-900 text-rose-100">
+                      {getAgentDisplayName(agent.name)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -78,7 +78,7 @@ export function DexterShell({
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {messages}
               {voiceDock ? (
-                <div className="flex-shrink-0 border-t border-neutral-800/60 bg-surface-base/80 px-3 py-2">
+                <div className="flex-shrink-0 border-t border-neutral-800/60 bg-surface-base/70 px-2 py-1">
                   {voiceDock}
                 </div>
               ) : null}

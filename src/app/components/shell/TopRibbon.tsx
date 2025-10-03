@@ -1,6 +1,5 @@
 import React from "react";
 import Image from "next/image";
-import type { RealtimeAgent } from "@openai/agents/realtime";
 import { SessionStatus } from "@/app/types";
 import { AuthMenu } from "@/app/components/AuthMenu";
 
@@ -42,9 +41,6 @@ interface McpStatusProps {
 
 interface TopRibbonProps {
   sessionStatus: SessionStatus;
-  selectedAgentName: string;
-  agents: RealtimeAgent[];
-  onAgentChange: (agentName: string) => void;
   onToggleConnection?: () => void;
   onReloadBrand?: () => void;
   authState: AuthStateSummary;
@@ -68,13 +64,6 @@ function getStatusAccent(sessionStatus: SessionStatus) {
     default:
       return { label: "Offline", tone: "bg-neutral-800/60 text-neutral-400 border-neutral-800" };
   }
-}
-
-function getAgentDisplayName(agentName: string): string {
-  const displayNames: Record<string, string> = {
-    'dexterVoice': 'Dexter Voice',
-  };
-  return displayNames[agentName] || agentName;
 }
 
 function getMcpAccent(state: McpStatusProps['state']) {
@@ -155,9 +144,6 @@ function getRoleButtonTone(identity: SessionIdentitySummary) {
 
 export function TopRibbon({
   sessionStatus,
-  selectedAgentName,
-  agents,
-  onAgentChange,
   onToggleConnection,
   onReloadBrand,
   authState,
@@ -212,10 +198,6 @@ export function TopRibbon({
     ? sessionIdentity.user?.email?.split("@")[0] || "User"
     : "Demo";
   const sessionBadge = getSessionBadgeTone(sessionIdentity);
-  const normalizedRoles = (sessionIdentity.user?.roles ?? []).map((role) => role.toLowerCase());
-  const isSuperAdmin = Boolean(sessionIdentity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
-  const isAdmin = isSuperAdmin || normalizedRoles.includes('admin');
-  const canManageAgents = sessionIdentity.type === 'user' && isAdmin;
   const authButtonTone = getRoleButtonTone(sessionIdentity);
   const authRoleLabel = sessionIdentity.type === 'user' ? sessionBadge.label : sessionLabel;
   const authEmail = sessionIdentity.type === 'user' ? sessionIdentity.user?.email ?? undefined : undefined;
@@ -276,33 +258,6 @@ export function TopRibbon({
         >
           {sessionStatus === "CONNECTED" ? "Disconnect" : "Connect"}
         </button>
-      )}
-
-      {/* Agent Selector */}
-      {canManageAgents && (
-        <div className="relative inline-flex flex-shrink min-w-0">
-          <select
-            value={selectedAgentName}
-            onChange={(event) => onAgentChange(event.target.value)}
-            className="appearance-none rounded-md border border-rose-500/60 bg-rose-500/10 px-2 py-1.5 pr-7 text-xs text-rose-100 outline-none transition focus:border-rose-300 focus:ring-2 focus:ring-rose-300/40 sm:px-3 sm:pr-8"
-            title="Select agent"
-          >
-            {agents.map((agent) => (
-              <option key={agent.name} value={agent.name} className="bg-neutral-900 text-rose-100">
-                {getAgentDisplayName(agent.name)}
-              </option>
-            ))}
-          </select>
-          <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-rose-200/80">
-            <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-              <path
-                fillRule="evenodd"
-                d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
-                clipRule="evenodd"
-              />
-            </svg>
-          </span>
-        </div>
       )}
 
       <div className="ml-auto flex min-w-0 flex-shrink items-center gap-2 sm:gap-3">
