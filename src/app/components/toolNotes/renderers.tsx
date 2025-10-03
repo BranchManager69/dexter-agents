@@ -6,6 +6,7 @@ export interface ToolNoteRendererProps {
   item: TranscriptItem;
   isExpanded: boolean;
   onToggle: () => void;
+  debug?: boolean;
 }
 
 export type ToolNoteRenderer = (props: ToolNoteRendererProps) => React.ReactNode;
@@ -16,7 +17,7 @@ function normalizeOutput(data: Record<string, any> | undefined) {
   return data;
 }
 
-const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle }) => {
+const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
   const payload = normalizeOutput(item.data as Record<string, any> | undefined) || {};
   const streams = Array.isArray((payload as any).streams) ? (payload as any).streams : [];
   const generatedAt = typeof (payload as any).generatedAt === "string" ? (payload as any).generatedAt : null;
@@ -136,7 +137,7 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle }) =>
           )}
         </div>
       )}
-      {isExpanded && (
+      {debug && isExpanded && (
         <details className="mt-4 w-full" open>
           <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-neutral-400">
             Raw payload

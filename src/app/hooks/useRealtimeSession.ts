@@ -358,8 +358,6 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
           offendingKeys,
           valueType: typeof (ev.session as any).type,
         }, '(invalid param)');
-        // eslint-disable-next-line no-console
-        console.warn('[session.update] Invalid param "session.type" present; keys:', offendingKeys);
       }
     } catch {}
     sessionRef.current?.transport.sendEvent(ev);
