@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 const path = require('path');
 const { spawn } = require('child_process');
-const yargs = require('yargs/yargs');
-const { hideBin } = require('yargs/helpers');
 const { runHarness, resolveOutputDir } = require('./runHarness');
 
 const COLUMN_WIDTH = 60;
@@ -203,7 +201,12 @@ async function runRefreshCommand(argv) {
 }
 
 (async () => {
-  const argv = yargs(hideBin(process.argv))
+  const [{ default: yargsFactory }, { hideBin }] = await Promise.all([
+    import('yargs/yargs'),
+    import('yargs/helpers'),
+  ]);
+
+  const parser = yargsFactory(hideBin(process.argv))
     .usage('$0 [options]', 'Run a scripted chat against the Dexter realtime agent.', (cmd) =>
       cmd
         .option('prompt', {
@@ -279,8 +282,9 @@ async function runRefreshCommand(argv) {
         .example('$0 -p "Test" -u http://localhost:3000/ -w 30000', 'Run against local dev for 30 seconds.')
         .example('$0 refresh', 'Interactively refresh HARNESS_COOKIE + storage state.')
         .help()
-        .alias('help', 'h'),
-    ).argv;
+        .alias('help', 'h'));
+
+  const argv = await parser.parseAsync();
 
   try {
     const subcommand = Array.isArray(argv._) && argv._.length > 0 ? argv._[0] : null;
