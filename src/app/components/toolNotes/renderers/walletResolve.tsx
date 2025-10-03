@@ -8,15 +8,66 @@ import {
 } from "./helpers";
 
 const resolveWalletRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
+  const normalized = normalizeOutput(item.data as Record<string, any> | undefined);
+  const rawOutput = normalized ?? (item.data as any);
   const payload = rawOutput && typeof rawOutput === "object" ? rawOutput : {};
   const args = (item.data as any)?.arguments ?? {};
 
-  const walletAddress = typeof (payload as any)?.wallet_address === "string" ? (payload as any).wallet_address : null;
-  const source = typeof (payload as any)?.source === "string" ? (payload as any).source : null;
-  const sourceBadge = resolveSourceBadge(source);
+  const extractAddress = (value: any, depth = 0): string | null => {
+    if (value === null || value === undefined) return null;
+    if (depth > 4) return null;
+
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (!trimmed) return null;
+      if (/^[1-9A-HJ-NP-Za-km-z]{32,64}$/.test(trimmed)) {
+        return trimmed;
+      }
+      return null;
+    }
+
+    if (Array.isArray(value)) {
+      for (const entry of value) {
+        const found = extractAddress(entry, depth + 1);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    if (typeof value === "object") {
+      const candidates = [
+        (value as any)?.wallet_address,
+        (value as any)?.address,
+        (value as any)?.public_key,
+        (value as any)?.active_wallet_address,
+        (value as any)?.text,
+        (value as any)?.value,
+      ];
+      for (const candidate of candidates) {
+        const found = extractAddress(candidate, depth + 1);
+        if (found) return found;
+      }
+      for (const key of Object.keys(value)) {
+        if (candidates.some((candidate) => candidate === (value as any)[key])) continue;
+        const found = extractAddress((value as any)[key], depth + 1);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const walletAddress = extractAddress(payload) ?? extractAddress(rawOutput) ?? extractAddress((item.data as any)?.output) ?? null;
+  const rawSource = typeof (payload as any)?.source === "string" ? (payload as any).source : null;
   const userId = typeof (payload as any)?.user_id === "string" ? (payload as any).user_id : null;
   const requestedWallet = typeof args?.wallet_address === "string" ? args.wallet_address : null;
+  const derivedSource = rawSource
+    ? rawSource
+    : walletAddress
+      ? userId
+        ? 'resolver'
+        : 'demo'
+      : null;
+  const sourceBadge = resolveSourceBadge(derivedSource);
 
   const hasRawDetails = debug && Object.keys(rawOutput || {}).length > 0;
 
