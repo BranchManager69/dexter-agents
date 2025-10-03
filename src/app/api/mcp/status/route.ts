@@ -8,6 +8,13 @@ export async function GET() {
   try {
     const auth = await resolveMcpAuth();
     const summary = summarizeIdentity(auth);
+    console.log('[mcp] status summary', {
+      state: summary.state,
+      detail: summary.detail,
+      minted: auth.minted,
+      cacheKey: auth.cacheKey,
+      bearerPresent: Boolean(auth.bearer),
+    });
     return NextResponse.json({
       state: summary.state,
       label: summary.label,

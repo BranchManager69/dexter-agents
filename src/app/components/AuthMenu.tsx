@@ -12,6 +12,13 @@ interface WalletPortfolioSummary {
   lastUpdatedLabel: string | null;
   lastUpdatedIso: string | null;
   error?: string | null;
+  balances: Array<{
+    mint: string | null;
+    symbol: string | null;
+    label: string | null;
+    amountUi: number | null;
+    usdValue: number | null;
+  }>;
 }
 
 interface AuthMenuProps {
@@ -287,6 +294,30 @@ export function AuthMenu({
                           {walletPortfolio.tokenCount > 0 && (
                             <span className="text-neutral-500">({walletPortfolio.tokenCount} tokens)</span>
                           )}
+                        </div>
+                      )}
+                      {walletPortfolio.balances.length > 0 && (
+                        <div className="mt-2 space-y-2">
+                          {walletPortfolio.balances.slice(0, 5).map((token, index) => {
+                            const symbol = token.symbol || token.label || (token.mint ? `${token.mint.slice(0, 4)}…${token.mint.slice(-4)}` : `Token ${index + 1}`);
+                            const amount = typeof token.amountUi === 'number'
+                              ? token.amountUi.toLocaleString('en-US', {
+                                  maximumFractionDigits: token.amountUi >= 1 ? 4 : 6,
+                                })
+                              : '—';
+                            const usd = typeof token.usdValue === 'number'
+                              ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(token.usdValue)
+                              : null;
+                            return (
+                              <div key={`${token.mint ?? symbol}-${index}`} className="flex items-center justify-between gap-2 text-[11px] text-neutral-200">
+                                <span className="font-medium text-neutral-100" title={token.label ?? symbol}>{symbol}</span>
+                                <span className="flex items-center gap-2 text-neutral-300">
+                                  <span title={`${amount} ${symbol}`}>{amount}</span>
+                                  {usd && <span className="text-neutral-500">{usd}</span>}
+                                </span>
+                              </div>
+                            );
+                          })}
                         </div>
                       )}
                       {walletPortfolio.lastUpdatedLabel && walletPortfolio.status === 'ready' && (
