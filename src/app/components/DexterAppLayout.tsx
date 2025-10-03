@@ -33,23 +33,13 @@ export function DexterAppLayout({
   debugModalProps,
   superAdminModalProps,
 }: DexterAppLayoutProps) {
-  const {
-    showLogs,
-    marketPulse,
-    pumpStreams,
-    wallet,
-    toolCatalog,
-    logsExpanded,
-  } = signalStackProps;
+  const { showLogs, toolCatalog } = signalStackProps;
 
   const renderSignalStack = () => (
     <SignalStack
       showLogs={showLogs}
-      marketPulse={marketPulse}
-      pumpStreams={pumpStreams}
-      wallet={wallet}
       toolCatalog={toolCatalog}
-      logs={<Events isExpanded={logsExpanded} />}
+      renderLogs={({ isExpanded }) => <Events isExpanded={isExpanded} />}
     />
   );
 

@@ -77,14 +77,14 @@ type McpStatusState = {
 type TopRibbonProps = ComponentProps<typeof TopRibbonComponent>;
 type VoiceDockProps = ComponentProps<typeof VoiceDockComponent>;
 type BottomStatusRailProps = ComponentProps<typeof BottomStatusRailComponent>;
-type SignalStackProps = ComponentProps<typeof SignalStackComponent>;
+type SignalStackComponentProps = ComponentProps<typeof SignalStackComponent>;
 type SignalsDrawerProps = ComponentProps<typeof SignalsDrawerComponent>;
 type DebugInfoModalProps = ComponentProps<typeof DebugInfoModalComponent>;
 type SuperAdminModalProps = ComponentProps<typeof SuperAdminModalComponent>;
 type TranscriptMessagesProps = ComponentProps<typeof TranscriptMessagesComponent>;
 type InputBarProps = ComponentProps<typeof InputBarComponent>;
 
-type SignalStackLayoutProps = Omit<SignalStackProps, "logs"> & { logsExpanded: boolean };
+type SignalStackLayoutProps = Pick<SignalStackComponentProps, "showLogs" | "toolCatalog">;
 type SignalsDrawerShellProps = Omit<SignalsDrawerProps, "children">;
 
 export interface DexterAppController {
@@ -1487,11 +1487,7 @@ export function useDexterAppController(): DexterAppController {
 
   const signalStackProps: SignalStackLayoutProps = {
     showLogs: isEventsPaneExpanded,
-    marketPulse: signalData.marketPulse,
-    pumpStreams: signalData.pumpStreams,
-    wallet: signalData.wallet,
     toolCatalog,
-    logsExpanded: isEventsPaneExpanded,
   };
 
   const bottomStatusProps: BottomStatusRailProps = {
