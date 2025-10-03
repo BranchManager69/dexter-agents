@@ -77,8 +77,13 @@ export function DexterShell({
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {messages}
+              {voiceDock ? (
+                <div className="flex-shrink-0 border-t border-neutral-800/60 bg-surface-base/80 px-3 py-2">
+                  {voiceDock}
+                </div>
+              ) : null}
+              {inputBar}
             </div>
-            {inputBar}
           </div>
           {signals ? (
             <aside className="hidden w-full max-w-sm flex-col lg:flex">
@@ -91,20 +96,6 @@ export function DexterShell({
       <footer className="relative z-10 flex-shrink-0 border-t border-footer-border/50 bg-footer/90 backdrop-blur-xl">
         {statusBar}
       </footer>
-
-      {/* Floating Voice Dock - with scale animation */}
-      <div className="pointer-events-none fixed bottom-10 left-9 right-auto z-20 max-w-xs">
-        <div
-          className={`pointer-events-auto transition-all duration-300 ease-out ${
-            voiceDock
-              ? "scale-100 opacity-100"
-              : "scale-75 opacity-0"
-          }`}
-        >
-          {voiceDock}
-        </div>
-      </div>
-
       {mobileOverlay}
     </div>
   );
