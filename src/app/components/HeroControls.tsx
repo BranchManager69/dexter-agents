@@ -137,7 +137,7 @@ export function HeroControls({
     "flex flex-shrink-0 items-center justify-center rounded border border-rose-500/60 bg-rose-500/10 p-1.5 text-rose-200 transition hover:border-rose-400/80 hover:text-rose-50";
   const consoleButtonTone = [
     adminButtonTone,
-    "relative hidden h-9 w-9 lg:flex",
+    "relative hidden lg:flex",
     isAdminConsoleOpen ? "ring-2 ring-rose-400/40" : null,
   ]
     .filter(Boolean)
@@ -273,9 +273,9 @@ export function HeroControls({
               aria-expanded={isAdminConsoleOpen}
               aria-label="Open admin console"
             >
-              <MixerHorizontalIcon className="h-4 w-4" />
+              <MixerHorizontalIcon className="h-3.5 w-3.5" />
               {typeof adminConsoleMetadata?.toolCount === "number" && (
-                <span className="absolute -top-1.5 -right-1.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full border border-rose-500/50 bg-rose-500/40 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-rose-50">
+                <span className="absolute -top-1 -right-1 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full border border-rose-500/50 bg-rose-500/40 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-rose-50">
                   {adminConsoleMetadata.toolCount}
                 </span>
               )}
