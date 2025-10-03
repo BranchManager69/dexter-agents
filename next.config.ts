@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
   outputFileTracingRoot: __dirname,
   // Keep stack traces human-readable even in production builds.
   productionBrowserSourceMaps: true,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "thumbnails.pump.fun",
+        pathname: "/**",
+      },
+    ],
+  },
   async rewrites() {
     return [
       { source: "/auth/config", destination: `${API_ORIGIN}/auth/config` },

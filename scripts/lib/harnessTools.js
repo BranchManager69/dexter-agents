@@ -57,6 +57,43 @@ const pumpstreamTool = {
 
 const TOOL_REGISTRY = {
   pumpstream: pumpstreamTool,
+  wallets: {
+    id: 'wallets',
+    label: 'List Wallets + Balances',
+    defaults: {
+      waitMs: 45000,
+    },
+    api: {
+      // Two-step chained API test: list_my_wallets then solana_list_balances for the first wallet
+      buildRequest: () => ({ name: 'list_my_wallets', arguments: {} }),
+      summarize: ({ result }) => {
+        try {
+          const tool = result?.tool;
+          const structured = tool?.structured || tool?.output || result?.structured;
+          const wallets = Array.isArray(structured?.wallets) ? structured.wallets : [];
+          const first = wallets[0];
+          return {
+            walletsCount: wallets.length,
+            firstWallet: first?.address || first?.public_key || null,
+          };
+        } catch {
+          return { message: 'No wallets returned.' };
+        }
+      },
+      artifactName: ({ timestamp }) => `wallets-api-${timestamp}.json`,
+      followUps: [
+        ({ previousResult }) => {
+          const structured = previousResult?.tool?.structured || {};
+          const wallets = Array.isArray(structured.wallets) ? structured.wallets : [];
+          const first = wallets[0];
+          const addr = first?.address || first?.public_key;
+          return addr
+            ? { name: 'solana_list_balances', arguments: { wallet_address: addr } }
+            : null;
+        },
+      ],
+    },
+  },
 };
 
 function getToolConfig(toolId) {

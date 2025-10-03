@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { TranscriptItem } from "@/app/types";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { GuardrailChip } from "./GuardrailChip";
+import { getToolNoteRenderer } from "./toolNotes/renderers";
 
 interface TranscriptMessagesProps {
   hasActivatedSession?: boolean;
@@ -145,12 +146,22 @@ export function TranscriptMessages({
               </div>
             );
           } else if (type === "TOOL_NOTE") {
+            const renderer = getToolNoteRenderer(title);
+            if (renderer) {
+              return (
+                <div key={itemId} className="flex flex-col items-start text-[11px] text-neutral-400">
+                  {renderer({
+                    item,
+                    isExpanded: expanded,
+                    onToggle: () => toggleTranscriptItemExpand(itemId),
+                  })}
+                </div>
+              );
+            }
+
             const hasDetails = data && Object.keys(data).length > 0;
             return (
-              <div
-                key={itemId}
-                className="flex flex-col items-start text-[11px] text-neutral-400"
-              >
+              <div key={itemId} className="flex flex-col items-start text-[11px] text-neutral-400">
                 <div
                   className={`flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 font-mono uppercase tracking-[0.28em] text-[10px] text-neutral-300 ${
                     hasDetails ? "cursor-pointer hover:border-flux/60" : ""

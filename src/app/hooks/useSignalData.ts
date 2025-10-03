@@ -136,10 +136,12 @@ function unwrapStructuredPayload(raw: unknown): unknown {
 function findLatestToolResult(transcriptItems: TranscriptItem[], toolName: string): ToolResult | undefined {
   for (let i = transcriptItems.length - 1; i >= 0; i -= 1) {
     const item = transcriptItems[i];
-    if (item.type !== "BREADCRUMB" || !item.title) continue;
-    if (item.title.toLowerCase() === `function call result: ${toolName}`.toLowerCase()) {
+
+    if (item.type === 'TOOL_NOTE' && item.title === toolName) {
+      const raw = item.data as any;
+      const payload = raw && typeof raw === 'object' && 'output' in raw ? raw.output : raw;
       return {
-        data: unwrapStructuredPayload(item.data),
+        data: unwrapStructuredPayload(payload),
         timestamp: item.timestamp,
       };
     }

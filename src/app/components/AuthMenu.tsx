@@ -31,6 +31,7 @@ export function AuthMenu({
   const [turnstileVisible, setTurnstileVisible] = useState(() => Boolean(turnstileSiteKey));
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null);
 
   const providerInfo = resolveEmailProvider(email);
@@ -61,13 +62,22 @@ export function AuthMenu({
   // Click outside to close
   useEffect(() => {
     if (!open) return;
-    function handleClick(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
+    function handlePointer(event: MouseEvent | PointerEvent | TouchEvent) {
+      const targetNode = event.target as Node | null;
+      const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+      const isInContainer = containerRef.current ? path.includes(containerRef.current) || (targetNode ? containerRef.current.contains(targetNode) : false) : false;
+      const isInDropdown = dropdownRef.current ? path.includes(dropdownRef.current) || (targetNode ? dropdownRef.current.contains(targetNode) : false) : false;
+      if (isInContainer || isInDropdown) return;
+      setOpen(false);
     }
-    window.addEventListener("mousedown", handleClick);
-    return () => window.removeEventListener("mousedown", handleClick);
+    window.addEventListener("pointerdown", handlePointer, true);
+    window.addEventListener("mousedown", handlePointer, true);
+    window.addEventListener("touchstart", handlePointer, true);
+    return () => {
+      window.removeEventListener("pointerdown", handlePointer, true);
+      window.removeEventListener("mousedown", handlePointer, true);
+      window.removeEventListener("touchstart", handlePointer, true);
+    };
   }, [open]);
 
   const accountLabel = loading
@@ -119,6 +129,7 @@ export function AuthMenu({
 
   const dropdownContent = open && dropdownPosition && (
     <div
+      ref={dropdownRef}
       className="fixed z-[9999] w-80 rounded-md border border-neutral-800/60 bg-surface-glass/95 shadow-elevated backdrop-blur-xl"
       style={{ top: `${dropdownPosition.top}px`, right: `${dropdownPosition.right}px` }}
     >

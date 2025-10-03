@@ -14,7 +14,13 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   try {
     const cookieStorePromise = cookies();
-    const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStorePromise });
+    const supabase = createRouteHandlerClient<Database>(
+      { cookies: () => cookieStorePromise },
+      {
+        supabaseUrl: process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL,
+        supabaseKey: process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      }
+    );
     const {
       data: { session },
       error: sessionError,
