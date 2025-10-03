@@ -1459,11 +1459,11 @@ export function useDexterAppController(): DexterAppController {
     && (isSuperAdmin || isAdminRole);
 
   const heroContainerClassName = [
-    "border-b border-neutral-800/60 px-7",
-    heroCollapsed ? "py-4" : "py-7",
+    "border-b border-neutral-800/60 px-6 sm:px-7",
+    heroCollapsed ? "py-3 lg:py-4" : "py-7",
     "transition-all duration-500 ease-out",
   ].join(" ");
-  const heroControlsClassName = heroCollapsed ? "mt-2 lg:mt-0" : "mt-5";
+  const heroControlsClassName = heroCollapsed ? "mt-0 lg:mt-0" : "mt-5";
   const heroControlsProps: HeroControlsProps = {
     className: heroControlsClassName,
     sessionStatus,

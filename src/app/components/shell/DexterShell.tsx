@@ -29,8 +29,8 @@ export function DexterShell({
 }: DexterShellProps) {
   const heroSectionClasses = [
     heroWrapperClassName,
-    "flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between",
-    heroCollapsed ? "gap-4" : null,
+    "flex flex-col lg:flex-row lg:items-start lg:justify-between",
+    heroCollapsed ? "gap-1 lg:gap-4" : "gap-6",
   ]
     .filter(Boolean)
     .join(" ");
