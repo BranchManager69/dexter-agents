@@ -21,6 +21,7 @@ export function useHandleSessionHistory() {
   const showDebugTranscript = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
   const messageLogStateRef = useRef(new Map<string, string>());
   const toolLogSetRef = useRef(new Set<string>());
+  const toolNoteIdMapRef = useRef(new Map<string, string>());
 
   useEffect(() => {
     transcriptItemsRef.current = transcriptItems;
@@ -67,6 +68,56 @@ export function useHandleSessionHistory() {
     if (toolLogSetRef.current.has(toolId)) return;
     toolLogSetRef.current.add(toolId);
     postToServerLog({ kind: 'tool', toolId, ...entry });
+  };
+
+  const hasRenderableContent = (value: any) => {
+    if (value === undefined || value === null) return false;
+    if (typeof value === 'string') {
+      return value.trim().length > 0;
+    }
+    if (Array.isArray(value)) {
+      return value.length > 0;
+    }
+    if (typeof value === 'object') {
+      return Object.keys(value).length > 0;
+    }
+    return true;
+  };
+
+  const ensureToolNote = (
+    rawToolId: string | undefined,
+    toolName: string,
+    status: 'IN_PROGRESS' | 'DONE',
+    partialData?: Record<string, any>,
+  ) => {
+    const toolId = typeof rawToolId === 'string' && rawToolId.trim().length > 0
+      ? rawToolId.trim()
+      : undefined;
+    const synthesizedId = toolId
+      ? `tool-${toolId}`
+      : `tool-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+    if (toolId) {
+      toolNoteIdMapRef.current.set(toolId, synthesizedId);
+    }
+
+    const existing = transcriptItemsRef.current.find((item) => item.itemId === synthesizedId);
+    const existingData = (existing?.data ?? {}) as Record<string, any>;
+    const incomingData = partialData && Object.keys(partialData).length > 0 ? partialData : undefined;
+    const mergedData = incomingData ? { ...existingData, ...incomingData } : existingData;
+    const normalizedData = Object.keys(mergedData).length > 0 ? mergedData : undefined;
+
+    if (!existing) {
+      addTranscriptToolNote(toolName, normalizedData, { itemId: synthesizedId, status });
+    } else {
+      updateTranscriptItem(synthesizedId, {
+        status,
+        data: normalizedData,
+        title: toolName || existing.title,
+      });
+    }
+
+    return synthesizedId;
   };
 
   const ensureUserTranscriptMessage = (itemId: string, initialText = "") => {
@@ -292,34 +343,43 @@ export function useHandleSessionHistory() {
     }
   }
 
+  function handleMcpToolCallStarted(toolCall: any) {
+    if (!toolCall) return;
+    const toolName = toolCall?.name ?? 'mcp_tool';
+    const toolId = typeof toolCall?.id === 'string' ? toolCall.id : undefined;
+    const parsedArgs = maybeParseJson(toolCall?.arguments ?? {});
+    const noteData: Record<string, any> = {};
+
+    if (hasRenderableContent(parsedArgs)) {
+      noteData.arguments = parsedArgs;
+    }
+
+    ensureToolNote(toolId, toolName, 'IN_PROGRESS', noteData);
+  }
+
   function handleMcpToolCallCompleted(_context: any, _agent: any, toolCall: any) {
     const toolName = toolCall?.name ?? 'mcp_tool';
     const parsedArgs = maybeParseJson(toolCall?.arguments ?? {});
     const parsedOutput = toolCall?.output ? maybeParseJson(toolCall.output) : undefined;
     const noteData: Record<string, any> = {};
 
-    if (
-      parsedArgs !== undefined &&
-      parsedArgs !== null &&
-      (typeof parsedArgs !== 'string' || parsedArgs.trim?.()?.length)
-    ) {
+    if (hasRenderableContent(parsedArgs)) {
       noteData.arguments = parsedArgs;
     }
 
-    if (
-      parsedOutput !== undefined &&
-      parsedOutput !== null &&
-      (typeof parsedOutput !== 'string' || parsedOutput.trim?.()?.length)
-    ) {
+    if (hasRenderableContent(parsedOutput)) {
       noteData.output = parsedOutput;
     }
 
-    // If a start note was created earlier, finish it; otherwise create a DONE note
-    const existingId = (toolCall as any)?.__transcript_tool_item_id as string | undefined;
-    if (existingId) {
-      try { updateTranscriptItem(existingId, { status: 'DONE' }); } catch {}
-    } else {
-      addTranscriptToolNote(toolName, Object.keys(noteData).length ? noteData : undefined, { status: 'DONE' });
+    const toolId = typeof toolCall?.id === 'string'
+      ? toolCall.id
+      : typeof toolCall?.call_id === 'string'
+        ? toolCall.call_id
+        : undefined;
+
+    ensureToolNote(toolId, toolName, 'DONE', Object.keys(noteData).length ? noteData : undefined);
+    if (toolId) {
+      toolNoteIdMapRef.current.delete(toolId);
     }
 
     // Compact breadcrumb to surface tool usage inline, in order
@@ -338,6 +398,23 @@ export function useHandleSessionHistory() {
     });
   }
 
+  function handleMcpToolArgumentsDone(itemId: string | undefined, rawArguments: string | undefined) {
+    if (!itemId) return;
+    const noteId = toolNoteIdMapRef.current.get(itemId);
+    if (!noteId) return;
+
+    const parsedArgs = maybeParseJson(rawArguments ?? {});
+    if (!hasRenderableContent(parsedArgs)) return;
+
+    const existing = transcriptItemsRef.current.find((item) => item.itemId === noteId);
+    const existingData = (existing?.data ?? {}) as Record<string, any>;
+    const nextData = { ...existingData, arguments: parsedArgs };
+
+    updateTranscriptItem(noteId, {
+      data: nextData,
+    });
+  }
+
   const handlersRef = useRef({
     handleAgentToolStart,
     handleAgentToolEnd,
@@ -346,7 +423,9 @@ export function useHandleSessionHistory() {
     handleTranscriptionDelta,
     handleTranscriptionCompleted,
     handleGuardrailTripped,
+    handleMcpToolCallStarted,
     handleMcpToolCallCompleted,
+    handleMcpToolArgumentsDone,
     logOutgoingUserText: (text: string) => {
       const trimmed = text?.trim();
       if (!trimmed) return;
