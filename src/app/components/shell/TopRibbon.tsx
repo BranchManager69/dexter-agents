@@ -8,6 +8,7 @@ interface SessionIdentitySummary {
   type: "guest" | "user";
   user?: { id?: string | null; email?: string | null; roles?: string[]; isSuperAdmin?: boolean } | null;
   guestProfile?: { label?: string; instructions?: string } | null;
+  wallet?: { public_key: string | null; label?: string | null } | null;
 }
 
 interface AuthStateSummary {
