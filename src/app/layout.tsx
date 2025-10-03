@@ -4,8 +4,8 @@ import "./lib/envSetup";
 import { Providers } from "./providers";
 
 export const metadata: Metadata = {
-  title: "Realtime API Agents",
-  description: "A demo app from OpenAI.",
+  title: "Dexter Beta",
+  description: "Dexter Beta – realtime trading copilots and MCP tools.",
 };
 
 export default function RootLayout({
