@@ -584,11 +584,13 @@ export function useDexterAppController(): DexterAppController {
         credentials: 'include',
       });
       if (!response.ok) {
+        console.warn('[wallet] /api/wallet/active non-200', response.status);
         return null;
       }
       const data = await response.json();
       const wallet = data?.wallet;
       if (wallet && typeof wallet === 'object') {
+        console.log('[wallet] active wallet payload', wallet);
         return {
           public_key: typeof wallet.public_key === 'string' ? wallet.public_key : null,
           label: typeof wallet.label === 'string' ? wallet.label : null,
@@ -610,6 +612,7 @@ export function useDexterAppController(): DexterAppController {
 
     const lastKnownAddress = sessionIdentity.wallet?.public_key;
     const lastKnownLabel = sessionIdentity.wallet?.label ?? null;
+    console.log('[wallet] portfolio fetch start', { reason, lastKnownAddress, lastKnownLabel, status: walletPortfolioStatus });
     if (!lastKnownAddress) {
       setWalletPortfolio(null);
       setWalletPortfolioStatus('idle');
@@ -633,12 +636,14 @@ export function useDexterAppController(): DexterAppController {
       const meta = deriveActiveWalletMeta(resolvePayload);
       const effectiveAddress = meta.address ?? lastKnownAddress;
       const effectiveLabel = meta.label ?? lastKnownLabel;
+      console.log('[wallet] resolve_wallet meta', { meta, effectiveAddress, effectiveLabel });
 
       if (!effectiveAddress) {
         const snapshot = buildPortfolioSnapshot({ address: null, label: effectiveLabel }, []);
         if (walletFetchIdRef.current === requestId) {
           setWalletPortfolio(snapshot);
           setWalletPortfolioStatus('ready');
+          console.log('[wallet] portfolio snapshot empty', snapshot);
         }
         return;
       }
@@ -649,6 +654,7 @@ export function useDexterAppController(): DexterAppController {
       });
 
       const snapshot = buildPortfolioSnapshot({ address: effectiveAddress, label: effectiveLabel }, balancesResult);
+      console.log('[wallet] portfolio snapshot', snapshot);
 
       if (walletFetchIdRef.current === requestId) {
         setWalletPortfolio(snapshot);
@@ -661,7 +667,7 @@ export function useDexterAppController(): DexterAppController {
         setWalletPortfolioError(error?.message || 'Unable to load wallet balances.');
       }
     }
-  }, [callMcpTool, sessionIdentity.type, sessionIdentity.wallet?.label, sessionIdentity.wallet?.public_key]);
+  }, [callMcpTool, sessionIdentity.type, sessionIdentity.wallet?.label, sessionIdentity.wallet?.public_key, walletPortfolioStatus]);
 
   useEffect(() => {
     let cancelled = false;
