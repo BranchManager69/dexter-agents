@@ -117,6 +117,7 @@ export function TranscriptMessages({
             timestamp,
             title = "",
             isHidden,
+            status,
             guardrailResult,
           } = item;
 
@@ -182,9 +183,36 @@ export function TranscriptMessages({
             );
           } else if (type === "TOOL_NOTE") {
             const renderer = getToolNoteRenderer(title);
+            const isPending = status === 'IN_PROGRESS';
+            const pendingSpinner = (
+              <span
+                aria-hidden
+                className={
+                  isPending
+                    ? 'inline-flex h-2.5 w-2.5 animate-spin rounded-full border border-flux/70 border-t-transparent'
+                    : 'inline-flex h-1.5 w-1.5 items-center justify-center'
+                }
+              >
+                {!isPending && <span className="h-1.5 w-1.5 rounded-full bg-flux/70" />}
+              </span>
+            );
             if (renderer) {
               return (
                 <div key={itemId} className="flex flex-col items-start text-[11px] text-neutral-400">
+                  <div
+                    className={`mb-2 flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.28em] ${
+                      isPending ? 'border-flux/60 text-flux' : ''
+                    }`}
+                  >
+                    {pendingSpinner}
+                    <span>Tool</span>
+                    <span className="tracking-normal text-neutral-200">{title}</span>
+                    {isPending && (
+                      <span className="text-[9px] uppercase tracking-[0.28em] text-flux/80">
+                        Working…
+                      </span>
+                    )}
+                  </div>
                   {renderer({
                     item,
                     isExpanded: expanded,
@@ -200,14 +228,21 @@ export function TranscriptMessages({
             return (
               <div key={itemId} className="flex flex-col items-start text-[11px] text-neutral-400">
                 <div
-                  className={`flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 font-mono uppercase tracking-[0.28em] text-[10px] text-neutral-300 ${
+                  className={`flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 font-mono uppercase tracking-[0.28em] text-[10px] ${
+                    isPending ? 'border-flux/60 text-flux' : 'text-neutral-300'
+                  } ${
                     canToggle ? "cursor-pointer hover:border-flux/60" : ""
                   }`}
                   onClick={() => canToggle && toggleTranscriptItemExpand(itemId)}
                 >
-                  <span className="text-[9px] text-flux">•</span>
+                  {pendingSpinner}
                   <span>Tool</span>
                   <span className="tracking-normal text-neutral-200">{title}</span>
+                  {isPending && (
+                    <span className="text-[9px] uppercase tracking-[0.28em] text-flux/80">
+                      Working…
+                    </span>
+                  )}
                   {canToggle && (
                     <span
                       className={`ml-1 select-none text-neutral-500 transition-transform duration-200 ${

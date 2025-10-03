@@ -111,6 +111,13 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         const item = event?.item;
         if (item && item.type === 'mcp_call' && item.id) {
           pendingMcpCallsRef.current.add(item.id);
+          try {
+            historyHandlersRef.current.handleMcpToolCallStarted({
+              id: item.id,
+              name: item.name,
+              arguments: item.arguments,
+            });
+          } catch {}
         }
         logServerEvent(event);
         break;
@@ -122,6 +129,15 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
           pendingMcpCallsRef.current.delete(itemId);
           tryAdvanceAfterMcp();
         }
+        logServerEvent(event);
+        break;
+      }
+      case "response.mcp_call_arguments.done": {
+        const itemId = event?.item_id;
+        const args = event?.arguments;
+        try {
+          historyHandlersRef.current.handleMcpToolArgumentsDone(itemId, args);
+        } catch {}
         logServerEvent(event);
         break;
       }

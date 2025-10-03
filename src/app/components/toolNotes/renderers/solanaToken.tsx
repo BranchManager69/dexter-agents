@@ -10,6 +10,37 @@ import {
   unwrapStructured,
 } from "./helpers";
 
+const percentFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 2,
+  signDisplay: "always",
+});
+
+function pickNumber(...values: unknown[]): number | undefined {
+  for (const value of values) {
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+  return undefined;
+}
+
+function formatPercent(value: unknown) {
+  const numeric = pickNumber(value);
+  if (numeric === undefined) return undefined;
+  return `${percentFormatter.format(numeric)}%`;
+}
+
+function pickString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+  return undefined;
+}
+
 const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
   const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
   const payload = unwrapStructured(rawOutput);
@@ -27,13 +58,21 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
 
   const renderPairBadge = (pair: any, index: number) => {
     if (!pair) return null;
-    const dex = typeof pair.dexId === "string" && pair.dexId ? pair.dexId : "Pair";
-    const liquidity = formatUsd(pair.liquidityUsd ?? pair.liquidity_usd);
-    const price = formatUsd(pair.priceUsd ?? pair.price_usd, { precise: true });
-    const link = typeof pair.url === "string" && pair.url ? pair.url : undefined;
+    const key = pair?.pairAddress ?? pair?.url ?? `pair-${index}`;
+    const dex = typeof pair?.dexId === "string" && pair.dexId ? pair.dexId : "Pair";
+    const liquidityValue = pickNumber(pair?.liquidity?.usd, pair?.liquidityUsd, pair?.liquidity_usd);
+    const liquidity = formatUsd(liquidityValue);
+    const priceValue = pickNumber(pair?.priceUsd, pair?.price_usd);
+    const price = formatUsd(priceValue, { precise: true });
+    const volumeValue = pickNumber(pair?.volume?.h24, pair?.volume24hUsd, pair?.volume_24h_usd);
+    const volume = formatUsd(volumeValue);
+    const priceChangeValue = pickNumber(pair?.priceChange?.h24, pair?.price_change_24h, pair?.priceChange24h);
+    const priceChange = formatPercent(priceChangeValue);
+    const priceChangeClass = priceChangeValue !== undefined && priceChangeValue < 0 ? "text-rose-300" : "text-emerald-300";
+    const link = typeof pair?.url === "string" && pair.url ? pair.url : undefined;
 
-    const content = (
-      <div className="rounded-lg border border-neutral-800/60 bg-surface-glass/60 px-3 py-2">
+    const body = (
+      <>
         <div className="flex items-center justify-between gap-2">
           <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Pair {index + 1}</div>
           <div className="rounded-full border border-neutral-700 px-2 py-[2px] text-[10px] uppercase tracking-[0.2em] text-neutral-300">
@@ -41,45 +80,87 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
           </div>
         </div>
         <div className="mt-2 flex flex-col gap-1 text-xs text-neutral-300">
-          {liquidity && <div>Liquidity: <span className="text-neutral-100">{liquidity}</span></div>}
-          {price && <div>Price: <span className="text-neutral-100">{price}</span></div>}
+          {liquidity && (
+            <div>
+              Liquidity: <span className="text-neutral-100">{liquidity}</span>
+            </div>
+          )}
+          {price && (
+            <div>
+              Price: <span className="text-neutral-100">{price}</span>
+            </div>
+          )}
+          {volume && (
+            <div>
+              24h volume: <span className="text-neutral-100">{volume}</span>
+            </div>
+          )}
+          {priceChange && (
+            <div>
+              24h Δ: <span className={priceChangeClass}>{priceChange}</span>
+            </div>
+          )}
         </div>
-      </div>
+      </>
     );
 
-    if (!link) return content;
+    if (link) {
+      return (
+        <a
+          key={key}
+          href={link}
+          target="_blank"
+          rel="noreferrer"
+          className="block rounded-lg border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 transition hover:border-flux/60"
+        >
+          {body}
+        </a>
+      );
+    }
+
     return (
-      <a
-        key={link}
-        href={link}
-        target="_blank"
-        rel="noreferrer"
-        className="transition hover:border-flux/60"
-      >
-        {content}
-      </a>
+      <div key={key} className="rounded-lg border border-neutral-800/60 bg-surface-glass/60 px-3 py-2">
+        {body}
+      </div>
     );
   };
 
   const renderTokenCard = (token: any) => {
     if (!token) return null;
-    const address = typeof token.address === "string" ? token.address : typeof token.mint === "string" ? token.mint : null;
-    const symbol = typeof token.symbol === "string" && token.symbol ? token.symbol : "—";
-    const name = typeof token.name === "string" && token.name ? token.name : null;
-    const price = formatUsd(token.priceUsd ?? token.price_usd, { precise: true });
-    const liquidity = formatUsd(token.liquidityUsd ?? token.liquidity_usd);
-    const volume = formatUsd(token.volume24hUsd ?? token.volume24h_usd ?? token.volume24h, { precise: false });
-    const marketCap = formatUsd(token.marketCapUsd ?? token.market_cap_usd ?? token.fdvUsd ?? token.fdv_usd);
-    const pairs = Array.isArray(token.pairs) ? token.pairs.slice(0, 2) : [];
-    const iconUrl = typeof token.icon === "string" && token.icon
-      ? token.icon
-      : typeof token.logo === "string" && token.logo
-        ? token.logo
-        : typeof token.image === "string" && token.image
-          ? token.image
-          : Array.isArray(token.pairs) && token.pairs[0]?.baseToken?.icon
-            ? token.pairs[0].baseToken.icon
-            : null;
+    const address = typeof token?.address === "string" ? token.address : typeof token?.mint === "string" ? token.mint : null;
+    const symbol = typeof token?.symbol === "string" && token.symbol ? token.symbol : "—";
+    const name = typeof token?.name === "string" && token.name ? token.name : null;
+    const price = formatUsd(pickNumber(token?.priceUsd, token?.price_usd), { precise: true });
+    const liquidity = formatUsd(pickNumber(token?.liquidityUsd, token?.liquidity_usd));
+    const volume = formatUsd(pickNumber(token?.volume24hUsd, token?.volume24h_usd, token?.volume24h, token?.totalVolume?.h24));
+    const marketCapValue = pickNumber(
+      token?.marketCap,
+      token?.market_cap,
+      token?.marketCapUsd,
+      token?.market_cap_usd,
+      token?.fdv,
+      token?.fdvUsd,
+      token?.fdv_usd,
+    );
+    const marketCap = formatUsd(marketCapValue);
+    const priceChangeValue = pickNumber(token?.priceChange?.h24, token?.price_change_24h, token?.priceChange24h);
+    const priceChange = formatPercent(priceChangeValue);
+    const priceChangeClass = priceChangeValue !== undefined && priceChangeValue < 0 ? "text-rose-300" : "text-emerald-300";
+    const info = token?.info && typeof token.info === "object" ? token.info : undefined;
+    const pairs = Array.isArray(token?.pairs) ? token.pairs.slice(0, 3) : [];
+    const pairIcon = pairs
+      .map((pair: any) => pickString(pair?.info?.imageUrl, pair?.info?.openGraph))
+      .find((value: string | undefined) => typeof value === "string" && value.length > 0);
+    const iconUrl = pickString(
+      info?.imageUrl,
+      info?.openGraphImageUrl,
+      info?.headerImageUrl,
+      token?.icon,
+      token?.logo,
+      token?.image,
+      token?.pairs?.[0]?.baseToken?.icon,
+      pairIcon ?? undefined,
+    );
 
     return (
       <div key={address ?? symbol} className="rounded-xl border border-neutral-800/40 bg-surface-glass/40 p-4">
@@ -126,6 +207,12 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-neutral-500">24h volume:</span>
               <span className="text-neutral-100">{volume}</span>
+            </div>
+          )}
+          {priceChange && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-neutral-500">24h change:</span>
+              <span className={priceChangeClass}>{priceChange}</span>
             </div>
           )}
         </div>
