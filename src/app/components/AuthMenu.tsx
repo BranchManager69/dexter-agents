@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { resolveEmailProvider } from "@/app/lib/emailProviders";
 import { TurnstileWidget } from "./TurnstileWidget";
@@ -39,10 +39,12 @@ export function AuthMenu({
   const [turnstileKey, setTurnstileKey] = useState(0);
   const [turnstileVisible, setTurnstileVisible] = useState(() => Boolean(turnstileSiteKey));
   const [walletFeedback, setWalletFeedback] = useState<string>("");
+  const [exportBusy, setExportBusy] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{ top: number; right: number } | null>(null);
+  const feedbackTimeoutRef = useRef<number | null>(null);
 
   const providerInfo = resolveEmailProvider(email);
   const inboxUrl = providerInfo?.inboxUrl ?? "";
@@ -63,6 +65,10 @@ export function AuthMenu({
   // Reset turnstile when dropdown closes
   useEffect(() => {
     if (!open) {
+      if (feedbackTimeoutRef.current) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = null;
+      }
       setWalletFeedback("");
       if (turnstileSiteKey) {
         setCaptchaToken(null);
@@ -71,6 +77,15 @@ export function AuthMenu({
       }
     }
   }, [open, turnstileSiteKey]);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   // Click outside to close
   useEffect(() => {
@@ -133,6 +148,10 @@ export function AuthMenu({
     setEmail("");
     setAuthMessage("");
     setMagicLinkSent(false);
+    if (feedbackTimeoutRef.current) {
+      window.clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
     setWalletFeedback("");
     if (turnstileSiteKey) {
       setCaptchaToken(null);
@@ -141,10 +160,76 @@ export function AuthMenu({
     }
   };
 
-  const handleExportWallet = () => {
-    setWalletFeedback('Export coming soon');
-    setTimeout(() => setWalletFeedback(""), 2000);
-  };
+  const setFeedbackWithTimeout = useCallback(
+    (message: string, duration = 5000) => {
+      if (feedbackTimeoutRef.current) {
+        window.clearTimeout(feedbackTimeoutRef.current);
+        feedbackTimeoutRef.current = null;
+      }
+      setWalletFeedback(message);
+      if (duration > 0) {
+        feedbackTimeoutRef.current = window.setTimeout(() => {
+          setWalletFeedback("");
+          feedbackTimeoutRef.current = null;
+        }, duration);
+      }
+    },
+    [setWalletFeedback],
+  );
+
+  const handleExportWallet = useCallback(async () => {
+    if (exportBusy) return;
+    setFeedbackWithTimeout("Preparing export…", 0);
+    setExportBusy(true);
+
+    try {
+      const response = await fetch("/api/wallet/export", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        let errorMessage = "Unable to export wallet.";
+        try {
+          const errorData = await response.json();
+          if (typeof errorData?.error === "string") {
+            errorMessage = errorData.error.replace(/_/g, " ");
+          }
+        } catch {
+          // ignore parse errors
+        }
+        setFeedbackWithTimeout(errorMessage, 6000);
+        return;
+      }
+
+      const payload = await response.json();
+      const secretKey = typeof payload?.secret_key === "string" ? payload.secret_key.trim() : null;
+      if (!secretKey) {
+        setFeedbackWithTimeout("Wallet export response missing key.", 6000);
+        return;
+      }
+
+      const blob = new Blob([secretKey], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+      try {
+        const filenameSuffix = secretKey.slice(0, 8) || "wallet";
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `dexter-wallet-${filenameSuffix}.txt`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setFeedbackWithTimeout("Wallet export downloaded.", 6000);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error("Wallet export failed", error);
+      setFeedbackWithTimeout("Unexpected error exporting wallet.", 6000);
+    } finally {
+      setExportBusy(false);
+    }
+  }, [exportBusy, setFeedbackWithTimeout]);
 
   const dropdownContent = open && dropdownPosition && (
     <div
@@ -175,9 +260,10 @@ export function AuthMenu({
                     <button
                       type="button"
                       onClick={handleExportWallet}
-                      className="flex-1 rounded-md border border-rose-500/50 bg-rose-500/12 px-3 py-2 text-xs text-rose-100 transition hover:border-rose-300 hover:text-rose-50"
+                      disabled={exportBusy}
+                      className="flex-1 rounded-md border border-rose-500/50 bg-rose-500/12 px-3 py-2 text-xs text-rose-100 transition hover:border-rose-300 hover:text-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      Export wallet
+                      {exportBusy ? "Preparing…" : "Export wallet"}
                     </button>
                   </div>
                   {walletFeedback && (
