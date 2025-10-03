@@ -17,6 +17,16 @@ interface AuthStateSummary {
   email: string | null;
 }
 
+interface WalletPortfolioSummary {
+  status: 'idle' | 'loading' | 'ready' | 'error';
+  solBalanceFormatted: string | null;
+  totalUsdFormatted: string | null;
+  tokenCount: number;
+  lastUpdatedLabel: string | null;
+  lastUpdatedIso: string | null;
+  error?: string | null;
+}
+
 interface McpStatusProps {
   state: 'loading' | 'user' | 'fallback' | 'guest' | 'none' | 'error';
   label: string;
@@ -34,6 +44,7 @@ interface TopRibbonProps {
   sessionIdentity: SessionIdentitySummary;
   mcpStatus: McpStatusProps;
   activeWalletKey?: string | null;
+  walletPortfolio?: WalletPortfolioSummary | null;
   onSignIn?: (email: string, captchaToken: string | null) => Promise<{ success: boolean; message: string }>;
   onSignOut?: () => void;
   turnstileSiteKey?: string;
@@ -146,6 +157,7 @@ export function TopRibbon({
   sessionIdentity,
   mcpStatus,
   activeWalletKey,
+  walletPortfolio,
   onSignIn,
   onSignOut,
   turnstileSiteKey,
@@ -155,6 +167,39 @@ export function TopRibbon({
   const mcpTone = getMcpAccent(mcpStatus.state);
   const mcpLabel = mcpStatus.label || (mcpStatus.state === 'loading' ? 'Checking…' : 'Unavailable');
   const walletLabel = formatWalletAddress(activeWalletKey);
+  const walletTitleParts = [`Active wallet: ${walletLabel}`];
+  if (walletPortfolio?.solBalanceFormatted || walletPortfolio?.totalUsdFormatted) {
+    walletTitleParts.push(
+      `Balances: ${walletPortfolio.solBalanceFormatted ?? '—'} • ${walletPortfolio.totalUsdFormatted ?? '—'}`,
+    );
+  }
+  if (walletPortfolio?.tokenCount) {
+    walletTitleParts.push(`${walletPortfolio.tokenCount} tokens tracked`);
+  }
+  if (walletPortfolio?.lastUpdatedLabel) {
+    walletTitleParts.push(`Updated ${walletPortfolio.lastUpdatedLabel}`);
+  }
+  if (walletPortfolio?.status === 'error' && walletPortfolio.error) {
+    walletTitleParts.push(`Error: ${walletPortfolio.error}`);
+  }
+  const walletBadgeTitle = walletTitleParts.join('\n');
+
+  let walletSecondaryText: string | null = null;
+  let walletSecondaryTone = 'text-neutral-400';
+  if (walletPortfolio) {
+    if (walletPortfolio.status === 'loading' && !walletPortfolio.solBalanceFormatted && !walletPortfolio.totalUsdFormatted) {
+      walletSecondaryText = 'Loading balances…';
+      walletSecondaryTone = 'text-neutral-500';
+    } else if (walletPortfolio.status === 'error') {
+      walletSecondaryText = 'Balance error';
+      walletSecondaryTone = 'text-accent-critical';
+    } else if (walletPortfolio.solBalanceFormatted || walletPortfolio.totalUsdFormatted) {
+      walletSecondaryText = [walletPortfolio.solBalanceFormatted, walletPortfolio.totalUsdFormatted]
+        .filter(Boolean)
+        .join(' • ');
+      walletSecondaryTone = 'text-neutral-300';
+    }
+  }
 
   const sessionLabel = sessionIdentity.type === "user"
     ? sessionIdentity.user?.email?.split("@")[0] || "User"
@@ -274,10 +319,15 @@ export function TopRibbon({
 
         {/* Wallet Badge */}
         <span
-          className="hidden flex-shrink-0 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-1 text-[11px] text-neutral-200 lg:inline-flex lg:px-2.5"
-          title={`Active wallet: ${activeWalletKey || 'Auto (Dexter selects)'}`}
+          className="hidden flex-shrink-0 flex-col rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-1 text-[11px] text-neutral-200 lg:inline-flex lg:px-2.5"
+          title={walletBadgeTitle}
         >
-          {walletLabel}
+          <span>{walletLabel}</span>
+          {walletSecondaryText && (
+            <span className={`mt-1 text-[10px] tracking-normal ${walletSecondaryTone}`}>
+              {walletSecondaryText}
+            </span>
+          )}
         </span>
 
         <span className="hidden h-4 w-px flex-shrink-0 bg-neutral-800/60 md:inline-block" aria-hidden="true" />
@@ -295,6 +345,7 @@ export function TopRibbon({
             buttonToneClass={authButtonTone}
             buttonTitle={authEmail}
             activeWalletKey={sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined}
+            walletPortfolio={walletPortfolio ?? undefined}
           />
         </div>
       </div>
