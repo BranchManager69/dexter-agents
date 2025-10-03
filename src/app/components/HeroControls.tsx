@@ -135,10 +135,13 @@ export function HeroControls({
   const isConnected = sessionStatus === "CONNECTED";
   const adminButtonTone =
     "flex flex-shrink-0 items-center justify-center rounded border border-rose-500/60 bg-rose-500/10 p-1.5 text-rose-200 transition hover:border-rose-400/80 hover:text-rose-50";
-  const consoleButtonToneBase = "flex items-center gap-2 rounded-pill border px-3 py-1.5 text-xs uppercase tracking-[0.24em] transition";
-  const consoleButtonTone = isAdminConsoleOpen
-    ? `${consoleButtonToneBase} border-flux/60 bg-flux/15 text-flux shadow-[0_10px_30px_rgba(0,255,209,0.22)]`
-    : `${consoleButtonToneBase} border-neutral-800/60 bg-surface-glass/70 text-neutral-300 hover:border-flux/50 hover:text-flux`;
+  const consoleButtonTone = [
+    adminButtonTone,
+    "relative hidden h-9 w-9 lg:flex",
+    isAdminConsoleOpen ? "ring-2 ring-rose-400/40" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const rootClassName = [
     "flex flex-wrap items-start gap-3",
@@ -268,14 +271,15 @@ export function HeroControls({
               title="Open admin console"
               aria-haspopup="dialog"
               aria-expanded={isAdminConsoleOpen}
+              aria-label="Open admin console"
             >
-              <MixerHorizontalIcon className="h-3.5 w-3.5" />
-              <span>Console</span>
+              <MixerHorizontalIcon className="h-4 w-4" />
               {typeof adminConsoleMetadata?.toolCount === "number" && (
-                <span className="rounded-full border border-neutral-700/60 bg-neutral-900/70 px-2 py-0.5 text-[10px] tracking-[0.16em] text-neutral-400">
+                <span className="absolute -top-1.5 -right-1.5 flex min-h-[18px] min-w-[18px] items-center justify-center rounded-full border border-rose-500/50 bg-rose-500/40 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-rose-50">
                   {adminConsoleMetadata.toolCount}
                 </span>
               )}
+              <span className="sr-only">Open admin console</span>
             </button>
           )}
         </>
