@@ -23,6 +23,7 @@ export type DexterAppLayoutProps = DexterAppController;
 export function DexterAppLayout({
   topRibbonProps,
   heroContainerClassName,
+  heroCollapsed,
   heroControlsProps,
   transcriptProps,
   inputBarProps,
@@ -72,6 +73,7 @@ export function DexterAppLayout({
       <DexterShell
         topBar={<TopRibbon {...topRibbonProps} />}
         hero={heroSection}
+        heroCollapsed={heroCollapsed}
         heroControls={heroControlsSection}
         heroWrapperClassName={heroContainerClassName}
         messages={<TranscriptMessages {...transcriptProps} />}

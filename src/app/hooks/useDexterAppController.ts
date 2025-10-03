@@ -90,6 +90,7 @@ type SignalsDrawerShellProps = Omit<SignalsDrawerProps, "children">;
 export interface DexterAppController {
   topRibbonProps: TopRibbonProps;
   heroContainerClassName: string;
+  heroCollapsed: boolean;
   heroControlsProps: HeroControlsProps;
   transcriptProps: TranscriptMessagesProps;
   inputBarProps: InputBarProps;
@@ -1394,6 +1395,16 @@ export function useDexterAppController(): DexterAppController {
   const { transcriptItems } = useTranscript();
   const { loggedEvents } = useEvent();
 
+  const hasAssistantReply = useMemo(
+    () =>
+      transcriptItems.some(
+        (item) => item.type === "MESSAGE" && item.role === "assistant" && !item.isHidden,
+      ),
+    [transcriptItems],
+  );
+
+  const heroCollapsed = hasAssistantReply;
+
   const handleSaveLog = () => {
     try {
       const artifact = {
@@ -1447,9 +1458,14 @@ export function useDexterAppController(): DexterAppController {
     && sessionIdentity.type === 'user'
     && (isSuperAdmin || isAdminRole);
 
-  const heroContainerClassName = "border-b border-neutral-800/60 px-7 py-7";
+  const heroContainerClassName = [
+    "border-b border-neutral-800/60 px-7",
+    heroCollapsed ? "py-4" : "py-7",
+    "transition-all duration-500 ease-out",
+  ].join(" ");
+  const heroControlsClassName = heroCollapsed ? "mt-2 lg:mt-0" : "mt-5";
   const heroControlsProps: HeroControlsProps = {
-    className: "mt-5",
+    className: heroControlsClassName,
     sessionStatus,
     onOpenSignals: () => setIsMobileSignalsOpen(true),
     onCopyTranscript: handleCopyTranscript,
@@ -1558,6 +1574,7 @@ export function useDexterAppController(): DexterAppController {
   return {
     topRibbonProps,
     heroContainerClassName,
+    heroCollapsed,
     heroControlsProps,
     transcriptProps,
     inputBarProps,
