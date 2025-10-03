@@ -28,7 +28,7 @@ export function DexterShell({
           className="absolute inset-0 opacity-70"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 12% 18%, rgb(var(--color-gradient-warm) / 0.22), transparent 55%), radial-gradient(circle at 86% 14%, rgb(var(--color-gradient-ember) / 0.18), transparent 52%)",
+              "radial-gradient(circle at 14% 18%, rgb(var(--color-primary-bright) / 0.32), transparent 55%), radial-gradient(circle at 82% 14%, rgb(var(--color-accent-info) / 0.22), transparent 52%), radial-gradient(circle at 65% 78%, rgb(var(--color-flux) / 0.18), transparent 60%)",
           }}
         />
       </div>

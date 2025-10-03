@@ -107,7 +107,7 @@ function App() {
     setSessionIdentity(createGuestIdentity());
   }, []);
 
-  const syncIdentityToAuthSession = useCallback(() => {
+  const syncIdentityToAuthSession = useCallback((walletOverride?: { public_key: string | null; label?: string | null } | null) => {
     if (!authSession) {
       resetSessionIdentity();
       return;
@@ -129,7 +129,9 @@ function App() {
         JSON.stringify(current.user?.roles ?? []) === JSON.stringify(roles) &&
         Boolean(current.user?.isSuperAdmin) === isSuperAdmin
       ) {
-        return current;
+        if (walletOverride === undefined) {
+          return current;
+        }
       }
 
       return {
@@ -141,14 +143,60 @@ function App() {
           isSuperAdmin,
         },
         guestProfile: null,
-        wallet: current.type === 'user' ? current.wallet ?? null : null,
+        wallet:
+          walletOverride !== undefined
+            ? walletOverride
+            : current.type === 'user'
+              ? current.wallet ?? null
+              : null,
       };
     });
   }, [authSession, resetSessionIdentity]);
 
+  const fetchActiveWallet = useCallback(async () => {
+    try {
+      const response = await fetch('/api/wallet/active', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        return null;
+      }
+      const data = await response.json();
+      const wallet = data?.wallet;
+      if (wallet && typeof wallet === 'object') {
+        return {
+          public_key: typeof wallet.public_key === 'string' ? wallet.public_key : null,
+          label: typeof wallet.label === 'string' ? wallet.label : null,
+        };
+      }
+    } catch (error) {
+      console.warn('Failed to fetch active wallet', error);
+    }
+    return null;
+  }, []);
+
   useEffect(() => {
-    syncIdentityToAuthSession();
-  }, [syncIdentityToAuthSession]);
+    let cancelled = false;
+
+    const hydrateIdentity = async () => {
+      if (!authSession) {
+        resetSessionIdentity();
+        return;
+      }
+
+      const wallet = await fetchActiveWallet();
+      if (!cancelled) {
+        syncIdentityToAuthSession(wallet);
+      }
+    };
+
+    hydrateIdentity();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authSession, fetchActiveWallet, resetSessionIdentity, syncIdentityToAuthSession]);
 
   useEffect(() => {
     const unsubscribe = subscribeMcpStatus((snapshot) => {
@@ -459,7 +507,9 @@ function App() {
     disconnect();
     setSessionStatus("DISCONNECTED");
     setIsPTTUserSpeaking(false);
-    syncIdentityToAuthSession();
+    void fetchActiveWallet().then((wallet) => {
+      syncIdentityToAuthSession(wallet);
+    });
     setHasActivatedSession(false);
     setPendingAutoConnect(false);
   };
