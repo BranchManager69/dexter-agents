@@ -63,6 +63,11 @@ export function resolveSourceBadge(source: string | null) {
         label: "Session override",
         className: "border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-amber-200",
       };
+    case "primary":
+      return {
+        label: "Primary wallet",
+        className: "border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-300",
+      };
     case "demo":
       return {
         label: "Demo wallet",

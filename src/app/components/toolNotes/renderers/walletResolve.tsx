@@ -62,11 +62,11 @@ const resolveWalletRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, d
   const requestedWallet = typeof args?.wallet_address === "string" ? args.wallet_address : null;
   const derivedSource = rawSource
     ? rawSource
-    : walletAddress
-      ? userId
-        ? 'resolver'
-        : 'demo'
-      : null;
+    : userId
+      ? 'primary'
+      : walletAddress
+        ? 'demo'
+        : null;
   const sourceBadge = resolveSourceBadge(derivedSource);
 
   const hasRawDetails = debug && Object.keys(rawOutput || {}).length > 0;

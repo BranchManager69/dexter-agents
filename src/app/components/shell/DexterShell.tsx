@@ -47,7 +47,7 @@ export function DexterShell({
             {inputBar}
           </div>
 
-          <aside className="hidden w-full max-w-sm flex-col gap-4 rounded-lg border border-neutral-800/60 bg-surface-raised/80 shadow-elevated backdrop-blur-xl lg:flex lg:m-8">
+          <aside className="hidden w-full max-w-sm flex-col lg:flex">
             {signals}
           </aside>
         </div>
