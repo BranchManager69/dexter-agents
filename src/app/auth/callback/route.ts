@@ -7,8 +7,8 @@ type Database = any;
 export const dynamic = 'force-dynamic';
 
 const COOKIE_DOMAIN = process.env.SUPABASE_COOKIE_DOMAIN || ".dexter.cash";
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 const projectRefMatch = SUPABASE_URL?.match(/^https?:\/\/([a-z0-9-]+)\./i);
 const SUPABASE_PROJECT_REF = projectRefMatch ? projectRefMatch[1] : null;
