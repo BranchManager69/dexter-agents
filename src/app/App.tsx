@@ -856,7 +856,7 @@ function App() {
       userText={userText}
       setUserText={setUserText}
       onSendMessage={handleSendTextMessage}
-      canSend={true}
+      canSend={sessionStatus !== 'CONNECTING'}
     />
   );
 

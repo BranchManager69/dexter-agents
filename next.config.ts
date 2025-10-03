@@ -18,6 +18,21 @@ const nextConfig: NextConfig = {
         hostname: "thumbnails.pump.fun",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "dd.dexscreener.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.dexscreener.com",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "raw.githubusercontent.com",
+        pathname: "/**",
+      },
     ],
   },
   async rewrites() {
