@@ -71,22 +71,22 @@ export default function ToolsPage() {
   }, [tools, filter]);
 
   return (
-    <div style={{ padding: 24, maxWidth: 960, margin: '0 auto' }}>
-      <h1 style={{ fontSize: 28, fontWeight: 600, marginBottom: 8 }}>MCP Tools</h1>
-      <p style={{ opacity: 0.8, marginBottom: 16 }}>
+    <div className="mx-auto max-w-4xl px-6 py-6 text-foreground">
+      <h1 className="text-3xl font-semibold tracking-tight text-foreground">MCP Tools</h1>
+      <p className="mt-2 text-sm leading-relaxed text-neutral-300">
         Inspect hosted MCP tool definitions by hitting <code>/api/tools</code> via Dexter API.
       </p>
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16 }}>
+      <div className="mb-4 mt-6 flex items-center gap-3">
         <input
-          style={{ flex: '1 1 auto', padding: '10px 12px', borderRadius: 6, border: '1px solid #2c3242', background: '#0b0c10', color: '#e6edf3' }}
+          className="flex-1 rounded-md border border-border-subtle bg-surface-base/90 px-3 py-2.5 text-sm text-foreground placeholder:text-neutral-500 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
           placeholder="Filter by name or description"
           value={filter}
           onChange={(event) => setFilter(event.target.value)}
         />
         <button
           onClick={() => setShowRaw((v) => !v)}
-          style={{ padding: '10px 14px', borderRadius: 6, border: '1px solid #2c3242', background: '#141820', color: '#e6edf3' }}
+          className="rounded-md border border-border-subtle bg-surface-raised/80 px-4 py-2.5 text-sm font-medium text-foreground transition hover:border-primary hover:text-primary"
         >
           {showRaw ? 'Hide Raw' : 'Show Raw'}
         </button>
@@ -94,21 +94,32 @@ export default function ToolsPage() {
 
       {loading && <div>Loading tools…</div>}
       {error && (
-        <div style={{ color: '#ff9f9f', border: '1px solid #5a2323', background: '#2b0e0e', padding: 12, borderRadius: 6, marginBottom: 16 }}>
-          <div style={{ fontWeight: 600 }}>Error</div>
-          <div style={{ whiteSpace: 'pre-wrap' }}>{error}</div>
-          <div style={{ marginTop: 6, opacity: 0.8 }}>If you see 401/403, confirm the MCP token or session cookies.</div>
+        <div className="mb-4 rounded-lg border border-accent-critical/40 bg-accent-critical/10 px-4 py-3 text-sm text-accent-critical">
+          <div className="font-semibold uppercase tracking-wide">Error</div>
+          <div className="mt-1 whitespace-pre-wrap text-sm">{error}</div>
+          <div className="mt-2 text-xs text-accent-critical/80">
+            If you see 401/403, confirm the MCP token or session cookies.
+          </div>
         </div>
       )}
 
-      {!loading && !error && filtered.length === 0 && <div style={{ opacity: 0.8 }}>No tools found.</div>}
+      {!loading && !error && filtered.length === 0 && (
+        <div className="text-sm text-neutral-400">No tools found.</div>
+      )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {filtered.map((tool, index) => (
-          <div key={`${tool.name || 'tool'}:${index}`} style={{ border: '1px solid #2c3242', borderRadius: 6, padding: 16, background: '#0b0c10' }}>
-            <div style={{ fontWeight: 600, marginBottom: 8 }}>{tool.name || '(unnamed tool)'}</div>
+          <div
+            key={`${tool.name || 'tool'}:${index}`}
+            className="rounded-lg border border-border-subtle/80 bg-surface-base/80 p-4 shadow-[0_10px_24px_rgba(0,0,0,0.25)]"
+          >
+            <div className="text-lg font-semibold text-foreground">
+              {tool.name || '(unnamed tool)'}
+            </div>
             {tool.description || tool.summary ? (
-              <div style={{ opacity: 0.85, marginBottom: 12 }}>{tool.description || tool.summary}</div>
+              <div className="mt-2 text-sm text-neutral-300">
+                {tool.description || tool.summary}
+              </div>
             ) : null}
             <SchemaBlock title="Input Schema" value={(tool as any).input_schema ?? (tool as any).parameters} />
             <SchemaBlock title="Output Schema" value={(tool as any).output_schema} />
@@ -117,9 +128,9 @@ export default function ToolsPage() {
       </div>
 
       {showRaw && (
-        <div style={{ marginTop: 24 }}>
-          <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 6 }}>Raw response</div>
-          <pre style={{ whiteSpace: 'pre-wrap', background: '#0b0c10', color: '#9fb2c8', border: '1px solid #2c3242', borderRadius: 6, padding: 16 }}>
+        <div className="mt-8">
+          <div className="mb-2 text-xs uppercase tracking-wide text-neutral-400">Raw response</div>
+          <pre className="whitespace-pre-wrap rounded-lg border border-border-subtle/80 bg-surface-base/80 p-4 text-xs text-neutral-200">
             {safeStringify(raw)}
           </pre>
         </div>
@@ -131,9 +142,9 @@ export default function ToolsPage() {
 function SchemaBlock({ title, value }: { title: string; value: unknown }) {
   if (!value) return null;
   return (
-    <div style={{ marginTop: 12 }}>
-      <div style={{ fontSize: 12, opacity: 0.8, marginBottom: 4 }}>{title}</div>
-      <pre style={{ whiteSpace: 'pre-wrap', background: '#0b0c10', color: '#9fb2c8', border: '1px solid #2c3242', borderRadius: 6, padding: 12, maxHeight: 220, overflow: 'auto' }}>
+    <div className="mt-3">
+      <div className="mb-1 text-xs uppercase tracking-wide text-neutral-400">{title}</div>
+      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-lg border border-border-subtle/70 bg-surface-base/80 p-3 text-xs text-neutral-200">
         {safeStringify(value)}
       </pre>
     </div>

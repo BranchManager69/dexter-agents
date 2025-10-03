@@ -6,7 +6,7 @@ import { AuthMenu } from "@/app/components/AuthMenu";
 
 interface SessionIdentitySummary {
   type: "guest" | "user";
-  user?: { id?: string | null; email?: string | null } | null;
+  user?: { id?: string | null; email?: string | null; roles?: string[]; isSuperAdmin?: boolean } | null;
   guestProfile?: { label?: string; instructions?: string } | null;
 }
 
@@ -84,6 +84,56 @@ function formatWalletAddress(address?: string | null) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
+function getSessionBadgeTone(identity: SessionIdentitySummary) {
+  if (identity.type !== 'user') {
+    return {
+      tone: 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300',
+      label: 'Guest',
+    };
+  }
+
+  const normalizedRoles = (identity.user?.roles ?? []).map((role) => role.toLowerCase());
+  const isSuperAdmin = Boolean(identity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
+
+  if (isSuperAdmin) {
+    return {
+      tone: 'border-amber-400/60 bg-amber-500/10 text-amber-200',
+      label: 'Super Admin',
+    };
+  }
+
+  if (normalizedRoles.includes('admin')) {
+    return {
+      tone: 'border-rose-500/50 bg-rose-500/10 text-rose-200',
+      label: 'Admin',
+    };
+  }
+
+  return {
+    tone: 'border-orange-500/50 bg-orange-500/10 text-orange-200',
+    label: 'User',
+  };
+}
+
+function getRoleButtonTone(identity: SessionIdentitySummary) {
+  if (identity.type !== 'user') {
+    return 'border-neutral-800/60 bg-surface-glass/60 text-neutral-200 hover:border-flux/40 hover:text-flux';
+  }
+
+  const normalizedRoles = (identity.user?.roles ?? []).map((role) => role.toLowerCase());
+  const isSuperAdmin = Boolean(identity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
+
+  if (isSuperAdmin) {
+    return 'border-amber-400/60 bg-amber-500/12 text-amber-100 hover:border-amber-300 hover:text-amber-50';
+  }
+
+  if (normalizedRoles.includes('admin')) {
+    return 'border-rose-500/60 bg-rose-500/12 text-rose-100 hover:border-rose-300 hover:text-rose-50';
+  }
+
+  return 'border-orange-500/60 bg-orange-500/12 text-orange-200 hover:border-orange-300 hover:text-orange-50';
+}
+
 export function TopRibbon({
   sessionStatus,
   selectedAgentName,
@@ -108,6 +158,14 @@ export function TopRibbon({
   const sessionLabel = sessionIdentity.type === "user"
     ? sessionIdentity.user?.email?.split("@")[0] || "User"
     : "Demo";
+  const sessionBadge = getSessionBadgeTone(sessionIdentity);
+  const normalizedRoles = (sessionIdentity.user?.roles ?? []).map((role) => role.toLowerCase());
+  const isSuperAdmin = Boolean(sessionIdentity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
+  const isAdmin = isSuperAdmin || normalizedRoles.includes('admin');
+  const canManageAgents = sessionIdentity.type === 'user' && isAdmin;
+  const authButtonTone = getRoleButtonTone(sessionIdentity);
+  const authRoleLabel = sessionIdentity.type === 'user' ? sessionBadge.label : sessionLabel;
+  const authEmail = sessionIdentity.type === 'user' ? sessionIdentity.user?.email ?? undefined : undefined;
 
   const handleAuthSignIn = async (email: string, captchaToken: string | null) => {
     if (!onSignIn) return { success: false, message: "Sign-in not available" };
@@ -168,42 +226,42 @@ export function TopRibbon({
       )}
 
       {/* Agent Selector */}
-      <div className="relative inline-flex flex-shrink min-w-0">
-        <select
-          value={selectedAgentName}
-          onChange={(event) => onAgentChange(event.target.value)}
-          className="appearance-none rounded-md border border-neutral-800/80 bg-surface-glass/80 px-2 py-1.5 pr-7 text-xs text-neutral-100 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30 sm:px-3 sm:pr-8"
-          title="Select agent"
-        >
-          {agents.map((agent) => (
-            <option key={agent.name} value={agent.name}>
-              {getAgentDisplayName(agent.name)}
-            </option>
-          ))}
-        </select>
-        <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-neutral-500">
-          <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-            <path
-              fillRule="evenodd"
-              d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
-              clipRule="evenodd"
-            />
-          </svg>
-        </span>
-      </div>
+      {canManageAgents && (
+        <div className="relative inline-flex flex-shrink min-w-0">
+          <select
+            value={selectedAgentName}
+            onChange={(event) => onAgentChange(event.target.value)}
+            className="appearance-none rounded-md border border-rose-500/60 bg-rose-500/10 px-2 py-1.5 pr-7 text-xs text-rose-100 outline-none transition focus:border-rose-300 focus:ring-2 focus:ring-rose-300/40 sm:px-3 sm:pr-8"
+            title="Select agent"
+          >
+            {agents.map((agent) => (
+              <option key={agent.name} value={agent.name} className="bg-neutral-900 text-rose-100">
+                {getAgentDisplayName(agent.name)}
+              </option>
+            ))}
+          </select>
+          <span className="pointer-events-none absolute inset-y-0 right-2 flex items-center text-rose-200/80">
+            <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <path
+                fillRule="evenodd"
+                d="M5.23 7.21a.75.75 0 011.06.02L10 10.44l3.71-3.21a.75.75 0 111.04 1.08l-4.25 3.65a.75.75 0 01-1.04 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                clipRule="evenodd"
+              />
+            </svg>
+          </span>
+        </div>
+      )}
 
       <div className="ml-auto flex min-w-0 flex-shrink items-center gap-2 sm:gap-3">
         {/* Session Badge */}
-        <span
-          className={`hidden flex-shrink-0 rounded-md border px-2 py-1 text-[11px] font-medium md:inline-flex md:px-2.5 ${
-            sessionIdentity.type === 'user'
-              ? 'border-flux/40 bg-flux/10 text-flux'
-              : 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300'
-          }`}
-          title={sessionIdentity.type === "user" ? `Session: ${sessionIdentity.user?.email || "Authenticated"}` : "Demo session"}
-        >
-          {sessionLabel}
-        </span>
+        {sessionIdentity.type !== 'user' && (
+          <span
+            className={`hidden flex-shrink-0 rounded-md border px-2 py-1 text-[11px] font-medium md:inline-flex md:px-2.5 ${sessionBadge.tone}`}
+            title="Demo session"
+          >
+            {sessionLabel}
+          </span>
+        )}
 
         {/* MCP Badge */}
         <span
@@ -232,6 +290,10 @@ export function TopRibbon({
             onSignIn={handleAuthSignIn}
             onSignOut={handleAuthSignOut}
             turnstileSiteKey={turnstileSiteKey}
+            roleLabel={authRoleLabel}
+            buttonToneClass={authButtonTone}
+            buttonTitle={authEmail}
+            activeWalletKey={sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined}
           />
         </div>
       </div>

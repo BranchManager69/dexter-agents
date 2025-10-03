@@ -1,25 +1,33 @@
-import {
-  RealtimeAgent,
-} from '@openai/agents/realtime';
+import { RealtimeAgent } from '@openai/agents/realtime';
+import { fetchPromptModule } from '@/app/lib/promptModules';
 
-export const haikuWriterAgent = new RealtimeAgent({
-  name: 'haikuWriter',
-  voice: 'sage',
-  instructions:
-    'Ask the user for a topic, then reply with a haiku about that topic.',
-  handoffs: [],
-  tools: [],
-  handoffDescription: 'Agent that writes haikus',
-});
+export async function buildHaikuWriterAgent(): Promise<RealtimeAgent> {
+  const prompt = await fetchPromptModule('agent.haiku_writer.instructions');
+  return new RealtimeAgent({
+    name: 'haikuWriter',
+    voice: 'sage',
+    instructions: prompt.segment,
+    handoffs: [],
+    tools: [],
+    handoffDescription: 'Agent that writes haikus',
+  });
+}
 
-export const greeterAgent = new RealtimeAgent({
-  name: 'greeter',
-  voice: 'sage',
-  instructions:
-    "Please greet the user and ask them if they'd like a Haiku. If yes, hand off to the 'haiku' agent.",
-  handoffs: [haikuWriterAgent],
-  tools: [],
-  handoffDescription: 'Agent that greets the user',
-});
+export async function buildGreeterAgent(): Promise<RealtimeAgent> {
+  const prompt = await fetchPromptModule('agent.greeter.instructions');
+  const haikuAgent = await buildHaikuWriterAgent();
+  return new RealtimeAgent({
+    name: 'greeter',
+    voice: 'sage',
+    instructions: prompt.segment,
+    handoffs: [haikuAgent],
+    tools: [],
+    handoffDescription: 'Agent that greets the user',
+  });
+}
 
-export const simpleHandoffScenario = [greeterAgent, haikuWriterAgent];
+export async function loadSimpleHandoffScenario(): Promise<RealtimeAgent[]> {
+  const greeter = await buildGreeterAgent();
+  const haiku = await buildHaikuWriterAgent();
+  return [greeter, haiku];
+}

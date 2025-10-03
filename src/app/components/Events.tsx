@@ -15,9 +15,9 @@ function Events({ isExpanded }: EventsProps) {
   const { loggedEvents, toggleExpand } = useEvent();
 
   const getDirectionArrow = (direction: string) => {
-    if (direction === "client") return { symbol: "▲", color: "#7C5CFF" };
-    if (direction === "server") return { symbol: "▼", color: "#5BFFBA" };
-    return { symbol: "•", color: "#94A6C2" };
+    if (direction === "client") return { symbol: "▲", className: "text-primary-bright" };
+    if (direction === "server") return { symbol: "▼", className: "text-flux" };
+    return { symbol: "•", className: "text-neutral-400" };
   };
 
   useEffect(() => {
@@ -66,7 +66,7 @@ function Events({ isExpanded }: EventsProps) {
                   className="flex cursor-pointer items-center justify-between gap-4"
                 >
                   <div className="flex flex-1 items-center gap-3">
-                    <span style={{ color: arrowInfo.color }}>{arrowInfo.symbol}</span>
+                    <span className={arrowInfo.className}>{arrowInfo.symbol}</span>
                     <span className={`flex-1 ${isError ? "text-accent-critical" : "text-neutral-200"}`}>
                       {log.eventName}
                     </span>

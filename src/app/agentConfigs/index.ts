@@ -1,10 +1,10 @@
-import { dexterTradingScenario } from './customerServiceRetail';
-
 import type { RealtimeAgent } from '@openai/agents/realtime';
+import { loadDexterTradingScenario, defaultAgentSetKey } from './customerServiceRetail';
 
-// Map of scenario key -> array of RealtimeAgent objects
-export const allAgentSets: Record<string, RealtimeAgent[]> = {
-  dexterTrading: dexterTradingScenario,
+export type AgentScenarioLoader = () => Promise<RealtimeAgent[]>;
+
+export const scenarioLoaders: Record<string, AgentScenarioLoader> = {
+  dexterTrading: loadDexterTradingScenario,
 };
 
-export const defaultAgentSetKey = 'dexterTrading';
+export { defaultAgentSetKey };

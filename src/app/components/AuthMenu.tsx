@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { resolveEmailProvider } from "@/app/lib/emailProviders";
 import { TurnstileWidget } from "./TurnstileWidget";
+import { HashBadge } from "@/app/components/toolNotes/renderers/helpers";
 
 interface AuthMenuProps {
   isAuthenticated: boolean;
@@ -11,6 +12,10 @@ interface AuthMenuProps {
   onSignOut: () => void;
   turnstileSiteKey?: string;
   turnstileSlot?: React.ReactNode;
+  roleLabel?: string | null;
+  buttonToneClass?: string;
+  buttonTitle?: string;
+  activeWalletKey?: string | null;
 }
 
 export function AuthMenu({
@@ -20,6 +25,10 @@ export function AuthMenu({
   onSignIn,
   onSignOut,
   turnstileSiteKey,
+  roleLabel,
+  buttonToneClass,
+  buttonTitle,
+  activeWalletKey,
 }: AuthMenuProps) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -29,6 +38,7 @@ export function AuthMenu({
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [turnstileKey, setTurnstileKey] = useState(0);
   const [turnstileVisible, setTurnstileVisible] = useState(() => Boolean(turnstileSiteKey));
+  const [walletFeedback, setWalletFeedback] = useState<string>("");
   const containerRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -52,10 +62,13 @@ export function AuthMenu({
 
   // Reset turnstile when dropdown closes
   useEffect(() => {
-    if (!open && turnstileSiteKey) {
-      setCaptchaToken(null);
-      setTurnstileVisible(Boolean(turnstileSiteKey));
-      setTurnstileKey((key) => key + 1);
+    if (!open) {
+      setWalletFeedback("");
+      if (turnstileSiteKey) {
+        setCaptchaToken(null);
+        setTurnstileVisible(Boolean(turnstileSiteKey));
+        setTurnstileKey((key) => key + 1);
+      }
     }
   }, [open, turnstileSiteKey]);
 
@@ -120,11 +133,17 @@ export function AuthMenu({
     setEmail("");
     setAuthMessage("");
     setMagicLinkSent(false);
+    setWalletFeedback("");
     if (turnstileSiteKey) {
       setCaptchaToken(null);
       setTurnstileVisible(Boolean(turnstileSiteKey));
       setTurnstileKey((key) => key + 1);
     }
+  };
+
+  const handleExportWallet = () => {
+    setWalletFeedback('Export coming soon');
+    setTimeout(() => setWalletFeedback(""), 2000);
   };
 
   const dropdownContent = open && dropdownPosition && (
@@ -141,6 +160,31 @@ export function AuthMenu({
               <div className="mb-4 text-sm text-neutral-200">
                 {authenticatedEmail ?? "Dexter user"}
               </div>
+              {roleLabel && (
+                <div className="mb-3 text-xs text-neutral-400">
+                  Role: <span className="text-neutral-100">{roleLabel}</span>
+                </div>
+              )}
+              {activeWalletKey && (
+                <div className="mb-4 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-3 text-xs text-neutral-300">
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">Active Wallet</div>
+                  <div className="mt-2">
+                    <HashBadge value={activeWalletKey} ariaLabel="wallet address" />
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleExportWallet}
+                      className="flex-1 rounded-md border border-rose-500/50 bg-rose-500/12 px-3 py-2 text-xs text-rose-100 transition hover:border-rose-300 hover:text-rose-50"
+                    >
+                      Export wallet
+                    </button>
+                  </div>
+                  {walletFeedback && (
+                    <div className="mt-2 text-[11px] text-neutral-300">{walletFeedback}</div>
+                  )}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -244,19 +288,21 @@ export function AuthMenu({
     </div>
   );
 
+  const closedToneClass = buttonToneClass || 'border-neutral-800/60 bg-surface-glass/60 text-neutral-200 hover:border-flux/40 hover:text-flux';
+  const openToneClass = buttonToneClass
+    ? `${buttonToneClass} ring-2 ring-offset-0 ring-flux/40`
+    : 'border-flux/40 bg-flux/10 text-flux';
+
   return (
     <div ref={containerRef} className="relative">
       <button
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-[11px] transition ${
-          open
-            ? "border-flux/40 bg-flux/10 text-flux"
-            : "border-neutral-800/60 bg-surface-glass/60 text-neutral-200 hover:border-flux/40 hover:text-flux"
-        }`}
+        className={`inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-[11px] transition ${open ? openToneClass : closedToneClass}`}
         aria-haspopup="menu"
         aria-expanded={open}
+        title={buttonTitle || authenticatedEmail || undefined}
       >
         <span>{accountLabel}</span>
         <svg

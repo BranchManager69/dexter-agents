@@ -1,5 +1,7 @@
 import type { Config } from "tailwindcss";
 
+const withOpacityValue = (variable: string) => `rgb(var(${variable}) / <alpha-value>)`;
+
 export default {
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,30 +11,44 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: "#070910",
-        foreground: "#E6EDF7",
+        background: withOpacityValue("--color-background"),
+        foreground: withOpacityValue("--color-foreground"),
         surface: {
-          base: "#0E1420",
-          raised: "#111B2B",
-          glass: "#18253A",
+          base: withOpacityValue("--color-surface-base"),
+          raised: withOpacityValue("--color-surface-raised"),
+          glass: withOpacityValue("--color-surface-glass"),
         },
-        flux: "#5BFFBA",
-        iris: "#7C5CFF",
+        header: withOpacityValue("--color-header-bg"),
+        "header-border": withOpacityValue("--color-header-border"),
+        footer: withOpacityValue("--color-footer-bg"),
+        "footer-border": withOpacityValue("--color-footer-border"),
+        border: {
+          subtle: withOpacityValue("--color-border-subtle"),
+          strong: withOpacityValue("--color-border-strong"),
+        },
+        primary: {
+          DEFAULT: withOpacityValue("--color-primary"),
+          bright: withOpacityValue("--color-primary-bright"),
+          muted: withOpacityValue("--color-primary-muted"),
+        },
+        flux: withOpacityValue("--color-flux"),
+        iris: withOpacityValue("--color-iris"),
         accent: {
-          info: "#45B3FF",
-          success: "#38F2B8",
-          warn: "#FFC66B",
-          critical: "#FF597D",
+          info: withOpacityValue("--color-accent-info"),
+          success: withOpacityValue("--color-accent-success"),
+          warn: withOpacityValue("--color-accent-warn"),
+          critical: withOpacityValue("--color-accent-critical"),
         },
         neutral: {
-          100: "#E6EDF7",
-          200: "#C7D3E5",
-          300: "#A9B8CF",
-          400: "#94A6C2",
-          500: "#7A8CA3",
-          600: "#5A6B82",
-          700: "#3F4E63",
-          800: "#243449",
+          100: withOpacityValue("--color-neutral-100"),
+          200: withOpacityValue("--color-neutral-200"),
+          300: withOpacityValue("--color-neutral-300"),
+          400: withOpacityValue("--color-neutral-400"),
+          500: withOpacityValue("--color-neutral-500"),
+          600: withOpacityValue("--color-neutral-600"),
+          700: withOpacityValue("--color-neutral-700"),
+          800: withOpacityValue("--color-neutral-800"),
+          900: withOpacityValue("--color-neutral-900"),
         },
       },
       fontFamily: {
@@ -65,7 +81,7 @@ export default {
         11: "88px",
       },
       backgroundImage: {
-        'gradient-fade-dark': 'linear-gradient(180deg, rgba(8, 14, 26, 0) 0%, rgba(8, 14, 26, 0.9) 45%, rgba(6, 12, 24, 0.96) 100%)',
+        'gradient-fade-dark': 'linear-gradient(180deg, rgb(var(--color-background) / 0) 0%, rgb(var(--color-background) / 0.9) 45%, rgb(var(--color-background) / 0.96) 100%)',
       },
     },
   },

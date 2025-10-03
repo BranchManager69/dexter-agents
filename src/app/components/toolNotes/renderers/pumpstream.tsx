@@ -1,21 +1,13 @@
-import React from "react";
 import Image from "next/image";
-import type { TranscriptItem } from "@/app/types";
 
-export interface ToolNoteRendererProps {
-  item: TranscriptItem;
-  isExpanded: boolean;
-  onToggle: () => void;
-  debug?: boolean;
-}
-
-export type ToolNoteRenderer = (props: ToolNoteRendererProps) => React.ReactNode;
-
-function normalizeOutput(data: Record<string, any> | undefined) {
-  if (!data) return undefined;
-  if (data.output && typeof data.output === "object") return data.output;
-  return data;
-}
+import type { ToolNoteRenderer } from "./types";
+import {
+  BASE_CARD_CLASS,
+  SECTION_TITLE_CLASS,
+  countCompactFormatter,
+  formatUsd,
+  normalizeOutput,
+} from "./helpers";
 
 const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
   const payload = normalizeOutput(item.data as Record<string, any> | undefined) || {};
@@ -24,15 +16,16 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
   const headline = streams.slice(0, 3);
   const remaining = streams.slice(3);
 
-  const formatNumber = (value: unknown, options?: Intl.NumberFormatOptions) => {
-    if (typeof value !== "number" && typeof value !== "bigint") return undefined;
-    return new Intl.NumberFormat("en-US", options).format(Number(value));
-  };
-
-  const renderStreamCard = (stream: any) => {
-    const title: string = stream?.name || stream?.symbol || stream?.mintId || "Stream";
-    const viewers = formatNumber(stream?.currentViewers);
-    const marketCap = formatNumber(stream?.marketCapUsd, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const renderStreamCard = (stream: any, index: number) => {
+    const title: string = stream?.name || stream?.symbol || stream?.mintId || stream?.channel || `Stream ${index + 1}`;
+    const viewersRaw = stream?.currentViewers ?? stream?.viewer_count ?? stream?.viewers;
+    const marketCap = formatUsd(stream?.marketCapUsd ?? stream?.market_cap_usd ?? stream?.marketCap, { precise: false });
+    const momentum = stream?.momentum ?? stream?.signal;
+    const momentumLabel = typeof momentum === "number"
+      ? `${momentum >= 0 ? "+" : ""}${momentum.toFixed(2)}%`
+      : typeof momentum === "string"
+        ? momentum
+        : undefined;
 
     const inferredHref = typeof stream?.url === "string" && stream.url
       ? stream.url
@@ -42,9 +35,9 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
           ? `https://pump.fun/${stream.mintId}`
           : undefined;
 
-    const content = (
-      <div className="w-full rounded-xl border border-neutral-800/60 bg-surface-glass/70 p-3 transition hover:border-flux/60">
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-neutral-900/60 bg-neutral-900/60">
+    const card = (
+      <div className="flex h-full flex-col gap-3 rounded-xl border border-neutral-800/40 bg-surface-glass/40 p-3">
+        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-neutral-900/60">
           {typeof stream?.thumbnail === "string" && stream.thumbnail ? (
             <Image
               src={stream.thumbnail}
@@ -55,26 +48,33 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-xs text-neutral-500">
-              No thumbnail
+              Preview unavailable
             </div>
           )}
         </div>
-        <div className="mt-3 text-sm font-medium text-neutral-100 truncate" title={title}>
-          {title}
+        <div className="flex flex-col gap-1">
+          <div className="text-sm font-semibold text-neutral-100" title={title}>
+            {title}
+          </div>
+          <div className="text-xs text-neutral-400">
+            {typeof viewersRaw === "number"
+              ? `${countCompactFormatter.format(viewersRaw)} watching`
+              : viewersRaw
+                ? String(viewersRaw)
+                : "Viewer data pending"}
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-neutral-500">
+            {marketCap && <span>MCAP {marketCap}</span>}
+            {momentumLabel && <span className="rounded-full border border-neutral-700 px-2 py-[1px] text-[10px] text-neutral-200">Momentum {momentumLabel}</span>}
+          </div>
         </div>
-        <div className="mt-1 text-xs text-neutral-400">
-          {viewers ? `${viewers} watching` : "Viewer data pending"}
-        </div>
-        {marketCap && (
-          <div className="text-xs text-neutral-500">MCAP {marketCap}</div>
-        )}
       </div>
     );
 
     if (!inferredHref) {
       return (
-        <div key={stream?.mintId || title} className="flex">
-          {content}
+        <div key={stream?.mintId || title} className="h-full">
+          {card}
         </div>
       );
     }
@@ -85,32 +85,39 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
         href={inferredHref}
         target="_blank"
         rel="noreferrer"
-        className="flex"
+        className="h-full transition hover:border-flux/50"
       >
-        {content}
+        {card}
       </a>
     );
   };
 
   return (
-    <div className="w-full max-w-xl rounded-2xl border border-neutral-800/60 bg-surface-glass/50 p-4 text-neutral-100 shadow-elevated">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="font-display text-sm uppercase tracking-[0.28em] text-neutral-400">
-          Pump.fun Streams
+    <div className={BASE_CARD_CLASS}>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className={SECTION_TITLE_CLASS}>Pump.fun Streams</div>
+          {generatedAt && (
+            <div className="text-xs text-neutral-500">Updated {new Date(generatedAt).toLocaleTimeString()}</div>
+          )}
         </div>
-        {generatedAt && (
-          <div className="text-[10px] text-neutral-500">{new Date(generatedAt).toLocaleTimeString()}</div>
+        {streams.length > 0 && (
+          <div className="rounded-full border border-neutral-700 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-neutral-300">
+            {streams.length} live
+          </div>
         )}
       </div>
+
       {headline.length > 0 ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {headline.map((stream: any) => renderStreamCard(stream))}
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {headline.map((stream: any, index: number) => renderStreamCard(stream, index))}
         </div>
       ) : (
         <div className="mt-4 rounded-lg border border-dashed border-neutral-800/60 px-4 py-6 text-center text-sm text-neutral-400">
           No live streams reported in the last response.
         </div>
       )}
+
       {remaining.length > 0 && (
         <div className="mt-4">
           {!isExpanded ? (
@@ -123,8 +130,8 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
             </button>
           ) : (
             <>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {remaining.map((stream: any) => renderStreamCard(stream))}
+              <div className="grid gap-3 md:grid-cols-2">
+                {remaining.map((stream: any, index: number) => renderStreamCard(stream, index + headline.length))}
               </div>
               <button
                 type="button"
@@ -137,6 +144,7 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
           )}
         </div>
       )}
+
       {debug && isExpanded && (
         <details className="mt-4 w-full" open>
           <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-neutral-400">
@@ -151,12 +159,4 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
   );
 };
 
-const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
-  pumpstream_live_summary: pumpstreamRenderer,
-};
-
-export function getToolNoteRenderer(toolName?: string | null): ToolNoteRenderer | undefined {
-  if (!toolName) return undefined;
-  const key = toolName.trim().toLowerCase();
-  return TOOL_NOTE_RENDERERS[key];
-}
+export default pumpstreamRenderer;
