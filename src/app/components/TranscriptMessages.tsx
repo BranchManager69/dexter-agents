@@ -19,6 +19,9 @@ export function TranscriptMessages({
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
+  const showDebugPayloads = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
+  const [visibleTimestamps, setVisibleTimestamps] = useState<Record<string, boolean>>({});
+  const timestampTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
 
   function scrollToBottom() {
     if (transcriptRef.current) {
@@ -42,6 +45,26 @@ export function TranscriptMessages({
 
     setPrevLogs(transcriptItems);
   }, [transcriptItems, prevLogs]);
+
+  useEffect(() => () => {
+    timestampTimersRef.current.forEach((timer) => clearTimeout(timer));
+    timestampTimersRef.current.clear();
+  }, []);
+
+  const revealTimestamp = (itemId: string) => {
+    setVisibleTimestamps((prev) => ({ ...prev, [itemId]: true }));
+    const existing = timestampTimersRef.current.get(itemId);
+    if (existing) clearTimeout(existing);
+    const timer = setTimeout(() => {
+      setVisibleTimestamps((prev) => ({ ...prev, [itemId]: false }));
+      timestampTimersRef.current.delete(itemId);
+    }, 4000);
+    timestampTimersRef.current.set(itemId, timer);
+  };
+
+  const handleBubbleInteract = (itemId: string) => {
+    revealTimestamp(itemId);
+  };
 
   // Only show empty state if there are no user or assistant messages (filter out debug/system items)
   const hasRealMessages = transcriptItems.some(item =>
@@ -103,39 +126,51 @@ export function TranscriptMessages({
 
           if (type === "MESSAGE") {
             const isUser = role === "user";
-            const containerClasses = `flex flex-col ${
+            const containerClasses = `group/message relative flex flex-col gap-1 ${
               isUser ? "items-end" : "items-start"
             }`;
-            const bubbleBase = `max-w-xl rounded-2xl border border-neutral-800/60 px-5 py-4 ${
+            const bubbleBase = `relative max-w-xl rounded-3xl border border-neutral-800/50 px-5 py-3 shadow-sm transition-colors ${
               isUser
-                ? "bg-iris/15 text-neutral-100"
-                : "bg-surface-glass/60 text-neutral-200"
+                ? "bg-gradient-to-r from-iris/30 via-iris/20 to-iris/10 text-neutral-100"
+                : "bg-surface-glass/70 text-neutral-100"
             }`;
             const isBracketedMessage =
               title.startsWith("[") && title.endsWith("]");
-            const messageStyle = isBracketedMessage
-              ? 'italic text-gray-400'
-              : '';
-            const displayTitle = isBracketedMessage
-              ? title.slice(1, -1)
-              : title;
+            const messageStyle = isBracketedMessage ? "italic text-neutral-400" : "";
+            const displayTitle = isBracketedMessage ? title.slice(1, -1) : title;
+
+            const timestampVisible = Boolean(visibleTimestamps[itemId]);
 
             return (
               <div key={itemId} className={containerClasses}>
                 <div className="max-w-xl">
                   <div
-                    className={`${bubbleBase} rounded-3xl ${guardrailResult ? "rounded-b-none" : ""}`}
+                    role="button"
+                    tabIndex={0}
+                    className={`${bubbleBase} ${guardrailResult ? "rounded-b-none" : ""}`}
+                    onClick={() => handleBubbleInteract(itemId)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        handleBubbleInteract(itemId);
+                      }
+                    }}
+                    onTouchStart={() => handleBubbleInteract(itemId)}
                   >
-                    <div
-                      className={`text-[10px] font-mono uppercase tracking-[0.28em] ${
-                        isUser ? "text-neutral-400" : "text-neutral-500"
-                      }`}
+                    <span
+                      className={`pointer-events-none absolute -top-5 ${
+                        isUser ? "right-3" : "left-3"
+                      } ${
+                        timestampVisible
+                          ? "flex"
+                          : "hidden lg:group-hover/message:flex"
+                      } rounded-md bg-neutral-900/90 px-2 py-1 text-[10px] uppercase tracking-[0.24em] text-neutral-200 shadow-lg transition-opacity duration-200`}
                     >
                       {timestamp}
-                    </div>
-                    <div className={`mt-2 whitespace-pre-wrap leading-relaxed ${messageStyle}`}>
-                      <ReactMarkdown>{displayTitle}</ReactMarkdown>
-                    </div>
+                    </span>
+                    <ReactMarkdown className={`whitespace-pre-wrap leading-relaxed ${messageStyle}`}>
+                      {displayTitle}
+                    </ReactMarkdown>
                   </div>
                   {guardrailResult && (
                     <div className="rounded-b-3xl border border-neutral-800/40 bg-surface-glass/50 px-4 py-3">
@@ -154,24 +189,26 @@ export function TranscriptMessages({
                     item,
                     isExpanded: expanded,
                     onToggle: () => toggleTranscriptItemExpand(itemId),
+                    debug: showDebugPayloads,
                   })}
                 </div>
               );
             }
 
             const hasDetails = data && Object.keys(data).length > 0;
+            const canToggle = showDebugPayloads && hasDetails;
             return (
               <div key={itemId} className="flex flex-col items-start text-[11px] text-neutral-400">
                 <div
                   className={`flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 font-mono uppercase tracking-[0.28em] text-[10px] text-neutral-300 ${
-                    hasDetails ? "cursor-pointer hover:border-flux/60" : ""
+                    canToggle ? "cursor-pointer hover:border-flux/60" : ""
                   }`}
-                  onClick={() => hasDetails && toggleTranscriptItemExpand(itemId)}
+                  onClick={() => canToggle && toggleTranscriptItemExpand(itemId)}
                 >
                   <span className="text-[9px] text-flux">•</span>
                   <span>Tool</span>
                   <span className="tracking-normal text-neutral-200">{title}</span>
-                  {hasDetails && (
+                  {canToggle && (
                     <span
                       className={`ml-1 select-none text-neutral-500 transition-transform duration-200 ${
                         expanded ? "rotate-90" : "rotate-0"
@@ -181,7 +218,7 @@ export function TranscriptMessages({
                     </span>
                   )}
                 </div>
-                {expanded && hasDetails && (
+                {showDebugPayloads && expanded && hasDetails && (
                   <pre className="mt-2 w-full max-w-xl break-words whitespace-pre-wrap rounded-md border border-neutral-800/40 bg-surface-glass/40 px-3 py-2 text-[11px] font-mono text-neutral-200">
                     {JSON.stringify(data, null, 2)}
                   </pre>
