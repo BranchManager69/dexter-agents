@@ -42,9 +42,45 @@ const normalizeResult = (result: McpToolResponse) => {
   if (Array.isArray(result)) {
     return { content: result };
   }
-  if (result && typeof result === 'object' && 'content' in result) {
-    return result;
+
+  if (result && typeof result === 'object') {
+    const structured =
+      'structuredContent' in result
+        ? (result as any).structuredContent
+        : 'structured_content' in result
+          ? (result as any).structured_content
+          : undefined;
+    const hasStructured = structured !== undefined;
+    const hasContent = Array.isArray((result as any).content);
+
+    if (hasStructured || hasContent) {
+      const normalized: Record<string, unknown> = { ...result };
+
+      if (hasStructured && !('structuredContent' in normalized)) {
+        normalized.structuredContent = structured;
+      }
+
+      if (!hasContent) {
+        const fallbackText = typeof structured === 'string'
+          ? structured
+          : structured !== undefined
+            ? JSON.stringify(structured)
+            : typeof result === 'string'
+              ? result
+              : JSON.stringify(result);
+
+        normalized.content = [
+          {
+            type: 'text',
+            text: fallbackText,
+          },
+        ];
+      }
+
+      return normalized;
+    }
   }
+
   return {
     content: [
       {
