@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { ClipboardCopyIcon, DownloadIcon, MixerHorizontalIcon } from "@radix-ui/react-icons";
 import { SessionStatus } from "@/app/types";
 import type { DexterUserBadge } from "@/app/types";
+import { UserBadge } from "./UserBadge";
 export interface HeroControlsProps {
   sessionStatus: SessionStatus;
   onOpenSignals: () => void;
@@ -235,31 +236,11 @@ export function HeroControls({
       )
     ) : null;
 
-  const badgeDescriptor = userBadge
-    ? userBadge === "dev"
-      ? {
-          label: "DEV",
-          title: "Super admin access",
-          className:
-            "border-amber-400/70 bg-amber-400/15 text-amber-100 shadow-[0_0_16px_rgba(255,200,92,0.25)]",
-        }
-      : {
-          label: "PRO",
-          title: "Pro member access",
-          className: "border-iris/60 bg-iris/18 text-iris",
-        }
-    : null;
+  const badgeVariant = userBadge === "dev" ? "dev" : userBadge === "pro" ? "pro" : null;
 
   return (
     <div className={rootClassName}>
-      {badgeDescriptor && (
-        <span
-          className={`inline-flex min-h-[32px] items-center justify-center rounded-full border px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.32em] ${badgeDescriptor.className}`}
-          title={badgeDescriptor.title}
-        >
-          {badgeDescriptor.label}
-        </span>
-      )}
+      {badgeVariant && <UserBadge variant={badgeVariant} size="md" />}
       {canUseAdminTools && (
         <>
           <button

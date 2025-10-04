@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { resolveEmailProvider } from "@/app/lib/emailProviders";
 import { TurnstileWidget } from "./TurnstileWidget";
 import { HashBadge } from "@/app/components/toolNotes/renderers/helpers";
+import { UserBadge } from "./UserBadge";
 import type { DexterUserBadge } from "@/app/types";
 
 interface WalletPortfolioSummary {
@@ -71,23 +72,7 @@ export function AuthMenu({
   const providerInfo = resolveEmailProvider(email);
   const inboxUrl = providerInfo?.inboxUrl ?? "";
 
-  const badgeDescriptor = userBadge
-    ? userBadge === "dev"
-      ? {
-          buttonClass: "border-amber-400/60 bg-amber-500/20 text-amber-100 shadow-[0_0_14px_rgba(255,200,92,0.25)]",
-          dropdownClass: "border-amber-400/60 bg-amber-500/12 text-amber-100",
-          label: "DEV",
-          dropdownLabel: "Dev",
-          title: "Super admin access",
-        }
-      : {
-          buttonClass: "border-iris/60 bg-iris/18 text-iris",
-          dropdownClass: "border-iris/60 bg-iris/12 text-iris",
-          label: "PRO",
-          dropdownLabel: "Pro",
-          title: "Pro member access",
-        }
-    : null;
+  const badgeVariant = userBadge === "dev" ? "dev" : userBadge === "pro" ? "pro" : null;
 
   // Calculate dropdown position when opening
   useEffect(() => {
@@ -288,13 +273,8 @@ export function AuthMenu({
               {roleLabel && (
                 <div className="mb-3 text-xs text-neutral-400">
                   Role:{" "}
-                  {badgeDescriptor ? (
-                    <span
-                      className={`ml-2 inline-flex items-center justify-center gap-1 rounded-full border px-2 py-0.5 text-[10px] uppercase tracking-[0.26em] ${badgeDescriptor.dropdownClass}`}
-                      title={badgeDescriptor.title}
-                    >
-                      {badgeDescriptor.dropdownLabel}
-                    </span>
+                  {badgeVariant ? (
+                    <UserBadge variant={badgeVariant} size="sm" className="ml-2" />
                   ) : (
                     <span className="ml-1 text-neutral-100">{roleLabel}</span>
                   )}
@@ -487,19 +467,14 @@ export function AuthMenu({
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`inline-flex items-center ${badgeDescriptor ? 'gap-2' : 'gap-0'} rounded-md border px-3 py-1.5 text-[11px] transition ${open ? openToneClass : closedToneClass}`}
+        className={`inline-flex items-center ${badgeVariant ? 'gap-2' : 'gap-0'} rounded-md border px-3 py-1.5 text-[11px] transition ${open ? openToneClass : closedToneClass}`}
         aria-haspopup="menu"
         aria-expanded={open}
         title={buttonTitle || authenticatedEmail || undefined}
       >
         <span>{accountLabel}</span>
-        {badgeDescriptor && (
-          <span
-            className={`inline-flex items-center justify-center rounded-full border px-2 py-[3px] text-[9px] font-semibold tracking-[0.36em] ${badgeDescriptor.buttonClass}`}
-            title={badgeDescriptor.title}
-          >
-            {badgeDescriptor.label}
-          </span>
+        {badgeVariant && (
+          <UserBadge variant={badgeVariant} size="xs" />
         )}
       </button>
 
