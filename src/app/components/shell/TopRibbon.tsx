@@ -51,6 +51,7 @@ interface TopRibbonProps {
   onSignIn?: (email: string, captchaToken: string | null) => Promise<{ success: boolean; message: string }>;
   onSignOut?: () => void;
   turnstileSiteKey?: string;
+  onOpenPersonaModal?: () => void;
 }
 
 function getStatusAccent(sessionStatus: SessionStatus) {
@@ -154,6 +155,7 @@ export function TopRibbon({
   onSignIn,
   onSignOut,
   turnstileSiteKey,
+  onOpenPersonaModal,
 }: TopRibbonProps) {
 
   const statusChip = getStatusAccent(sessionStatus);
@@ -293,6 +295,18 @@ export function TopRibbon({
         </span>
 
         <span className="hidden h-4 w-px flex-shrink-0 bg-neutral-800/60 md:inline-block" aria-hidden="true" />
+
+        {onOpenPersonaModal && (
+          <button
+            type="button"
+            onClick={onOpenPersonaModal}
+            className="hidden flex-shrink-0 items-center gap-2 rounded-full border border-neutral-800/60 bg-surface-glass/60 px-3 py-1.5 text-[11px] uppercase tracking-[0.28em] text-neutral-200 transition hover:border-flux/50 hover:text-flux md:inline-flex"
+          >
+            Customize
+          </button>
+        )}
+
+        {onOpenPersonaModal && <span className="hidden h-4 w-px flex-shrink-0 bg-neutral-800/60 md:inline-block" aria-hidden="true" />}
 
         {/* Auth Menu */}
         <div className="flex-shrink-0">
