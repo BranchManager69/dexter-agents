@@ -1,9 +1,10 @@
 import { RealtimeAgent } from '@openai/agents/realtime'
+import { CONFIG } from '@/app/config/env'
 import { getNextResponseFromSupervisor } from './supervisorAgent';
 
 export const chatAgent = new RealtimeAgent({
   name: 'chatAgent',
-  voice: 'sage',
+  voice: CONFIG.dexterVoicePrimary,
   instructions: `
 You are a helpful junior customer service agent. Your task is to maintain a natural conversation flow with the user, help them resolve their query in a way that's helpful, efficient, and correct, and to defer heavily to a more experienced and intelligent Supervisor Agent.
 
