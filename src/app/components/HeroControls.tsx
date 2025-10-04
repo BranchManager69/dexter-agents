@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { createPortal } from "react-dom";
 import { ClipboardCopyIcon, DownloadIcon, MixerHorizontalIcon } from "@radix-ui/react-icons";
 import { SessionStatus } from "@/app/types";
-
 export interface HeroControlsProps {
   sessionStatus: SessionStatus;
   onOpenSignals: () => void;

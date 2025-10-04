@@ -72,6 +72,7 @@ type McpStatusState = {
   state: "loading" | "user" | "fallback" | "guest" | "none" | "error";
   label: string;
   detail?: string;
+  minted?: boolean | null;
 };
 
 type TopRibbonProps = ComponentProps<typeof TopRibbonComponent>;
@@ -784,19 +785,6 @@ export function useDexterAppController(): DexterAppController {
   }, [sessionIdentity.type, sessionIdentity.wallet?.public_key, fetchWalletPortfolio]);
 
   useEffect(() => {
-    const unsubscribe = subscribeMcpStatus((snapshot) => {
-      setMcpStatus({ state: snapshot.state, label: snapshot.label, detail: snapshot.detail });
-
-      // Notify waiting callbacks if MCP is now ready
-      if (snapshot.state === 'user' || snapshot.state === 'fallback' || snapshot.state === 'guest') {
-        mcpReadyCallbacksRef.current.forEach(cb => cb());
-        mcpReadyCallbacksRef.current = [];
-      }
-    });
-    return unsubscribe;
-  }, []);
-
-  useEffect(() => {
     fetch("/api/mcp/status", { credentials: "include" })
       .then((response) => response.json())
       .then((data) => updateMcpStatusFromPayload(data || {}))
@@ -896,7 +884,67 @@ export function useDexterAppController(): DexterAppController {
 
   const [sessionStatus, setSessionStatus] =
     useState<SessionStatus>("DISCONNECTED");
-  const mcpReadyCallbacksRef = useRef<Array<() => void>>([]);
+  const isAdminSession = useMemo(() => {
+    if (sessionIdentity.type !== 'user') {
+      return false;
+    }
+    const roles = (sessionIdentity.user?.roles ?? [])
+      .filter((role): role is string => typeof role === 'string')
+      .map((role) => role.toLowerCase());
+    if (sessionIdentity.user?.isSuperAdmin) {
+      return true;
+    }
+    return roles.includes('admin') || roles.includes('superadmin');
+  }, [sessionIdentity]);
+
+  const debugTranscriptEnabled = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
+
+  type McpReadyCallbackEntry = {
+    requireUserIdentity: boolean;
+    resolve: () => void;
+    reject: (error: Error) => void;
+  };
+
+  const mcpReadyCallbacksRef = useRef<McpReadyCallbackEntry[]>([]);
+
+  const isMcpReadyForSession = useCallback(
+    (status: McpStatusState, requireUserIdentity: boolean) => {
+      if (requireUserIdentity) {
+        return status.state === 'user';
+      }
+      return status.state === 'user' || status.state === 'fallback' || status.state === 'guest';
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const unsubscribe = subscribeMcpStatus((snapshot) => {
+      setMcpStatus({ state: snapshot.state, label: snapshot.label, detail: snapshot.detail, minted: snapshot.minted });
+
+      const remaining: McpReadyCallbackEntry[] = [];
+      mcpReadyCallbacksRef.current.forEach((entry) => {
+        if (isMcpReadyForSession(snapshot, entry.requireUserIdentity)) {
+          entry.resolve();
+          return;
+        }
+
+        if (snapshot.state === 'error' || snapshot.state === 'none') {
+          entry.reject(
+            new Error(
+              snapshot.state === 'error'
+                ? 'MCP token unavailable (error state).'
+                : 'MCP token missing for this session.',
+            ),
+          );
+          return;
+        }
+
+        remaining.push(entry);
+      });
+      mcpReadyCallbacksRef.current = remaining;
+    });
+    return unsubscribe;
+  }, [isMcpReadyForSession]);
 
   const [isEventsPaneExpanded, setIsEventsPaneExpanded] =
     useState<boolean>(true);
@@ -995,10 +1043,12 @@ export function useDexterAppController(): DexterAppController {
       const currentAgent = scenarioAgents.find(
         (a) => a.name === selectedAgentName
       );
-      addTranscriptBreadcrumb(
-        `Session started with ${selectedAgentName}`,
-        currentAgent ? { name: currentAgent.name } : undefined,
-      );
+      if (debugTranscriptEnabled && isAdminSession) {
+        addTranscriptBreadcrumb(
+          `Session started with ${selectedAgentName}`,
+          currentAgent ? { name: currentAgent.name } : undefined,
+        );
+      }
       const isHandoff = handoffTriggeredRef.current;
       updateSession(false);
       if (!isHandoff) {
@@ -1007,7 +1057,7 @@ export function useDexterAppController(): DexterAppController {
       // Reset flag after handling so subsequent effects behave normally
       handoffTriggeredRef.current = false;
     }
-  }, [scenarioAgents, selectedAgentName, sessionStatus]);
+  }, [scenarioAgents, selectedAgentName, sessionStatus, isAdminSession, debugTranscriptEnabled]);
 
   useEffect(() => {
     if (pendingAutoConnect && sessionStatus === "DISCONNECTED" && selectedAgentName) {
@@ -1045,34 +1095,36 @@ export function useDexterAppController(): DexterAppController {
     logServerEvent(data, "fetch_session_token_response");
 
     const dexterSession = data?.dexter_session;
-    const authRolesRaw = authSession?.user?.app_metadata?.roles as unknown;
-    const authRoles = Array.isArray(authRolesRaw) ? authRolesRaw.map((value) => String(value)) : [];
-    const userIsSuperAdmin = authRoles.includes('superadmin');
+    const walletFromSession =
+      dexterSession && typeof dexterSession.wallet !== 'undefined'
+        ? (dexterSession.wallet ?? null)
+        : undefined;
 
-    if (dexterSession) {
-      if (dexterSession.type === "user") {
-        setSessionIdentity({
-          type: "user",
-          user: {
-            id: dexterSession.user?.id ?? null,
-            email: dexterSession.user?.email ?? null,
-            roles: authRoles,
-            isSuperAdmin: userIsSuperAdmin,
-          },
-          guestProfile: null,
-          wallet: dexterSession.wallet ?? null,
-        });
-      } else {
-        setSessionIdentity({
-          type: "guest",
-          user: null,
-          guestProfile: dexterSession.guest_profile ?? {
-            label: "Dexter Demo Wallet",
-            instructions: GUEST_SESSION_INSTRUCTIONS,
-          },
-          wallet: dexterSession.wallet ?? null,
-        });
-      }
+    if (authSession) {
+      syncIdentityToAuthSession(walletFromSession);
+    } else if (dexterSession) {
+      setSessionIdentity({
+        type: dexterSession.type === 'user' ? 'user' : 'guest',
+        user:
+          dexterSession.type === 'user'
+            ? {
+                id: dexterSession.user?.id ?? null,
+                email: dexterSession.user?.email ?? null,
+                roles: Array.isArray(dexterSession.user?.roles)
+                  ? (dexterSession.user.roles as string[])
+                  : [],
+                isSuperAdmin: false,
+              }
+            : null,
+        guestProfile:
+          dexterSession.type !== 'user'
+            ? dexterSession.guest_profile ?? {
+                label: 'Dexter Demo Wallet',
+                instructions: GUEST_SESSION_INSTRUCTIONS,
+              }
+            : null,
+        wallet: walletFromSession ?? null,
+      });
     } else {
       resetSessionIdentity();
     }
@@ -1212,20 +1264,55 @@ export function useDexterAppController(): DexterAppController {
   }
 
   const waitForMcpReady = () => {
-    const currentState = mcpStatus.state;
-    if (currentState === 'user' || currentState === 'fallback' || currentState === 'guest') {
+    const requireUserIdentity = sessionIdentity.type === 'user';
+
+    if (isMcpReadyForSession(mcpStatus, requireUserIdentity)) {
       return Promise.resolve();
     }
 
-    return new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('MCP ready timeout'));
-      }, 10000);
+    if (requireUserIdentity && mcpStatus.state !== 'user') {
+      void fetch('/api/mcp/status', { credentials: 'include' })
+        .then((response) => response.json())
+        .then((data) => updateMcpStatusFromPayload(data || {}))
+        .catch(() => {
+          /* non-blocking refresh */
+        });
+    }
 
-      mcpReadyCallbacksRef.current.push(() => {
-        clearTimeout(timeout);
-        resolve();
-      });
+    return new Promise<void>((resolve, reject) => {
+      const timeoutMs = requireUserIdentity ? 15000 : 10000;
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+      const entry: McpReadyCallbackEntry = {
+        requireUserIdentity,
+        resolve: () => {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          resolve();
+        },
+        reject: (error: Error) => {
+          if (timeoutId) {
+            clearTimeout(timeoutId);
+          }
+          reject(error);
+        },
+      };
+
+      timeoutId = setTimeout(() => {
+        mcpReadyCallbacksRef.current = mcpReadyCallbacksRef.current.filter((cb) => cb !== entry);
+        if (requireUserIdentity) {
+          entry.reject(
+            new Error(
+              'Dexter could not mint your personal MCP token. Please sign out and back in, or run the Supabase refresh helper to regenerate credentials.',
+            ),
+          );
+        } else {
+          entry.reject(new Error('Timed out waiting for MCP session readiness.'));
+        }
+      }, timeoutMs);
+
+      mcpReadyCallbacksRef.current.push(entry);
     });
   };
 
@@ -1252,6 +1339,13 @@ export function useDexterAppController(): DexterAppController {
       await waitForMcpReady();
     } catch (err) {
       console.error('MCP not ready, aborting message send', err);
+      addTranscriptBreadcrumb(
+        'MCP token unavailable',
+        {
+          detail: err instanceof Error ? err.message : 'Unknown MCP readiness failure',
+          guidance: 'Sign out/in or run the Supabase refresh helper to restore your session.',
+        },
+      );
       setUserText(messageToSend);
       return;
     }
@@ -1465,8 +1559,8 @@ export function useDexterAppController(): DexterAppController {
   ].join(" ");
   const heroControlsClassName = heroCollapsed ? "mt-0 lg:mt-0" : "mt-5";
   const heroControlsProps: HeroControlsProps = {
-    className: heroControlsClassName,
     sessionStatus,
+    className: heroControlsClassName,
     onOpenSignals: () => setIsMobileSignalsOpen(true),
     onCopyTranscript: handleCopyTranscript,
     onDownloadAudio: downloadRecording,
@@ -1477,17 +1571,6 @@ export function useDexterAppController(): DexterAppController {
     showSuperAdminTools: isSuperAdmin,
     onOpenSuperAdmin: () => setIsSuperAdminModalOpen(true),
   };
-
-  const voiceDockProps: VoiceDockProps | null = sessionStatus === "CONNECTED" && isVoiceDockExpanded
-    ? {
-        sessionStatus,
-        isPTTActive,
-        isPTTUserSpeaking,
-        onTogglePTT: setIsPTTActive,
-        onTalkStart: handleTalkButtonDown,
-        onTalkEnd: handleTalkButtonUp,
-      }
-    : null;
 
   const transcriptProps: TranscriptMessagesProps = {
     hasActivatedSession,
@@ -1505,6 +1588,17 @@ export function useDexterAppController(): DexterAppController {
     },
     canSend: sessionStatus !== 'CONNECTING',
   };
+
+  const voiceDockProps: VoiceDockProps | null = sessionStatus === "CONNECTED" && isVoiceDockExpanded
+    ? {
+        sessionStatus,
+        isPTTActive,
+        isPTTUserSpeaking,
+        onTogglePTT: setIsPTTActive,
+        onTalkStart: handleTalkButtonDown,
+        onTalkEnd: handleTalkButtonUp,
+      }
+    : null;
 
   const signalStackProps: SignalStackLayoutProps = {
     showLogs: isEventsPaneExpanded,

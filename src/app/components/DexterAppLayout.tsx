@@ -6,10 +6,10 @@ import Hero from "./Hero";
 import HeroControls from "./HeroControls";
 import TranscriptMessages from "./TranscriptMessages";
 import InputBar from "./InputBar";
+import VoiceDock from "./shell/VoiceDock";
 import Events from "./Events";
 import DexterShell from "./shell/DexterShell";
 import TopRibbon from "./shell/TopRibbon";
-import VoiceDock from "./shell/VoiceDock";
 import BottomStatusRail from "./shell/BottomStatusRail";
 import SignalStack from "./signals/SignalStack";
 import SignalsDrawer from "./signals/SignalsDrawer";
@@ -77,10 +77,10 @@ export function DexterAppLayout({
         heroControls={heroControlsSection}
         heroWrapperClassName={heroContainerClassName}
         messages={<TranscriptMessages {...transcriptProps} />}
+        voiceDock={voiceDockSection}
         inputBar={<InputBar {...inputBarProps} />}
         signals={desktopSignalsPanel}
         statusBar={<BottomStatusRail {...bottomStatusProps} />}
-        voiceDock={voiceDockSection}
         mobileOverlay={mobileSignalsOverlay}
       />
 
