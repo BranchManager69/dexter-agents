@@ -12,6 +12,8 @@ type StartConversationButtonProps = {
 
 export function StartConversationButton({ onClick, isLoading = false, disabled }: StartConversationButtonProps) {
   const isDisabled = disabled ?? isLoading;
+  const LOOP_DURATION = 2.4;
+  const PULSE_EASE: [number, number, number, number] = [0.6, 0, 0.4, 1];
 
   return (
     <motion.button
@@ -20,25 +22,32 @@ export function StartConversationButton({ onClick, isLoading = false, disabled }
       disabled={isDisabled}
       aria-busy={isLoading || undefined}
       className="group relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-iris/80 via-flux/70 to-amber-300/70 text-3xl text-white shadow-[0_0_45px_rgba(94,234,212,0.35)] focus:outline-none focus:ring-2 focus:ring-flux/80 disabled:opacity-80"
-      initial={{ scale: 0.98 }}
-      animate={{ scale: 1.02 }}
-      transition={{ duration: 3.2, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }}
+      initial={{ scale: 0.99 }}
+      animate={{ scale: [0.99, 1.04, 0.99] }}
+      transition={{ duration: LOOP_DURATION * 1.5, repeat: Infinity, ease: PULSE_EASE }}
       whileHover={{ scale: 1.08 }}
       whileFocus={{ scale: 1.08 }}
     >
       <motion.span
         className="pointer-events-none absolute h-28 w-28 rounded-full bg-iris/30 blur-3xl opacity-60"
         aria-hidden
-        initial={{ opacity: 0.45, scale: 0.92 }}
-        animate={{ opacity: [0.45, 0.75, 0.45], scale: [0.92, 1.05, 0.92] }}
-        transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
+        initial={{ opacity: 0.45, scale: 0.9 }}
+        animate={{ opacity: [0.45, 0.72, 0.45], scale: [0.9, 1.06, 0.9] }}
+        transition={{ duration: LOOP_DURATION, repeat: Infinity, ease: PULSE_EASE }}
       />
       <motion.span
         className="pointer-events-none absolute h-full w-full rounded-full border border-flux/30"
         aria-hidden
-        initial={{ opacity: 0.55, scale: 0.98 }}
-        animate={{ opacity: [0.55, 0.85, 0.55], scale: [0.98, 1.08, 0.98] }}
-        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+        initial={{ opacity: 0.55, scale: 0.96 }}
+        animate={{ opacity: [0.55, 0.82, 0.55], scale: [0.96, 1.05, 0.96] }}
+        transition={{ duration: LOOP_DURATION, repeat: Infinity, ease: PULSE_EASE, delay: LOOP_DURATION / 4 }}
+      />
+      <motion.span
+        className="pointer-events-none absolute inset-0 rounded-full opacity-40 mix-blend-screen"
+        aria-hidden
+        style={{ background: "conic-gradient(from 0deg, rgba(255,255,255,0.15) 0deg, rgba(255,255,255,0.05) 120deg, rgba(255,255,255,0.2) 240deg, rgba(255,255,255,0.05) 360deg)" }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: LOOP_DURATION * 2.5, repeat: Infinity, ease: "linear" }}
       />
       <span className="relative flex h-12 w-12 items-center justify-center select-none">
         <AnimatePresence mode="wait" initial={false}>
@@ -56,7 +65,7 @@ export function StartConversationButton({ onClick, isLoading = false, disabled }
                 className="h-10 w-10 text-white"
                 initial={{ rotate: 0 }}
                 animate={{ rotate: 360 }}
-                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                transition={{ duration: LOOP_DURATION, repeat: Infinity, ease: "linear" }}
               >
                 <circle
                   cx="16"
@@ -75,11 +84,11 @@ export function StartConversationButton({ onClick, isLoading = false, disabled }
                   stroke="currentColor"
                   strokeWidth="2"
                   strokeLinecap="round"
-                  strokeDasharray="75"
+                  strokeDasharray="65"
                   strokeDashoffset="45"
-                  initial={{ strokeDashoffset: 75 }}
+                  initial={{ strokeDashoffset: 65 }}
                   animate={{ strokeDashoffset: 0 }}
-                  transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                  transition={{ duration: LOOP_DURATION, repeat: Infinity, ease: PULSE_EASE }}
                 />
               </motion.svg>
             </motion.span>
