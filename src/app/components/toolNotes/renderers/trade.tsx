@@ -3,10 +3,10 @@ import {
   BASE_CARD_CLASS,
   HashBadge,
   SECTION_TITLE_CLASS,
-  formatSolDisplay,
   normalizeOutput,
   unwrapStructured,
 } from "./helpers";
+import { SolanaAmount, formatSolValue } from "@/app/components/solana/SolanaAmount";
 
 function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
   const badgeClass =
@@ -39,9 +39,12 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
         ? `https://solscan.io/tx/${signature}`
         : undefined;
 
-    const swapSol = formatSolDisplay(trade?.swapLamports ?? trade?.swap_lamports, { fromLamports: true });
-    const feeSol = formatSolDisplay(trade?.feeLamports ?? trade?.fee_lamports, { fromLamports: true });
-    const spendSol = formatSolDisplay(args?.amount_sol ?? args?.amountSol);
+    const swapLamports = trade?.swapLamports ?? trade?.swap_lamports;
+    const feeLamports = trade?.feeLamports ?? trade?.fee_lamports;
+    const spendSolValue = args?.amount_sol ?? args?.amountSol;
+    const swapDisplay = formatSolValue(swapLamports, { fromLamports: true });
+    const feeDisplay = formatSolValue(feeLamports, { fromLamports: true });
+    const spendDisplay = formatSolValue(spendSolValue);
     const percentage = typeof args?.percentage === "number" ? `${args.percentage}%` : undefined;
     const amountRaw = typeof args?.amount_raw === "string" && args.amount_raw.trim().length > 0 ? args.amount_raw : undefined;
     const mint = typeof args?.mint === "string" ? args.mint : typeof trade?.mint === "string" ? trade.mint : undefined;
@@ -71,8 +74,8 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
         value: <HashBadge value={walletAddress} href={`https://solscan.io/account/${walletAddress}`} ariaLabel="Wallet address" />,
       });
     }
-    if (mode === "buy" && spendSol) {
-      infoRows.push({ label: "Spend", value: <span className="text-neutral-100">{spendSol}</span> });
+    if (mode === "buy" && spendDisplay) {
+      infoRows.push({ label: "Spend", value: <SolanaAmount value={spendSolValue} /> });
     }
     if (mode === "sell" && percentage) {
       infoRows.push({ label: "Portion", value: <span className="text-neutral-100">{percentage}</span> });
@@ -80,11 +83,14 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
     if (mode === "sell" && amountRaw) {
       infoRows.push({ label: "Amount (raw)", value: <span className="font-mono text-neutral-100" title={amountRaw}>{amountRaw}</span> });
     }
-    if (swapSol) {
-      infoRows.push({ label: mode === "buy" ? "Swap out" : "Swap in", value: <span className="text-neutral-100">{swapSol}</span> });
+    if (swapDisplay) {
+      infoRows.push({
+        label: mode === "buy" ? "Swap out" : "Swap in",
+        value: <SolanaAmount value={swapLamports} fromLamports />,
+      });
     }
-    if (feeSol) {
-      infoRows.push({ label: "Platform fee", value: <span className="text-neutral-100">{feeSol}</span> });
+    if (feeDisplay) {
+      infoRows.push({ label: "Platform fee", value: <SolanaAmount value={feeLamports} fromLamports /> });
     }
     if (signature) {
       infoRows.push({

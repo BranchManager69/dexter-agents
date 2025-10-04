@@ -2,17 +2,18 @@ import type { ToolNoteRenderer } from "./types";
 import {
   BASE_CARD_CLASS,
   SECTION_TITLE_CLASS,
-  formatSolDisplay,
   normalizeOutput,
   unwrapStructured,
 } from "./helpers";
+import { SolanaAmount, formatSolValue } from "@/app/components/solana/SolanaAmount";
 
 const solanaPreviewSellRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
   const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
   const payload = unwrapStructured(rawOutput);
 
-  const expectedSolLamports = (payload as any)?.expectedSol ?? (payload as any)?.expected_sol;
-  const expectedSol = formatSolDisplay(expectedSolLamports, { fromLamports: true }) || formatSolDisplay(expectedSolLamports);
+  const expectedSolRaw = (payload as any)?.expectedSol ?? (payload as any)?.expected_sol;
+  const expectedSol =
+    formatSolValue(expectedSolRaw, { fromLamports: true }) ?? formatSolValue(expectedSolRaw);
   const warnings = Array.isArray((payload as any)?.warnings)
     ? (payload as any).warnings.filter((w: unknown): w is string => typeof w === "string" && w.length > 0)
     : [];
@@ -26,7 +27,8 @@ const solanaPreviewSellRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggl
         </div>
         {expectedSol && (
           <div className="rounded-full border border-neutral-700 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-neutral-200">
-            Expected: {expectedSol}
+            Expected:{" "}
+            <SolanaAmount value={expectedSolRaw} fromLamports className="text-xs" />
           </div>
         )}
       </div>
