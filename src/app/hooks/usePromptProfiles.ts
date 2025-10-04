@@ -33,6 +33,19 @@ export type PromptProfileDraft = {
   isDefault?: boolean;
 };
 
+export const DEFAULT_TOOL_SLUGS: PromptToolSlugMap = {
+  resolve_wallet: 'agent.concierge.tool.resolve_wallet',
+  list_my_wallets: 'agent.concierge.tool.list_my_wallets',
+  set_session_wallet_override: 'agent.concierge.tool.set_session_wallet_override',
+  auth_info: 'agent.concierge.tool.auth_info',
+  pumpstream_live_summary: 'agent.concierge.tool.pumpstream_live_summary',
+  search: 'agent.concierge.tool.search',
+  fetch: 'agent.concierge.tool.fetch',
+  codex_start: 'agent.concierge.tool.codex_start',
+  codex_reply: 'agent.concierge.tool.codex_reply',
+  codex_exec: 'agent.concierge.tool.codex_exec',
+};
+
 export type PromptProfileManager = {
   profiles: PromptProfileRecord[];
   loading: boolean;
@@ -55,14 +68,21 @@ async function handleJson(response: Response) {
 }
 
 function normalizeDraft(draft: PromptProfileDraft): PromptProfileDraft {
+  const mergedToolSlugs: PromptToolSlugMap = {
+    ...DEFAULT_TOOL_SLUGS,
+    ...(draft.toolSlugs || {}),
+  };
+  for (const key of Object.keys(mergedToolSlugs)) {
+    const value = mergedToolSlugs[key];
+    mergedToolSlugs[key] = typeof value === 'string' ? value.trim() : DEFAULT_TOOL_SLUGS[key];
+  }
+
   return {
     ...draft,
     instructionSlug: draft.instructionSlug.trim(),
     handoffSlug: draft.handoffSlug.trim(),
     guestSlug: draft.guestSlug.trim(),
-    toolSlugs: Object.fromEntries(
-      Object.entries(draft.toolSlugs || {}).map(([key, value]) => [key, value.trim()])
-    ),
+    toolSlugs: mergedToolSlugs,
     name: draft.name.trim(),
     description: draft.description?.trim() ?? null,
     voiceKey: draft.voiceKey?.trim() || null,
@@ -98,7 +118,14 @@ export function usePromptProfiles(): PromptProfileManager {
       const listData = await listRes.json();
       const activeData = await activeRes.json();
 
-      setProfiles(Array.isArray(listData?.profiles) ? listData.profiles : []);
+      const mappedProfiles = Array.isArray(listData?.profiles)
+        ? listData.profiles.map((profile: PromptProfileRecord) => ({
+            ...profile,
+            toolSlugs: { ...DEFAULT_TOOL_SLUGS, ...(profile.toolSlugs ?? {}) },
+          }))
+        : [];
+
+      setProfiles(mappedProfiles);
       setActiveResolvedProfile(activeData?.resolvedProfile ?? null);
     } catch (error) {
       console.error("Failed to load prompt profiles", error);
@@ -134,11 +161,15 @@ export function usePromptProfiles(): PromptProfileManager {
     }
     const data = await response.json();
     const created = data?.profile as PromptProfileRecord;
-    setProfiles((prev) => [...prev, created]);
+    const hydrated = {
+      ...created,
+      toolSlugs: { ...DEFAULT_TOOL_SLUGS, ...(created?.toolSlugs ?? {}) },
+    };
+    setProfiles((prev) => [...prev, hydrated]);
     if (data?.resolvedProfile) {
       setActiveResolvedProfile(data.resolvedProfile);
     }
-    return created;
+    return hydrated;
   }, []);
 
   const updateProfile = useCallback(async (id: string, draft: PromptProfileDraft) => {
@@ -164,11 +195,15 @@ export function usePromptProfiles(): PromptProfileManager {
     }
     const data = await response.json();
     const updated = data?.profile as PromptProfileRecord;
-    setProfiles((prev) => prev.map((profile) => (profile.id === updated.id ? updated : profile)));
+    const hydrated = {
+      ...updated,
+      toolSlugs: { ...DEFAULT_TOOL_SLUGS, ...(updated?.toolSlugs ?? {}) },
+    };
+    setProfiles((prev) => prev.map((profile) => (profile.id === hydrated.id ? hydrated : profile)));
     if (data?.resolvedProfile) {
       setActiveResolvedProfile(data.resolvedProfile);
     }
-    return updated;
+    return hydrated;
   }, []);
 
   const deleteProfile = useCallback(async (id: string) => {

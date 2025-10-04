@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { PromptProfileDraft, PromptProfileRecord } from "@/app/hooks/usePromptProfiles";
+import { DEFAULT_TOOL_SLUGS } from "@/app/hooks/usePromptProfiles";
 import type { ResolvedConciergeProfile } from "@/app/agentConfigs/customerServiceRetail/promptProfile";
 
 export type PersonaPreset = {
@@ -76,7 +77,7 @@ export function AgentPersonaModal({
           instructionSlug: currentDefault.instructionSlug,
           handoffSlug: currentDefault.handoffSlug,
           guestSlug: currentDefault.guestSlug,
-          toolSlugs: currentDefault.toolSlugs,
+          toolSlugs: { ...DEFAULT_TOOL_SLUGS, ...currentDefault.toolSlugs },
           voiceKey: currentDefault.voiceKey ?? undefined,
           metadata: currentDefault.metadata,
           isDefault: currentDefault.isDefault,
@@ -91,7 +92,7 @@ export function AgentPersonaModal({
           instructionSlug: defaultPreset.instructionSlug,
           handoffSlug: defaultPreset.handoffSlug,
           guestSlug: defaultPreset.guestSlug,
-          toolSlugs: defaultPreset.toolSlugs,
+          toolSlugs: { ...DEFAULT_TOOL_SLUGS, ...defaultPreset.toolSlugs },
           voiceKey: defaultPreset.voiceKey ?? undefined,
           metadata: defaultPreset.metadata ?? {},
           isDefault: true,
@@ -102,7 +103,7 @@ export function AgentPersonaModal({
   }, [open, profiles, draftState, defaultPreset, activeResolvedProfile]);
 
   useEffect(() => {
-    if (!draftState) return;
+    if (!open || !draftState) return;
     const controller = new AbortController();
     const handle = setTimeout(async () => {
       try {
@@ -130,7 +131,10 @@ export function AgentPersonaModal({
     };
   }, [draftState, onPreview]);
 
-  const availableProfiles = useMemo(() => profiles.sort((a, b) => a.name.localeCompare(b.name)), [profiles]);
+  const availableProfiles = useMemo(
+    () => [...profiles].sort((a, b) => a.name.localeCompare(b.name)),
+    [profiles],
+  );
 
   const handleSelectProfile = (profile: PromptProfileRecord) => {
     setDraftState({
@@ -142,7 +146,7 @@ export function AgentPersonaModal({
         instructionSlug: profile.instructionSlug,
         handoffSlug: profile.handoffSlug,
         guestSlug: profile.guestSlug,
-        toolSlugs: profile.toolSlugs,
+        toolSlugs: { ...DEFAULT_TOOL_SLUGS, ...profile.toolSlugs },
         voiceKey: profile.voiceKey ?? undefined,
         metadata: profile.metadata,
         isDefault: profile.isDefault,
@@ -160,7 +164,7 @@ export function AgentPersonaModal({
         instructionSlug: preset.instructionSlug,
         handoffSlug: preset.handoffSlug,
         guestSlug: preset.guestSlug,
-        toolSlugs: preset.toolSlugs,
+        toolSlugs: { ...DEFAULT_TOOL_SLUGS, ...preset.toolSlugs },
         voiceKey: preset.voiceKey ?? undefined,
         metadata: preset.metadata ?? {},
         isDefault: false,
@@ -172,11 +176,15 @@ export function AgentPersonaModal({
   const updateDraft = (patch: Partial<PromptProfileDraft>) => {
     setDraftState((current) => {
       if (!current) return current;
+      const nextToolSlugs = patch.toolSlugs
+        ? { ...DEFAULT_TOOL_SLUGS, ...(current.draft.toolSlugs ?? {}), ...patch.toolSlugs }
+        : current.draft.toolSlugs;
       return {
         ...current,
         draft: {
           ...current.draft,
           ...patch,
+          toolSlugs: nextToolSlugs ?? current.draft.toolSlugs,
         },
       };
     });
@@ -354,10 +362,10 @@ export function AgentPersonaModal({
               </select>
             </div>
 
-            <div className="rounded-3xl border border-neutral-800/60 bg-neutral-950/60 p-4">
+              <div className="rounded-3xl border border-neutral-800/60 bg-neutral-950/60 p-4">
               <h4 className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Tool descriptions</h4>
               <div className="mt-3 space-y-3">
-                {Object.entries(draftState?.draft.toolSlugs ?? {}).map(([key, slug]) => (
+                {Object.entries(draftState?.draft.toolSlugs ?? DEFAULT_TOOL_SLUGS).map(([key, slug]) => (
                   <div key={key} className="grid gap-2 lg:grid-cols-[160px_1fr]">
                     <span className="text-xs uppercase tracking-[0.32em] text-neutral-500">{key.replace(/_/g, ' ')}</span>
                     <input
@@ -366,7 +374,6 @@ export function AgentPersonaModal({
                       onChange={(event) =>
                         updateDraft({
                           toolSlugs: {
-                            ...(draftState?.draft.toolSlugs ?? {}),
                             [key]: event.target.value,
                           },
                         })

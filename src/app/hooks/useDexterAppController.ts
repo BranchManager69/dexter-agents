@@ -106,7 +106,7 @@ export interface DexterAppController {
 
 import { resolveConciergeProfile, type ResolvedConciergeProfile } from '@/app/agentConfigs/customerServiceRetail/promptProfile';
 import type { AgentPersonaModalProps, PersonaPreset } from '@/app/components/AgentPersonaModal';
-import { usePromptProfiles } from './usePromptProfiles';
+import { usePromptProfiles, DEFAULT_TOOL_SLUGS } from './usePromptProfiles';
 
 const DEFAULT_GUEST_SESSION_INSTRUCTIONS =
   'Operate using the shared Dexter demo wallet with limited funds. Avoid destructive actions and encourage the user to sign in for persistent access.';
@@ -150,7 +150,7 @@ const PERSONA_PRESETS: PersonaPreset[] = [
     instructionSlug: 'agent.concierge.instructions',
     handoffSlug: 'agent.concierge.handoff',
     guestSlug: 'agent.concierge.guest',
-    toolSlugs: {},
+    toolSlugs: { ...DEFAULT_TOOL_SLUGS },
   },
   {
     id: 'dexter-scout',
@@ -159,7 +159,7 @@ const PERSONA_PRESETS: PersonaPreset[] = [
     instructionSlug: 'agent.concierge.instructions',
     handoffSlug: 'agent.concierge.handoff',
     guestSlug: 'agent.concierge.guest',
-    toolSlugs: {},
+    toolSlugs: { ...DEFAULT_TOOL_SLUGS },
     metadata: { agentName: 'Dexter Scout' },
   },
   {
@@ -169,7 +169,7 @@ const PERSONA_PRESETS: PersonaPreset[] = [
     instructionSlug: 'agent.concierge.instructions',
     handoffSlug: 'agent.concierge.handoff',
     guestSlug: 'agent.concierge.guest',
-    toolSlugs: {},
+    toolSlugs: { ...DEFAULT_TOOL_SLUGS },
     metadata: { agentName: 'Dexter Guardian' },
   },
 ];
@@ -715,6 +715,7 @@ export function useDexterAppController(): DexterAppController {
   const isSuperAdmin = Boolean(sessionIdentity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
   const hasProRole = normalizedRoles.includes('pro');
   const hasProAccess = isSuperAdmin || hasProRole;
+  const userBadge = isSuperAdmin ? 'dev' : hasProRole ? 'pro' : null;
   const canUseAdminTools = sessionIdentity.type === 'user' && (isSuperAdmin || isAdminRole);
   const canViewDebugPayloads = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true'
     && sessionIdentity.type === 'user'
@@ -1772,6 +1773,7 @@ export function useDexterAppController(): DexterAppController {
     onToggleVoiceDock: () => setIsVoiceDockExpanded(!isVoiceDockExpanded),
     canUseAdminTools,
     showSuperAdminTools: isSuperAdmin,
+    userBadge,
     onOpenSuperAdmin: () => setIsSuperAdminModalOpen(true),
   };
 
