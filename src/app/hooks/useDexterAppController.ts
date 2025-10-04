@@ -101,9 +101,12 @@ export interface DexterAppController {
   voiceDockProps: VoiceDockProps | null;
   debugModalProps: DebugInfoModalProps;
   superAdminModalProps: SuperAdminModalProps;
+  personaModalProps: AgentPersonaModalProps;
 }
 
 import { resolveConciergeProfile, type ResolvedConciergeProfile } from '@/app/agentConfigs/customerServiceRetail/promptProfile';
+import type { AgentPersonaModalProps, PersonaPreset } from '@/app/components/AgentPersonaModal';
+import { usePromptProfiles } from './usePromptProfiles';
 
 const DEFAULT_GUEST_SESSION_INSTRUCTIONS =
   'Operate using the shared Dexter demo wallet with limited funds. Avoid destructive actions and encourage the user to sign in for persistent access.';
@@ -138,6 +141,38 @@ const SOL_SMALL_FORMATTER = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 4,
   maximumFractionDigits: 6,
 });
+
+const PERSONA_PRESETS: PersonaPreset[] = [
+  {
+    id: 'dexter-classic',
+    label: 'Dexter Classic',
+    description: 'Balanced tone tuned for portfolio updates and quick trades.',
+    instructionSlug: 'agent.concierge.instructions',
+    handoffSlug: 'agent.concierge.handoff',
+    guestSlug: 'agent.concierge.guest',
+    toolSlugs: {},
+  },
+  {
+    id: 'dexter-scout',
+    label: 'Alpha Scout',
+    description: 'Prioritize market intel and watchlist synopses.',
+    instructionSlug: 'agent.concierge.instructions',
+    handoffSlug: 'agent.concierge.handoff',
+    guestSlug: 'agent.concierge.guest',
+    toolSlugs: {},
+    metadata: { agentName: 'Dexter Scout' },
+  },
+  {
+    id: 'dexter-guardian',
+    label: 'Risk Guardian',
+    description: 'Cautious persona that emphasizes safeguards and confirmations.',
+    instructionSlug: 'agent.concierge.instructions',
+    handoffSlug: 'agent.concierge.handoff',
+    guestSlug: 'agent.concierge.guest',
+    toolSlugs: {},
+    metadata: { agentName: 'Dexter Guardian' },
+  },
+];
 
 function formatUsdDisplay(value: number | null | undefined): string | null {
   if (value === null || value === undefined || Number.isNaN(value)) return null;
@@ -527,6 +562,9 @@ export function useDexterAppController(): DexterAppController {
 
   const [guestInstructions, setGuestInstructions] = useState<string>(DEFAULT_GUEST_SESSION_INSTRUCTIONS);
   const [activeConciergeProfile, setActiveConciergeProfile] = useState<ResolvedConciergeProfile | null>(null);
+  const promptProfiles = usePromptProfiles();
+  const { refresh: refreshPromptProfiles } = promptProfiles;
+  const [isPersonaModalOpen, setIsPersonaModalOpen] = useState(false);
   const [sessionIdentity, setSessionIdentity] = useState<DexterSessionSummary>(() => createGuestIdentity(guestInstructions));
   const [mcpStatus, setMcpStatus] = useState<McpStatusState>(getMcpStatusSnapshot());
   const [isSuperAdminModalOpen, setIsSuperAdminModalOpen] = useState(false);
@@ -614,6 +652,18 @@ export function useDexterAppController(): DexterAppController {
     });
   }, [guestInstructions]);
 
+  useEffect(() => {
+    if (promptProfiles.activeResolvedProfile) {
+      setActiveConciergeProfile(promptProfiles.activeResolvedProfile);
+    }
+  }, [promptProfiles.activeResolvedProfile]);
+
+  useEffect(() => {
+    if (isPersonaModalOpen) {
+      refreshPromptProfiles();
+    }
+  }, [isPersonaModalOpen, refreshPromptProfiles]);
+
   const syncIdentityToAuthSession = useCallback((walletOverride?: { public_key: string | null; label?: string | null } | null) => {
     if (!authSession) {
       resetSessionIdentity();
@@ -660,7 +710,28 @@ export function useDexterAppController(): DexterAppController {
     });
   }, [authSession, resetSessionIdentity]);
 
+  const normalizedRoles = (sessionIdentity.user?.roles ?? []).map((role) => (typeof role === 'string' ? role.toLowerCase() : String(role || '').toLowerCase()));
+  const isAdminRole = normalizedRoles.includes('admin');
+  const isSuperAdmin = Boolean(sessionIdentity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
+  const hasProRole = normalizedRoles.includes('pro');
+  const hasProAccess = isSuperAdmin || hasProRole;
+  const canUseAdminTools = sessionIdentity.type === 'user' && (isSuperAdmin || isAdminRole);
+  const canViewDebugPayloads = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true'
+    && sessionIdentity.type === 'user'
+    && (isSuperAdmin || isAdminRole);
+
   const callMcpTool = useCallback(async (toolName: string, args: Record<string, unknown> = {}) => {
+    const superAdminOnlyTools = new Set(['codex_start', 'codex_reply', 'codex_exec']);
+    const proOnlyTools = new Set(['stream_set_scene']);
+
+    if (superAdminOnlyTools.has(toolName) && !isSuperAdmin) {
+      throw new Error('This tool is available to super admins only.');
+    }
+
+    if (proOnlyTools.has(toolName) && !hasProAccess) {
+      throw new Error('This tool is available to pro members.');
+    }
+
     try {
       const response = await fetch('/api/mcp', {
         method: 'POST',
@@ -678,7 +749,7 @@ export function useDexterAppController(): DexterAppController {
     } catch (error: any) {
       throw new Error(error?.message || `MCP ${toolName} failed`);
     }
-  }, []);
+  }, [isSuperAdmin, hasProAccess]);
 
   const walletFetchIdRef = useRef(0);
   const lastFetchedWalletRef = useRef<string | null>(null);
@@ -1045,7 +1116,25 @@ export function useDexterAppController(): DexterAppController {
     useAudioDownload();
 
   const signalData = useSignalData();
-  const toolCatalog = useToolCatalog();
+  const rawToolCatalog = useToolCatalog();
+
+  const filteredToolCatalog = useMemo(() => {
+    const superAdminOnlyTools = new Set(['codex_start', 'codex_reply', 'codex_exec']);
+    const proOnlyTools = new Set(['stream_set_scene']);
+
+    return {
+      ...rawToolCatalog,
+      tools: rawToolCatalog.tools.filter((tool) => {
+        if (superAdminOnlyTools.has(tool.name) && !isSuperAdmin) {
+          return false;
+        }
+        if (proOnlyTools.has(tool.name) && !hasProAccess) {
+          return false;
+        }
+        return true;
+      }),
+    };
+  }, [rawToolCatalog, isSuperAdmin, hasProAccess]);
 
   useEffect(() => {
     const lastUpdated = signalData.wallet.lastUpdated;
@@ -1666,14 +1755,6 @@ export function useDexterAppController(): DexterAppController {
     }
   };
 
-  const normalizedRoles = (sessionIdentity.user?.roles ?? []).map((role) => (typeof role === 'string' ? role.toLowerCase() : String(role || '').toLowerCase()));
-  const isAdminRole = normalizedRoles.includes('admin');
-  const isSuperAdmin = Boolean(sessionIdentity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
-  const canUseAdminTools = sessionIdentity.type === 'user' && (isSuperAdmin || isAdminRole);
-  const canViewDebugPayloads = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true'
-    && sessionIdentity.type === 'user'
-    && (isSuperAdmin || isAdminRole);
-
   const heroContainerClassName = [
     "border-b border-neutral-800/60 px-6 sm:px-7",
     heroCollapsed ? "py-3 lg:py-4" : "py-7",
@@ -1725,7 +1806,7 @@ export function useDexterAppController(): DexterAppController {
 
   const signalStackProps: SignalStackLayoutProps = {
     showLogs: isEventsPaneExpanded,
-    toolCatalog,
+    toolCatalog: filteredToolCatalog,
   };
 
   const bottomStatusProps: BottomStatusRailProps = {
@@ -1758,6 +1839,7 @@ export function useDexterAppController(): DexterAppController {
     onSignIn: handleSignIn,
     onSignOut: handleSignOut,
     turnstileSiteKey,
+    onOpenPersonaModal: () => setIsPersonaModalOpen(true),
   };
 
   const identityLabel = sessionIdentity.type === "user"
@@ -1789,6 +1871,20 @@ export function useDexterAppController(): DexterAppController {
     onClose: () => setIsSuperAdminModalOpen(false),
   };
 
+  const personaModalProps: AgentPersonaModalProps = {
+    open: isPersonaModalOpen,
+    onClose: () => setIsPersonaModalOpen(false),
+    loading: promptProfiles.loading,
+    profiles: promptProfiles.profiles,
+    activeResolvedProfile: promptProfiles.activeResolvedProfile ?? activeConciergeProfile,
+    onCreate: promptProfiles.createProfile,
+    onUpdate: promptProfiles.updateProfile,
+    onActivate: promptProfiles.activateProfile,
+    onDelete: promptProfiles.deleteProfile,
+    onPreview: promptProfiles.previewProfile,
+    presets: PERSONA_PRESETS,
+  };
+
   return {
     topRibbonProps,
     heroContainerClassName,
@@ -1802,5 +1898,6 @@ export function useDexterAppController(): DexterAppController {
     voiceDockProps,
     debugModalProps,
     superAdminModalProps,
+    personaModalProps,
   };
 }

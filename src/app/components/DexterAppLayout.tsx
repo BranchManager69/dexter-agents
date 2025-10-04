@@ -15,6 +15,7 @@ import SignalStack from "./signals/SignalStack";
 import SignalsDrawer from "./signals/SignalsDrawer";
 import { DebugInfoModal } from "./DebugInfoModal";
 import SuperAdminModal from "./SuperAdminModal";
+import AgentPersonaModal from "./AgentPersonaModal";
 
 import type { DexterAppController } from "../hooks/useDexterAppController";
 
@@ -33,6 +34,7 @@ export function DexterAppLayout({
   voiceDockProps,
   debugModalProps,
   superAdminModalProps,
+  personaModalProps,
 }: DexterAppLayoutProps) {
   const { showLogs, toolCatalog } = signalStackProps;
 
@@ -86,6 +88,7 @@ export function DexterAppLayout({
 
       <DebugInfoModal {...debugModalProps} />
       <SuperAdminModal {...superAdminModalProps} />
+      <AgentPersonaModal {...personaModalProps} />
     </>
   );
 }
