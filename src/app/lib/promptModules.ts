@@ -152,7 +152,10 @@ function normalizeRevision(input: any): PromptModuleRevision {
   };
 }
 
-export async function fetchPromptModule(slug: string): Promise<PromptModule> {
+export async function fetchPromptModule(
+  slug: string,
+  options: { accessToken?: string | null; signal?: AbortSignal } = {},
+): Promise<PromptModule> {
   const trimmed = slug.trim();
   if (!trimmed) {
     throw new Error('Prompt module slug is required.');
@@ -161,7 +164,10 @@ export async function fetchPromptModule(slug: string): Promise<PromptModule> {
     return cache.get(trimmed)!;
   }
 
-  const data = await requestPromptApi<{ prompt?: any }>(`/prompt-modules/${encodeURIComponent(trimmed)}`);
+  const data = await requestPromptApi<{ prompt?: any }>(`/prompt-modules/${encodeURIComponent(trimmed)}`, {
+    accessToken: options.accessToken ?? null,
+    signal: options.signal,
+  });
   const raw = data?.prompt;
   if (!data?.ok || !raw) {
     throw new Error(`Prompt module response invalid for slug: ${trimmed}`);

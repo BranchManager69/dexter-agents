@@ -1,6 +1,7 @@
 import { tool } from '@openai/agents/realtime';
 import { setMcpStatusError, updateMcpStatusFromHeaders } from '@/app/state/mcpStatusStore';
 import { CONFIG, getDexterApiRoute } from '@/app/config/env';
+import { getDefaultConciergeProfileDefinition, type ResolvedConciergeProfile } from './promptProfile';
 
 type ToolCallArgs = Record<string, unknown> | undefined;
 
@@ -91,183 +92,208 @@ const normalizeResult = (result: McpToolResponse) => {
   };
 };
 
-export const resolveWallet = tool({
-  name: 'resolve_wallet',
-  description: 'Resolve the effective Dexter wallet for this session (override, resolver default, or fallback).',
-  parameters: {
-    type: 'object',
-    properties: {},
-    required: [],
-    additionalProperties: false,
-  } as const,
-  strict: true,
-  execute: async () => normalizeResult(await callMcp('resolve_wallet')),
-});
+const TOOL_FALLBACKS = getDefaultConciergeProfileDefinition().toolDescriptions;
 
-export const listMyWallets = tool({
-  name: 'list_my_wallets',
-  description: 'List wallets linked to the authenticated Dexter account.',
-  parameters: {
-    type: 'object',
-    properties: {},
-    required: [],
-    additionalProperties: false,
-  } as const,
-  strict: true,
-  execute: async () => normalizeResult(await callMcp('list_my_wallets')),
-});
+type ConciergeToolName = keyof typeof TOOL_FALLBACKS;
 
-export const setSessionWalletOverride = tool({
-  name: 'set_session_wallet_override',
-  description: 'Override the wallet used for this MCP session until cleared.',
-  parameters: {
-    type: 'object',
-    properties: {
-      wallet_id: { type: 'string', description: 'Wallet identifier to activate for the rest of this session.' },
-      clear: { type: 'boolean', description: 'When true, clear any override and revert to resolver defaults.' },
-    },
-    required: [],
-    additionalProperties: false,
-  } as const,
-  strict: true,
-  execute: async (input) => normalizeResult(await callMcp('set_session_wallet_override', input as ToolCallArgs)),
-});
+type ConciergeToolset = Record<ConciergeToolName, ReturnType<typeof tool>>;
 
-export const authInfo = tool({
-  name: 'auth_info',
-  description: 'Diagnostics for wallet resolution, bearer source and session overrides.',
-  parameters: {
-    type: 'object',
-    properties: {},
-    required: [],
-    additionalProperties: false,
-  } as const,
-  strict: true,
-  execute: async () => normalizeResult(await callMcp('auth_info')),
-});
+function describeTool(name: ConciergeToolName, overrides?: Record<string, string>): string {
+  const override = overrides?.[name];
+  if (override && override.trim().length) {
+    return override;
+  }
+  const fallback = TOOL_FALLBACKS[name]?.fallback;
+  return fallback || `MCP tool: ${name}`;
+}
 
-export const pumpstreamLiveSummary = tool({
-  name: 'pumpstream_live_summary',
-  description: 'Snapshot of live pump streams and token momentum from pump.dexter.cash.',
-  parameters: {
-    type: 'object',
-    properties: {
-      limit: {
-        type: 'number',
-        description: 'Maximum number of streams to include (1-10).',
-      },
-    },
-    required: [],
-    additionalProperties: false,
-  } as const,
-  strict: true,
-  execute: async (input) => normalizeResult(await callMcp('pumpstream_live_summary', input as ToolCallArgs)),
-});
-
-export const dexterSearch = tool({
-  name: 'search',
-  description: 'Search Dexter connector documentation and playbooks.',
-  parameters: {
-    type: 'object',
-    properties: {
-      query: {
-        type: 'string',
-        description: 'Search string describing the desired topic.',
-      },
-    },
-    required: [],
-    additionalProperties: false,
-  } as const,
-  strict: true,
-  execute: async (input) => normalizeResult(await callMcp('search', input as ToolCallArgs)),
-});
-
-export const dexterFetch = tool({
-  name: 'fetch',
-  description: 'Fetch the full content of a Dexter knowledge document discovered via search.',
-  parameters: {
-    type: 'object',
-    properties: {
-      id: {
-        type: 'string',
-        description: 'Identifier returned by the search tool.',
-      },
-    },
-    required: ['id'],
-    additionalProperties: false,
-  } as const,
-  strict: true,
-  execute: async (input) => normalizeResult(await callMcp('fetch', input as ToolCallArgs)),
-});
-
-export const codexStart = tool({
-  name: 'codex_start',
-  description: 'Start a Codex reasoning session and return a conversation identifier.',
-  parameters: {
-    type: 'object',
-    properties: {
-      prompt: {
-        type: 'string',
-        description: 'Initial instruction or question for Codex.',
-      },
-    },
-    required: ['prompt'],
-    additionalProperties: false,
-  } as const,
-  strict: true,
-  execute: async (input) => normalizeResult(await callMcp('codex_start', input as ToolCallArgs)),
-});
-
-export const codexReply = tool({
-  name: 'codex_reply',
-  description: 'Continue an existing Codex session using the conversation_id.',
-  parameters: {
-    type: 'object',
-    properties: {
-      conversation_id: {
-        type: 'string',
-        description: 'Identifier returned by codex_start in structuredContent.conversationId.',
-      },
-      prompt: {
-        type: 'string',
-        description: 'Follow-up instruction or question for Codex.',
-      },
-    },
-    required: ['conversation_id', 'prompt'],
-    additionalProperties: false,
-  } as const,
-  strict: true,
-  execute: async (input) => normalizeResult(await callMcp('codex_reply', input as ToolCallArgs)),
-});
-
-export const codexExec = tool({
-  name: 'codex_exec',
-  description:
-    'Run Codex in exec mode. Optionally pass output_schema (stringified JSON) for structured replies.',
-  parameters: {
-    type: 'object',
-    properties: {
-      prompt: {
-        type: 'string',
-        description: 'Instruction or question for Codex exec mode.',
-      },
-      output_schema: {
-        type: 'string',
-        description: 'JSON schema describing the desired final response shape.',
-      },
-      metadata: {
+export function createConciergeToolset(toolDescriptions: Record<string, string> = {}): ConciergeToolset {
+  return {
+    resolve_wallet: tool({
+      name: 'resolve_wallet',
+      description: describeTool('resolve_wallet', toolDescriptions),
+      parameters: {
         type: 'object',
-        description: 'Optional metadata to inject into the Codex prompt preface.',
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async () => normalizeResult(await callMcp('resolve_wallet')),
+    }),
+    list_my_wallets: tool({
+      name: 'list_my_wallets',
+      description: describeTool('list_my_wallets', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async () => normalizeResult(await callMcp('list_my_wallets')),
+    }),
+    set_session_wallet_override: tool({
+      name: 'set_session_wallet_override',
+      description: describeTool('set_session_wallet_override', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          wallet_id: { type: 'string', description: 'Wallet identifier to activate for the rest of this session.' },
+          clear: { type: 'boolean', description: 'When true, clear any override and revert to resolver defaults.' },
+        },
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('set_session_wallet_override', input as ToolCallArgs)),
+    }),
+    auth_info: tool({
+      name: 'auth_info',
+      description: describeTool('auth_info', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async () => normalizeResult(await callMcp('auth_info')),
+    }),
+    pumpstream_live_summary: tool({
+      name: 'pumpstream_live_summary',
+      description: describeTool('pumpstream_live_summary', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          limit: {
+            type: 'number',
+            description: 'Maximum number of streams to include (1-10).',
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('pumpstream_live_summary', input as ToolCallArgs)),
+    }),
+    search: tool({
+      name: 'search',
+      description: describeTool('search', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'Search string describing the desired topic.',
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('search', input as ToolCallArgs)),
+    }),
+    fetch: tool({
+      name: 'fetch',
+      description: describeTool('fetch', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          id: {
+            type: 'string',
+            description: 'Identifier returned by the search tool.',
+          },
+        },
+        required: ['id'],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('fetch', input as ToolCallArgs)),
+    }),
+    codex_start: tool({
+      name: 'codex_start',
+      description: describeTool('codex_start', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          prompt: {
+            type: 'string',
+            description: 'Initial instruction or question for Codex.',
+          },
+        },
+        required: ['prompt'],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('codex_start', input as ToolCallArgs)),
+    }),
+    codex_reply: tool({
+      name: 'codex_reply',
+      description: describeTool('codex_reply', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          conversation_id: {
+            type: 'string',
+            description: 'Identifier returned by codex_start in structuredContent.conversationId.',
+          },
+          prompt: {
+            type: 'string',
+            description: 'Follow-up instruction or question for Codex.',
+          },
+        },
+        required: ['conversation_id', 'prompt'],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('codex_reply', input as ToolCallArgs)),
+    }),
+    codex_exec: tool({
+      name: 'codex_exec',
+      description: describeTool('codex_exec', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          prompt: {
+            type: 'string',
+            description: 'Instruction or question for Codex exec mode.',
+          },
+          output_schema: {
+            type: 'string',
+            description: 'JSON schema describing the desired final response shape.',
+          },
+          metadata: {
+            type: 'object',
+            description: 'Optional metadata to inject into the Codex prompt preface.',
+            additionalProperties: true,
+          },
+        },
+        required: ['prompt'],
         additionalProperties: true,
-      },
-    },
-    required: ['prompt'],
-    additionalProperties: true,
-  } as const,
-  strict: false,
-  execute: async (input) => normalizeResult(await callMcp('codex_exec', input as ToolCallArgs)),
-});
+      } as const,
+      strict: false,
+      execute: async (input) => normalizeResult(await callMcp('codex_exec', input as ToolCallArgs)),
+    }),
+  };
+}
 
+export function createConciergeToolsetFromProfile(profile: ResolvedConciergeProfile): ConciergeToolset {
+  return createConciergeToolset(profile.toolDescriptions);
+}
+
+const defaultConciergeToolset = createConciergeToolset();
+
+export const resolveWallet = defaultConciergeToolset.resolve_wallet;
+export const listMyWallets = defaultConciergeToolset.list_my_wallets;
+export const setSessionWalletOverride = defaultConciergeToolset.set_session_wallet_override;
+export const authInfo = defaultConciergeToolset.auth_info;
+export const pumpstreamLiveSummary = defaultConciergeToolset.pumpstream_live_summary;
+export const dexterSearch = defaultConciergeToolset.search;
+export const dexterFetch = defaultConciergeToolset.fetch;
+export const codexStart = defaultConciergeToolset.codex_start;
+export const codexReply = defaultConciergeToolset.codex_reply;
+export const codexExec = defaultConciergeToolset.codex_exec;
 type RemoteToolMeta = {
   name?: string;
   title?: string;

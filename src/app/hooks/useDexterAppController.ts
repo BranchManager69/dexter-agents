@@ -103,13 +103,15 @@ export interface DexterAppController {
   superAdminModalProps: SuperAdminModalProps;
 }
 
-const GUEST_SESSION_INSTRUCTIONS =
-  "Operate using the shared Dexter demo wallet with limited funds. Avoid destructive actions and encourage the user to sign in for persistent access.";
+import { resolveConciergeProfile, type ResolvedConciergeProfile } from '@/app/agentConfigs/customerServiceRetail/promptProfile';
 
-const createGuestIdentity = (): DexterSessionSummary => ({
+const DEFAULT_GUEST_SESSION_INSTRUCTIONS =
+  'Operate using the shared Dexter demo wallet with limited funds. Avoid destructive actions and encourage the user to sign in for persistent access.';
+
+const createGuestIdentity = (instructions: string = DEFAULT_GUEST_SESSION_INSTRUCTIONS): DexterSessionSummary => ({
   type: "guest",
   user: null,
-  guestProfile: { label: "Dexter Demo Wallet", instructions: GUEST_SESSION_INSTRUCTIONS },
+  guestProfile: { label: "Dexter Demo Wallet", instructions },
   wallet: null,
 });
 
@@ -523,7 +525,9 @@ export function useDexterAppController(): DexterAppController {
 
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
-  const [sessionIdentity, setSessionIdentity] = useState<DexterSessionSummary>(createGuestIdentity);
+  const [guestInstructions, setGuestInstructions] = useState<string>(DEFAULT_GUEST_SESSION_INSTRUCTIONS);
+  const [activeConciergeProfile, setActiveConciergeProfile] = useState<ResolvedConciergeProfile | null>(null);
+  const [sessionIdentity, setSessionIdentity] = useState<DexterSessionSummary>(() => createGuestIdentity(guestInstructions));
   const [mcpStatus, setMcpStatus] = useState<McpStatusState>(getMcpStatusSnapshot());
   const [isSuperAdminModalOpen, setIsSuperAdminModalOpen] = useState(false);
   const [walletPortfolio, setWalletPortfolio] = useState<WalletPortfolioSnapshot | null>(null);
@@ -540,8 +544,75 @@ export function useDexterAppController(): DexterAppController {
   }, [authSession]);
 
   const resetSessionIdentity = useCallback(() => {
-    setSessionIdentity(createGuestIdentity());
-  }, []);
+    setSessionIdentity(createGuestIdentity(guestInstructions));
+  }, [guestInstructions]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const controller = new AbortController();
+
+    const loadProfile = async () => {
+      try {
+        const response = await fetch('/api/prompt-profiles/active', {
+          method: 'GET',
+          credentials: 'include',
+          signal: controller.signal,
+        });
+        if (!response.ok) {
+          throw new Error(`Active profile request failed (${response.status})`);
+        }
+        const data = await response.json();
+        if (cancelled) return;
+        const resolved: ResolvedConciergeProfile | null = data?.resolvedProfile ?? null;
+        if (resolved) {
+          setActiveConciergeProfile(resolved);
+          if (resolved.guestInstructions) {
+            setGuestInstructions((current) => (current === resolved.guestInstructions ? current : resolved.guestInstructions));
+          }
+          return;
+        }
+        const fallback = await resolveConciergeProfile();
+        if (cancelled) return;
+        setActiveConciergeProfile(fallback);
+        if (fallback.guestInstructions) {
+          setGuestInstructions((current) => (current === fallback.guestInstructions ? current : fallback.guestInstructions));
+        }
+      } catch (error) {
+        if (cancelled) return;
+        console.warn('Failed to fetch active prompt profile', error);
+        resolveConciergeProfile()
+          .then((profile) => {
+            if (cancelled) return;
+            setActiveConciergeProfile(profile);
+            if (profile.guestInstructions) {
+              setGuestInstructions((current) => (current === profile.guestInstructions ? current : profile.guestInstructions));
+            }
+          })
+          .catch((fallbackError) => {
+            if (!cancelled) {
+              console.error('Prompt profile fallback failed', fallbackError);
+            }
+          });
+      }
+    };
+
+    loadProfile();
+
+    return () => {
+      cancelled = true;
+      controller.abort();
+    };
+  }, [authSession?.user?.id]);
+
+  useEffect(() => {
+    setSessionIdentity((previous) => {
+      if (previous.type !== 'guest') return previous;
+      if (previous.guestProfile?.instructions === guestInstructions) {
+        return previous;
+      }
+      return createGuestIdentity(guestInstructions);
+    });
+  }, [guestInstructions]);
 
   const syncIdentityToAuthSession = useCallback((walletOverride?: { public_key: string | null; label?: string | null } | null) => {
     if (!authSession) {
@@ -815,6 +886,11 @@ export function useDexterAppController(): DexterAppController {
   const [scenarioMap, setScenarioMap] = useState<Record<string, RealtimeAgent[]>>({});
   const scenarioCacheRef = useRef<Record<string, RealtimeAgent[]>>({});
 
+  useEffect(() => {
+    scenarioCacheRef.current = {};
+    setScenarioMap({});
+  }, [activeConciergeProfile?.id]);
+
   const ensureScenarioLoaded = useCallback(async (key: string) => {
     if (scenarioCacheRef.current[key]) {
       return scenarioCacheRef.current[key];
@@ -823,14 +899,14 @@ export function useDexterAppController(): DexterAppController {
     if (!loader) {
       throw new Error(`Unknown agent set: ${key}`);
     }
-    const agents = await loader();
+    const agents = await loader({ resolvedProfile: activeConciergeProfile ?? undefined });
     scenarioCacheRef.current = { ...scenarioCacheRef.current, [key]: agents };
     setScenarioMap((prev) => {
       if (prev[key]) return prev;
       return { ...prev, [key]: agents };
     });
     return agents;
-  }, []);
+  }, [activeConciergeProfile]);
 
   const scenarioAgents = scenarioMap[defaultAgentSetKey] ?? [];
   const [selectedAgentName, setSelectedAgentName] = useState<string>("");
@@ -1120,7 +1196,7 @@ export function useDexterAppController(): DexterAppController {
           dexterSession.type !== 'user'
             ? dexterSession.guest_profile ?? {
                 label: 'Dexter Demo Wallet',
-                instructions: GUEST_SESSION_INSTRUCTIONS,
+                instructions: guestInstructions,
               }
             : null,
         wallet: walletFromSession ?? null,
@@ -1175,6 +1251,9 @@ export function useDexterAppController(): DexterAppController {
         audioElement: sdkAudioElement,
         outputGuardrails: [guardrail],
       });
+
+      // Prime session configuration before the first user turn.
+      updateSession(false);
     } catch (err) {
       console.error("Error connecting via SDK:", err);
       setSessionStatus("DISCONNECTED");
@@ -1263,11 +1342,11 @@ export function useDexterAppController(): DexterAppController {
     return;
   }
 
-  const waitForMcpReady = () => {
+  const waitForMcpReady = async () => {
     const requireUserIdentity = sessionIdentity.type === 'user';
 
     if (isMcpReadyForSession(mcpStatus, requireUserIdentity)) {
-      return Promise.resolve();
+      return;
     }
 
     if (requireUserIdentity && mcpStatus.state !== 'user') {
@@ -1279,7 +1358,7 @@ export function useDexterAppController(): DexterAppController {
         });
     }
 
-    return new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       const timeoutMs = requireUserIdentity ? 15000 : 10000;
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
@@ -1358,6 +1437,49 @@ export function useDexterAppController(): DexterAppController {
     } catch (err) {
       console.error('Failed to send via SDK', err);
     }
+  };
+
+  const resolveDisplayName = () => {
+    if (sessionIdentity.type !== 'user') {
+      return 'Dexter user';
+    }
+    const email = sessionIdentity.user?.email ?? '';
+    if (email.includes('@')) {
+      return email.split('@')[0] || email;
+    }
+    return email || 'Dexter user';
+  };
+
+  const handleStartConversation = async () => {
+    if (hasActivatedSession) {
+      return;
+    }
+
+    if (sessionStatus !== 'CONNECTED') {
+      try {
+        await connectToRealtime();
+      } catch (error) {
+        console.error('Failed to connect before auto-greeting', error);
+        addTranscriptBreadcrumb('Connection error', {
+          detail: error instanceof Error ? error.message : 'Unable to start session.',
+        });
+        return;
+      }
+    }
+
+    try {
+      await waitForMcpReady();
+    } catch (error) {
+      console.error('MCP not ready for auto-greeting', error);
+      addTranscriptBreadcrumb('MCP token unavailable', {
+        detail: error instanceof Error ? error.message : 'Unknown readiness error.',
+      });
+      return;
+    }
+
+    const greeting = `Hi, I'm ${resolveDisplayName()}.`;
+    sendSimulatedUserMessage(greeting);
+    setHasActivatedSession(true);
   };
 
   const handleTalkButtonDown = () => {
@@ -1578,6 +1700,7 @@ export function useDexterAppController(): DexterAppController {
       void handleSendTextMessage(message);
     },
     canViewDebugPayloads,
+    onStartConversation: () => handleStartConversation(),
   };
 
   const inputBarProps: InputBarProps = {

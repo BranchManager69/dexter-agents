@@ -1,9 +1,11 @@
 import type { RealtimeAgent } from '@openai/agents/realtime';
 
 import { buildConciergeAgent } from './concierge';
+import type { AgentScenarioContext } from '../index';
+export { resolveConciergeProfile, getDefaultConciergeProfileDefinition } from './promptProfile';
 
-export async function loadDexterTradingScenario(): Promise<RealtimeAgent[]> {
-  const concierge = await buildConciergeAgent();
+export async function loadDexterTradingScenario(context: AgentScenarioContext = {}): Promise<RealtimeAgent[]> {
+  const concierge = await buildConciergeAgent({ resolvedProfile: context.resolvedProfile ?? undefined });
   return [concierge];
 }
 

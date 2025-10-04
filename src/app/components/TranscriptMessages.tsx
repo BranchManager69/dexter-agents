@@ -11,12 +11,14 @@ interface TranscriptMessagesProps {
   hasActivatedSession?: boolean;
   onSendMessage?: (message: string) => void;
   canViewDebugPayloads?: boolean;
+  onStartConversation?: () => Promise<void> | void;
 }
 
 export function TranscriptMessages({
   hasActivatedSession,
   onSendMessage,
   canViewDebugPayloads = false,
+  onStartConversation,
 }: TranscriptMessagesProps = {}) {
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
@@ -25,6 +27,9 @@ export function TranscriptMessages({
   const showDebugPayloads = debugEnvEnabled && canViewDebugPayloads;
   const [visibleTimestamps, setVisibleTimestamps] = useState<Record<string, boolean>>({});
   const timestampTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const [isStartingConversation, setIsStartingConversation] = useState(false);
+  const [postPromptsVisible, setPostPromptsVisible] = useState(false);
+  const hasShownPostPromptsRef = useRef(false);
 
   function scrollToBottom() {
     if (transcriptRef.current) {
@@ -70,9 +75,14 @@ export function TranscriptMessages({
   };
 
   // Only show empty state if there are no user or assistant messages (filter out debug/system items)
-  const hasRealMessages = transcriptItems.some(item =>
-    item.role === 'user' || item.role === 'assistant'
-  );
+  const realMessageCount = transcriptItems.filter(
+    (item) =>
+      item.type === 'MESSAGE' &&
+      (item.role === 'user' || item.role === 'assistant') &&
+      !item.isHidden,
+  ).length;
+
+  const hasRealMessages = realMessageCount > 0;
   const showEmptyState = !hasActivatedSession && !hasRealMessages;
 
   const suggestedPrompts = [
@@ -80,6 +90,34 @@ export function TranscriptMessages({
     "Show me my wallet balance",
     "Help me find a promising new token",
   ];
+
+  useEffect(() => {
+    if (!hasShownPostPromptsRef.current && hasActivatedSession && hasRealMessages) {
+      setPostPromptsVisible(true);
+      hasShownPostPromptsRef.current = true;
+    }
+  }, [hasActivatedSession, hasRealMessages]);
+
+  useEffect(() => {
+    if (postPromptsVisible && realMessageCount > 1) {
+      setPostPromptsVisible(false);
+    }
+  }, [postPromptsVisible, realMessageCount]);
+
+  const handleStartClick = async () => {
+    if (!onStartConversation || isStartingConversation) return;
+    try {
+      setIsStartingConversation(true);
+      await onStartConversation();
+    } finally {
+      setIsStartingConversation(false);
+    }
+  };
+
+  const handleFollowUpPrompt = (prompt: string) => {
+    setPostPromptsVisible(false);
+    onSendMessage?.(prompt);
+  };
 
   return (
     <div
@@ -89,22 +127,44 @@ export function TranscriptMessages({
     >
       {showEmptyState && (
         <div className="flex h-full flex-1 items-center justify-center animate-in fade-in duration-500">
-          <div className="max-w-md text-center">
-            <p className="mb-6 text-sm text-neutral-400">
-              Need a spark? Try one of these:
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={handleStartClick}
+              disabled={isStartingConversation}
+              className="group relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-iris/80 via-flux/70 to-amber-300/70 text-3xl text-white shadow-[0_0_45px_rgba(94,234,212,0.35)] transition-transform duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-flux/80 disabled:opacity-80"
+            >
+              <span
+                className="absolute h-28 w-28 rounded-full bg-iris/30 blur-3xl opacity-60 group-hover:opacity-90"
+                aria-hidden
+              />
+              <span
+                className="absolute h-full w-full rounded-full border border-flux/30"
+                aria-hidden
+              />
+              <span className="relative select-none">
+                {isStartingConversation ? '…' : '✨'}
+              </span>
+              <span className="sr-only">Start conversation</span>
+            </button>
+            <p className="mt-6 text-sm text-neutral-400">
+              Tap to let Dexter know you&rsquo;re here.
             </p>
-            <div className="flex flex-col gap-2">
-              {suggestedPrompts.map((prompt, index) => (
-                <button
-                  key={index}
-                  onClick={() => onSendMessage?.(prompt)}
-                  className="rounded-md border border-neutral-800/60 bg-surface-glass/40 px-4 py-2.5 text-sm text-neutral-300 transition hover:border-flux/40 hover:bg-surface-glass/60 hover:text-flux"
-                >
-                  {prompt}
-                </button>
-              ))}
-            </div>
           </div>
+        </div>
+      )}
+
+      {postPromptsVisible && (
+        <div className="animate-in fade-in slide-in-from-top-2 mb-4 flex flex-wrap items-center justify-center gap-2 self-center rounded-full border border-neutral-800/60 bg-surface-glass/40 px-4 py-2 text-sm text-neutral-300 shadow-sm">
+          {suggestedPrompts.map((prompt, index) => (
+            <button
+              key={index}
+              onClick={() => handleFollowUpPrompt(prompt)}
+              className="rounded-full border border-transparent bg-neutral-900/50 px-3 py-1.5 text-xs uppercase tracking-[0.28em] transition hover:border-flux/60 hover:text-flux"
+            >
+              {prompt}
+            </button>
+          ))}
         </div>
       )}
 
