@@ -16,6 +16,8 @@ export const ModerationCategoryZod = z.enum([...MODERATION_CATEGORIES]);
 
 export type SessionStatus = "DISCONNECTED" | "CONNECTING" | "CONNECTED" | "ERROR";
 
+export type DexterUserBadge = "pro" | "dev";
+
 export interface ToolParameterProperty {
   type: string;
   description?: string;

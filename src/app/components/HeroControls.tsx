@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { createPortal } from "react-dom";
 import { ClipboardCopyIcon, DownloadIcon, MixerHorizontalIcon } from "@radix-ui/react-icons";
 import { SessionStatus } from "@/app/types";
+import type { DexterUserBadge } from "@/app/types";
 export interface HeroControlsProps {
   sessionStatus: SessionStatus;
   onOpenSignals: () => void;
@@ -22,6 +23,7 @@ export interface HeroControlsProps {
     lastUpdated: Date | null;
     source: "live" | "cache" | "none";
   };
+  userBadge?: DexterUserBadge | null;
 }
 
 export function HeroControls({
@@ -38,6 +40,7 @@ export function HeroControls({
   className,
   renderAdminConsole,
   adminConsoleMetadata,
+  userBadge,
 }: HeroControlsProps) {
   const [justCopied, setJustCopied] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
@@ -232,8 +235,31 @@ export function HeroControls({
       )
     ) : null;
 
+  const badgeDescriptor = userBadge
+    ? userBadge === "dev"
+      ? {
+          label: "DEV",
+          title: "Super admin access",
+          className:
+            "border-amber-400/70 bg-amber-400/15 text-amber-100 shadow-[0_0_16px_rgba(255,200,92,0.25)]",
+        }
+      : {
+          label: "PRO",
+          title: "Pro member access",
+          className: "border-iris/60 bg-iris/18 text-iris",
+        }
+    : null;
+
   return (
     <div className={rootClassName}>
+      {badgeDescriptor && (
+        <span
+          className={`inline-flex min-h-[32px] items-center justify-center rounded-full border px-4 py-1 text-[10px] font-semibold uppercase tracking-[0.32em] ${badgeDescriptor.className}`}
+          title={badgeDescriptor.title}
+        >
+          {badgeDescriptor.label}
+        </span>
+      )}
       {canUseAdminTools && (
         <>
           <button
