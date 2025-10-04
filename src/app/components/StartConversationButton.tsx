@@ -21,7 +21,7 @@ export function StartConversationButton({ onClick, isLoading = false, disabled }
       onClick={onClick}
       disabled={isDisabled}
       aria-busy={isLoading || undefined}
-      className="group relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-iris/80 via-flux/70 to-amber-300/70 text-3xl text-white shadow-[0_0_45px_rgba(94,234,212,0.35)] focus:outline-none focus:ring-2 focus:ring-flux/80 disabled:opacity-80"
+      className="group relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-[#F2691B]/95 via-[#F4944E]/80 to-[#FDD5A3]/70 text-3xl text-white shadow-[0_0_45px_rgba(242,105,27,0.35)] focus:outline-none focus:ring-2 focus:ring-[#F2691B]/50 disabled:opacity-80"
       initial={{ scale: 0.99 }}
       animate={{ scale: [0.99, 1.04, 0.99] }}
       transition={{ duration: LOOP_DURATION * 1.5, repeat: Infinity, ease: PULSE_EASE }}
@@ -29,14 +29,14 @@ export function StartConversationButton({ onClick, isLoading = false, disabled }
       whileFocus={{ scale: 1.08 }}
     >
       <motion.span
-        className="pointer-events-none absolute h-28 w-28 rounded-full bg-iris/30 blur-3xl opacity-60"
+        className="pointer-events-none absolute h-28 w-28 rounded-full bg-[#F2691B]/35 blur-3xl opacity-70"
         aria-hidden
         initial={{ opacity: 0.45, scale: 0.9 }}
         animate={{ opacity: [0.45, 0.72, 0.45], scale: [0.9, 1.06, 0.9] }}
         transition={{ duration: LOOP_DURATION, repeat: Infinity, ease: PULSE_EASE }}
       />
       <motion.span
-        className="pointer-events-none absolute h-full w-full rounded-full border border-flux/30"
+        className="pointer-events-none absolute h-full w-full rounded-full border border-[#F4944E]/40"
         aria-hidden
         initial={{ opacity: 0.55, scale: 0.96 }}
         animate={{ opacity: [0.55, 0.82, 0.55], scale: [0.96, 1.05, 0.96] }}
@@ -49,7 +49,7 @@ export function StartConversationButton({ onClick, isLoading = false, disabled }
         animate={{ rotate: 360 }}
         transition={{ duration: LOOP_DURATION * 2.5, repeat: Infinity, ease: "linear" }}
       />
-      <span className="relative flex h-12 w-12 items-center justify-center select-none">
+      <span className="relative flex h-16 w-16 items-center justify-center select-none">
         <AnimatePresence mode="wait" initial={false}>
           {isLoading ? (
             <motion.span
@@ -105,8 +105,8 @@ export function StartConversationButton({ onClick, isLoading = false, disabled }
                 src="/assets/logos/logo_orange.svg"
                 alt=""
                 role="presentation"
-                width={48}
-                height={48}
+                width={64}
+                height={64}
                 priority={false}
               />
             </motion.span>
