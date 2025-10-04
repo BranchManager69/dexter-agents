@@ -1,6 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { SessionStatus } from "@/app/types";
+import type { DexterUserBadge } from "@/app/types";
 import { AuthMenu } from "@/app/components/AuthMenu";
 
 interface SessionIdentitySummary {
@@ -52,6 +53,7 @@ interface TopRibbonProps {
   onSignOut?: () => void;
   turnstileSiteKey?: string;
   onOpenPersonaModal?: () => void;
+  userBadge?: DexterUserBadge | null;
 }
 
 function getStatusAccent(sessionStatus: SessionStatus) {
@@ -93,11 +95,25 @@ function formatWalletAddress(address?: string | null) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
-function getSessionBadgeTone(identity: SessionIdentitySummary) {
+function getSessionBadgeTone(identity: SessionIdentitySummary, userBadge?: DexterUserBadge | null) {
   if (identity.type !== 'user') {
     return {
       tone: 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300',
       label: 'Guest',
+    };
+  }
+
+  if (userBadge === 'dev') {
+    return {
+      tone: 'border-amber-400/60 bg-amber-500/10 text-amber-200',
+      label: 'Dev',
+    };
+  }
+
+  if (userBadge === 'pro') {
+    return {
+      tone: 'border-iris/50 bg-iris/15 text-iris',
+      label: 'Pro',
     };
   }
 
@@ -124,9 +140,17 @@ function getSessionBadgeTone(identity: SessionIdentitySummary) {
   };
 }
 
-function getRoleButtonTone(identity: SessionIdentitySummary) {
+function getRoleButtonTone(identity: SessionIdentitySummary, userBadge?: DexterUserBadge | null) {
   if (identity.type !== 'user') {
     return 'border-neutral-800/60 bg-surface-glass/60 text-neutral-200 hover:border-flux/40 hover:text-flux';
+  }
+
+  if (userBadge === 'dev') {
+    return 'border-amber-400/60 bg-amber-500/12 text-amber-100 hover:border-amber-300 hover:text-amber-50';
+  }
+
+  if (userBadge === 'pro') {
+    return 'border-iris/60 bg-iris/12 text-iris hover:border-iris/40 hover:text-iris';
   }
 
   const normalizedRoles = (identity.user?.roles ?? []).map((role) => role.toLowerCase());
@@ -156,6 +180,7 @@ export function TopRibbon({
   onSignOut,
   turnstileSiteKey,
   onOpenPersonaModal,
+  userBadge,
 }: TopRibbonProps) {
 
   const statusChip = getStatusAccent(sessionStatus);
@@ -199,8 +224,8 @@ export function TopRibbon({
   const sessionLabel = sessionIdentity.type === "user"
     ? sessionIdentity.user?.email?.split("@")[0] || "User"
     : "Demo";
-  const sessionBadge = getSessionBadgeTone(sessionIdentity);
-  const authButtonTone = getRoleButtonTone(sessionIdentity);
+  const sessionBadge = getSessionBadgeTone(sessionIdentity, userBadge);
+  const authButtonTone = getRoleButtonTone(sessionIdentity, userBadge);
   const authRoleLabel = sessionIdentity.type === 'user' ? sessionBadge.label : sessionLabel;
   const authEmail = sessionIdentity.type === 'user' ? sessionIdentity.user?.email ?? undefined : undefined;
 
@@ -322,6 +347,7 @@ export function TopRibbon({
             buttonTitle={authEmail}
             activeWalletKey={sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined}
             walletPortfolio={walletPortfolio ?? undefined}
+            userBadge={userBadge ?? undefined}
           />
         </div>
       </div>

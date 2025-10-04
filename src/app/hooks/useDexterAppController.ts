@@ -23,6 +23,7 @@ declare global {
 
 // Types
 import { SessionStatus } from "@/app/types";
+import type { DexterUserBadge } from "@/app/types";
 import type { RealtimeAgent } from '@openai/agents/realtime';
 
 // Context providers & hooks
@@ -715,7 +716,7 @@ export function useDexterAppController(): DexterAppController {
   const isSuperAdmin = Boolean(sessionIdentity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
   const hasProRole = normalizedRoles.includes('pro');
   const hasProAccess = isSuperAdmin || hasProRole;
-  const userBadge = isSuperAdmin ? 'dev' : hasProRole ? 'pro' : null;
+  const userBadge: DexterUserBadge | null = isSuperAdmin ? 'dev' : hasProRole ? 'pro' : null;
   const canUseAdminTools = sessionIdentity.type === 'user' && (isSuperAdmin || isAdminRole);
   const canViewDebugPayloads = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true'
     && sessionIdentity.type === 'user'
@@ -1841,6 +1842,7 @@ export function useDexterAppController(): DexterAppController {
     onSignIn: handleSignIn,
     onSignOut: handleSignOut,
     turnstileSiteKey,
+    userBadge,
     onOpenPersonaModal: () => setIsPersonaModalOpen(true),
   };
 
