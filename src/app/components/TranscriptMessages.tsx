@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TranscriptItem } from "@/app/types";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { GuardrailChip } from "./GuardrailChip";
 import { getToolNoteRenderer } from "./toolNotes/renderers";
+import MessageMarkdown from "./MessageMarkdown";
+import { StartConversationButton } from "./StartConversationButton";
 
 interface TranscriptMessagesProps {
   hasActivatedSession?: boolean;
@@ -23,6 +24,7 @@ export function TranscriptMessages({
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
+  const [isPinnedToBottom, setIsPinnedToBottom] = useState(true);
   const debugEnvEnabled = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
   const showDebugPayloads = debugEnvEnabled && canViewDebugPayloads;
   const [visibleTimestamps, setVisibleTimestamps] = useState<Record<string, boolean>>({});
@@ -31,11 +33,29 @@ export function TranscriptMessages({
   const [postPromptsVisible, setPostPromptsVisible] = useState(false);
   const hasShownPostPromptsRef = useRef(false);
 
-  function scrollToBottom() {
-    if (transcriptRef.current) {
-      transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
-    }
-  }
+  const scrollToBottom = useCallback(() => {
+    const node = transcriptRef.current;
+    if (!node) return;
+    node.scrollTo({ top: node.scrollHeight });
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const node = transcriptRef.current;
+    if (!node) return;
+    const { scrollTop, scrollHeight, clientHeight } = node;
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    const isNearBottom = distanceFromBottom <= 64;
+    setIsPinnedToBottom(isNearBottom);
+  }, []);
+
+  useEffect(() => {
+    const node = transcriptRef.current;
+    if (!node) return;
+    const listener = () => handleScroll();
+    node.addEventListener("scroll", listener, { passive: true });
+    handleScroll();
+    return () => node.removeEventListener("scroll", listener);
+  }, [handleScroll]);
 
   useEffect(() => {
     const hasNewMessage = transcriptItems.length > prevLogs.length;
@@ -47,12 +67,12 @@ export function TranscriptMessages({
       );
     });
 
-    if (hasNewMessage || hasUpdatedMessage) {
+    if ((hasNewMessage || hasUpdatedMessage) && isPinnedToBottom) {
       scrollToBottom();
     }
 
     setPrevLogs(transcriptItems);
-  }, [transcriptItems, prevLogs]);
+  }, [transcriptItems, prevLogs, isPinnedToBottom, scrollToBottom]);
 
   useEffect(() => () => {
     timestampTimersRef.current.forEach((timer) => clearTimeout(timer));
@@ -128,25 +148,10 @@ export function TranscriptMessages({
       {showEmptyState && (
         <div className="flex h-full flex-1 items-center justify-center animate-in fade-in duration-500">
           <div className="text-center">
-            <button
-              type="button"
+            <StartConversationButton
               onClick={handleStartClick}
-              disabled={isStartingConversation}
-              className="group relative mx-auto flex h-28 w-28 items-center justify-center rounded-full bg-gradient-to-br from-iris/80 via-flux/70 to-amber-300/70 text-3xl text-white shadow-[0_0_45px_rgba(94,234,212,0.35)] transition-transform duration-300 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-flux/80 disabled:opacity-80"
-            >
-              <span
-                className="absolute h-28 w-28 rounded-full bg-iris/30 blur-3xl opacity-60 group-hover:opacity-90"
-                aria-hidden
-              />
-              <span
-                className="absolute h-full w-full rounded-full border border-flux/30"
-                aria-hidden
-              />
-              <span className="relative select-none">
-                {isStartingConversation ? '…' : '✨'}
-              </span>
-              <span className="sr-only">Start conversation</span>
-            </button>
+              isLoading={isStartingConversation}
+            />
             <p className="mt-6 text-sm text-neutral-400">
               Tap to let Dexter know you&rsquo;re here.
             </p>
@@ -193,21 +198,24 @@ export function TranscriptMessages({
             const containerClasses = `group/message relative flex flex-col gap-1 ${
               isUser ? "items-end" : "items-start"
             }`;
-            const bubbleBase = `relative max-w-xl rounded-3xl border border-neutral-800/50 px-5 py-3 shadow-sm transition-colors ${
-              isUser
-                ? "bg-gradient-to-r from-iris/30 via-iris/20 to-iris/10 text-neutral-100"
-                : "bg-surface-glass/70 text-neutral-100"
-            }`;
+            const bubbleBase = `relative max-w-2xl rounded-3xl px-4 py-3 transition-colors`;
             const isBracketedMessage =
               title.startsWith("[") && title.endsWith("]");
             const messageStyle = isBracketedMessage ? "italic text-neutral-400" : "";
             const displayTitle = isBracketedMessage ? title.slice(1, -1) : title;
 
             const timestampVisible = Boolean(visibleTimestamps[itemId]);
+            const messageTextClass = `${
+              isUser ? "text-neutral-50 font-medium" : "text-neutral-200"
+            }`;
+            const timestampAlignment = isUser ? "self-end text-right" : "self-start text-left";
+            const timestampOpacity = timestampVisible
+              ? "opacity-100"
+              : "opacity-70 group-hover/message:opacity-100";
 
             return (
               <div key={itemId} className={containerClasses}>
-                <div className="max-w-xl">
+                <div className="max-w-2xl space-y-2">
                   <div
                     role="button"
                     tabIndex={0}
@@ -221,26 +229,24 @@ export function TranscriptMessages({
                     }}
                     onTouchStart={() => handleBubbleInteract(itemId)}
                   >
-                    <span
-                      className={`pointer-events-none absolute -top-5 ${
-                        isUser ? "right-3" : "left-3"
-                      } ${
-                        timestampVisible
-                          ? "flex"
-                          : "hidden lg:group-hover/message:flex"
-                      } rounded-md bg-neutral-900/90 px-2 py-1 text-[10px] uppercase tracking-[0.24em] text-neutral-200 shadow-lg transition-opacity duration-200`}
+                    <MessageMarkdown
+                      className={`whitespace-pre-wrap break-words text-[15px] leading-relaxed ${messageStyle} ${messageTextClass}`}
                     >
-                      {timestamp}
-                    </span>
-                    <ReactMarkdown className={`whitespace-pre-wrap leading-relaxed ${messageStyle}`}>
                       {displayTitle}
-                    </ReactMarkdown>
+                    </MessageMarkdown>
                   </div>
                   {guardrailResult && (
                     <div className="rounded-b-3xl border border-neutral-800/40 bg-surface-glass/50 px-4 py-3">
                       <GuardrailChip guardrailResult={guardrailResult} />
                     </div>
                   )}
+                  <span
+                    className={`${
+                      timestampAlignment
+                    } text-[11px] font-sans text-neutral-500 transition-opacity duration-200 ${timestampOpacity}`}
+                  >
+                    {timestamp}
+                  </span>
                 </div>
               </div>
             );

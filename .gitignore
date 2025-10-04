@@ -42,3 +42,5 @@ todo.md
 harness-results/
 logs/
 screenshots/
+archives/
+.playwright-mcp/
