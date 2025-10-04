@@ -1,11 +1,12 @@
 import { RealtimeAgent } from '@openai/agents/realtime';
 import { fetchPromptModule } from '@/app/lib/promptModules';
+import { CONFIG } from '@/app/config/env';
 
 export async function buildHaikuWriterAgent(): Promise<RealtimeAgent> {
   const prompt = await fetchPromptModule('agent.haiku_writer.instructions');
   return new RealtimeAgent({
     name: 'haikuWriter',
-    voice: 'sage',
+    voice: CONFIG.dexterVoicePrimary,
     instructions: prompt.segment,
     handoffs: [],
     tools: [],
@@ -18,7 +19,7 @@ export async function buildGreeterAgent(): Promise<RealtimeAgent> {
   const haikuAgent = await buildHaikuWriterAgent();
   return new RealtimeAgent({
     name: 'greeter',
-    voice: 'sage',
+    voice: CONFIG.dexterVoicePrimary,
     instructions: prompt.segment,
     handoffs: [haikuAgent],
     tools: [],
