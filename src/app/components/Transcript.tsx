@@ -1,13 +1,13 @@
 "use-client";
 
-import React, { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { TranscriptItem } from "@/app/types";
 import Image from "next/image";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
 import { DownloadIcon, ClipboardCopyIcon } from "@radix-ui/react-icons";
 import { GuardrailChip } from "./GuardrailChip";
+import MessageMarkdown from "./MessageMarkdown";
 
 export interface TranscriptProps {
   userText: string;
@@ -28,15 +28,34 @@ function Transcript({
   const { loggedEvents } = useEvent();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
   const [prevLogs, setPrevLogs] = useState<TranscriptItem[]>([]);
+  const [isPinnedToBottom, setIsPinnedToBottom] = useState(true);
   const [justCopied, setJustCopied] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  function scrollToBottom() {
-    if (transcriptRef.current) {
-      transcriptRef.current.scrollTop = transcriptRef.current.scrollHeight;
-    }
-  }
+  const scrollToBottom = useCallback(() => {
+    const node = transcriptRef.current;
+    if (!node) return;
+    node.scrollTo({ top: node.scrollHeight });
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    const node = transcriptRef.current;
+    if (!node) return;
+    const { scrollTop, scrollHeight, clientHeight } = node;
+    const distanceFromBottom = scrollHeight - (scrollTop + clientHeight);
+    const isNearBottom = distanceFromBottom <= 64;
+    setIsPinnedToBottom(isNearBottom);
+  }, []);
+
+  useEffect(() => {
+    const node = transcriptRef.current;
+    if (!node) return;
+    const listener = () => handleScroll();
+    node.addEventListener("scroll", listener, { passive: true });
+    handleScroll();
+    return () => node.removeEventListener("scroll", listener);
+  }, [handleScroll]);
 
   useEffect(() => {
     const hasNewMessage = transcriptItems.length > prevLogs.length;
@@ -48,12 +67,12 @@ function Transcript({
       );
     });
 
-    if (hasNewMessage || hasUpdatedMessage) {
+    if ((hasNewMessage || hasUpdatedMessage) && isPinnedToBottom) {
       scrollToBottom();
     }
 
     setPrevLogs(transcriptItems);
-  }, [transcriptItems]);
+  }, [transcriptItems, prevLogs, isPinnedToBottom, scrollToBottom]);
 
   // Autofocus on text box input on load
   useEffect(() => {
@@ -180,35 +199,31 @@ function Transcript({
               const containerClasses = `flex flex-col ${
                 isUser ? "items-end" : "items-start"
               }`;
-              const bubbleBase = `max-w-xl rounded-2xl border border-neutral-800/60 px-5 py-4 ${
-                isUser
-                  ? "bg-iris/15 text-neutral-100"
-                  : "bg-surface-glass/60 text-neutral-200"
-              }`;
+              const bubbleBase = `max-w-2xl rounded-2xl px-4 py-3`;
               const isBracketedMessage =
                 title.startsWith("[") && title.endsWith("]");
-              const messageStyle = isBracketedMessage
-                ? 'italic text-gray-400'
-                : '';
+              const messageStyle =
+                isBracketedMessage
+                  ? 'italic text-gray-400'
+                  : '';
               const displayTitle = isBracketedMessage
                 ? title.slice(1, -1)
                 : title;
+              const messageTextClass = isUser
+                ? "text-neutral-50 font-medium"
+                : "text-neutral-200";
+              const timestampAlignment = isUser ? "self-end text-right" : "self-start text-left";
 
               return (
                 <div key={itemId} className={containerClasses}>
-                    <div className="max-w-xl">
+                    <div className="max-w-2xl space-y-2">
                       <div
                         className={`${bubbleBase} rounded-3xl ${guardrailResult ? "rounded-b-none" : ""}`}
                       >
-                        <div
-                          className={`text-[10px] font-mono uppercase tracking-[0.28em] ${
-                            isUser ? "text-neutral-400" : "text-neutral-500"
-                          }`}
-                        >
-                          {timestamp}
-                        </div>
-                      <div className={`mt-2 whitespace-pre-wrap leading-relaxed ${messageStyle}`}>
-                        <ReactMarkdown>{displayTitle}</ReactMarkdown>
+                      <div
+                        className={`whitespace-pre-wrap break-words text-[15px] leading-relaxed ${messageStyle} ${messageTextClass}`}
+                      >
+                        <MessageMarkdown>{displayTitle}</MessageMarkdown>
                       </div>
                     </div>
                     {guardrailResult && (
@@ -216,6 +231,9 @@ function Transcript({
                         <GuardrailChip guardrailResult={guardrailResult} />
                       </div>
                     )}
+                    <span className={`${timestampAlignment} text-[11px] font-sans text-neutral-500`}>
+                      {timestamp}
+                    </span>
                   </div>
                 </div>
               );

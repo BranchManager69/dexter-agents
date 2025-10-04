@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" role="img" aria-labelledby="title">
+  <title id="title">Dexter orange logomark</title>
+  <defs>
+    <clipPath id="logo_orange_clip">
+      <circle cx="150" cy="150" r="150" />
+    </clipPath>
+  </defs>
+  <image
+    width="300"
+    height="300"
+    clip-path="url(#logo_orange_clip)"
+    preserveAspectRatio="xMidYMid slice"
+    href="data:image/png;base64,$(cat /tmp/logo_orange.b64)"
+  />
+</svg>
