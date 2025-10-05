@@ -2035,6 +2035,7 @@ export function useDexterAppController(): DexterAppController {
       ? sessionIdentity.user?.id ?? null
       : null,
     onOpenSuperAdmin: () => setIsSuperAdminModalOpen(true),
+    onOpenPersonaModal: () => setIsPersonaModalOpen(true),
   };
 
   const transcriptProps: TranscriptMessagesProps = {
@@ -2102,7 +2103,6 @@ export function useDexterAppController(): DexterAppController {
     onSignOut: handleSignOut,
     turnstileSiteKey,
     userBadge,
-    onOpenPersonaModal: () => setIsPersonaModalOpen(true),
   };
 
   const identityLabel = sessionIdentity.type === "user"

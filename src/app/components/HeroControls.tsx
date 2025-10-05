@@ -11,6 +11,7 @@ export interface HeroControlsProps {
   onCopyTranscript: () => Promise<void>;
   onDownloadAudio: () => void;
   onSaveLog: () => void;
+  onOpenPersonaModal?: () => void;
   isVoiceDockExpanded: boolean;
   onToggleVoiceDock: () => void;
   canUseAdminTools: boolean;
@@ -41,6 +42,7 @@ export default function HeroControls(props: HeroControlsProps) {
       onCopyTranscript={props.onCopyTranscript}
       onDownloadAudio={props.onDownloadAudio}
       onSaveLog={props.onSaveLog}
+      onOpenPersonaModal={props.onOpenPersonaModal}
       renderAdminConsole={props.renderAdminConsole}
       adminConsoleMetadata={props.adminConsoleMetadata}
       dossierSupabaseUserId={props.dossierSupabaseUserId}

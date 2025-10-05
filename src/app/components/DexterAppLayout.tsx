@@ -101,6 +101,7 @@ export function DexterAppLayout({
         }}
         dossierSupabaseUserId={heroControlsProps.dossierSupabaseUserId}
         userBadge={heroControlsProps.userBadge}
+        onOpenPersonaModal={heroControlsProps.onOpenPersonaModal}
       />
     </>
   );

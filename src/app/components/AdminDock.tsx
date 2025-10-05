@@ -9,6 +9,7 @@ import {
   ReaderIcon,
   ChevronDownIcon,
   FileTextIcon,
+  MagicWandIcon,
 } from "@radix-ui/react-icons";
 
 import { MEMORY_LIMITS } from "@/app/config/memory";
@@ -22,6 +23,7 @@ interface AdminDockProps {
   onCopyTranscript: () => Promise<void>;
   onDownloadAudio: () => void;
   onSaveLog: () => void;
+  onOpenPersonaModal?: () => void;
   renderAdminConsole?: () => React.ReactNode;
   adminConsoleMetadata?: {
     toolCount: number;
@@ -80,7 +82,7 @@ function formatTimestamp(iso: string | null) {
 }
 
 const dockButtonClass =
-  'pointer-events-auto flex h-9 w-9 items-center justify-center rounded-md border border-rose-500/50 bg-[#17090c]/85 text-rose-100 transition hover:border-rose-300/70 hover:text-rose-50 disabled:opacity-30 disabled:pointer-events-none shadow-sm';
+  'pointer-events-auto flex h-7 w-7 items-center justify-center rounded-md border border-rose-500/50 bg-[#17090c]/85 text-rose-100 transition hover:border-rose-300/70 hover:text-rose-50 disabled:opacity-30 disabled:pointer-events-none shadow-sm';
 
 const panelContainerBase =
   "rounded-2xl border border-rose-500/40 bg-[#1b0c0f]/95 shadow-elevated backdrop-blur-xl";
@@ -93,6 +95,7 @@ export default function AdminDock({
   onCopyTranscript,
   onDownloadAudio,
   onSaveLog,
+  onOpenPersonaModal,
   renderAdminConsole,
   adminConsoleMetadata,
   dossierSupabaseUserId,
@@ -637,6 +640,21 @@ export default function AdminDock({
           >
             <FileTextIcon className="h-3.5 w-3.5" />
           </button>
+
+          {onOpenPersonaModal && (
+            <button
+              type="button"
+              onClick={() => {
+                closeAllPanels();
+                onOpenPersonaModal();
+              }}
+              className={dockButtonClass}
+              title="Customize Dexter persona"
+              aria-label="Customize Dexter persona"
+            >
+              <MagicWandIcon className="h-3.5 w-3.5" />
+            </button>
+          )}
 
           <button
             onClick={async () => {
