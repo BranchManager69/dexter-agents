@@ -1399,10 +1399,19 @@ export function useDexterAppController(): DexterAppController {
   const handleSignOut = useCallback(async () => {
     try {
       await authSignOut();
-    } catch (err) {
-      console.error("Sign-out error:", err);
-    } finally {
+      const response = await fetch('/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error(`Logout endpoint returned ${response.status}`);
+      }
       disconnectFromRealtime();
+    } catch (err) {
+      console.error('Sign-out error:', err);
+      if (typeof window !== 'undefined') {
+        window.location.reload();
+      }
     }
   }, [authSignOut, disconnectFromRealtime]);
 
