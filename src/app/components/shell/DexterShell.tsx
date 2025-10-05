@@ -27,10 +27,13 @@ export function DexterShell({
   voiceDock,
   mobileOverlay,
 }: DexterShellProps) {
+  const heroPadding = heroCollapsed ? "pt-1" : "pt-4";
+
   const heroSectionClasses = [
     heroWrapperClassName,
     "flex flex-col lg:flex-row lg:items-start lg:justify-between",
     heroCollapsed ? "gap-1 lg:gap-4" : "gap-6",
+    heroPadding,
   ]
     .filter(Boolean)
     .join(" ");
