@@ -187,6 +187,18 @@ export function summarizeIdentity(auth: McpAuthDetails): McpIdentitySummary {
   }
 }
 
+export function clearMcpAuthCaches(sessionId?: string | null, userId?: string | null) {
+  if (sessionId) {
+    mintedTokenCache.delete(sessionId);
+    clientCache.delete(`user:${sessionId}`);
+  }
+
+  if (userId) {
+    mintedTokenCache.delete(userId);
+    clientCache.delete(`user:${userId}`);
+  }
+}
+
 function getClientEntry(key: string, token: string | null): CachedClient {
   const cached = clientCache.get(key);
   if (cached && cached.token === token) {
