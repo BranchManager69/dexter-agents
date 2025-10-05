@@ -52,7 +52,6 @@ interface TopRibbonProps {
   onSignIn?: (email: string, captchaToken: string | null) => Promise<{ success: boolean; message: string }>;
   onSignOut?: () => void;
   turnstileSiteKey?: string;
-  onOpenPersonaModal?: () => void;
   userBadge?: DexterUserBadge | null;
 }
 
@@ -65,7 +64,7 @@ function getStatusVisual(sessionStatus: SessionStatus) {
     case "ERROR":
       return { label: "Fault", dot: "bg-[#FF4D69]" };
     default:
-      return { label: "Offline", dot: "bg-[#FFE4B8]/70" };
+      return { label: "Offline", dot: "bg-[#FF3B30]" };
   }
 }
 
@@ -122,7 +121,6 @@ export function TopRibbon({
   onSignIn,
   onSignOut,
   turnstileSiteKey,
-  onOpenPersonaModal,
   userBadge,
 }: TopRibbonProps) {
   const statusVisual = getStatusVisual(sessionStatus);
@@ -154,10 +152,10 @@ export function TopRibbon({
   return (
     <div className="relative w-full px-5 pb-2 pt-1 sm:px-7">
       <div className="relative mx-auto flex w-full max-w-6xl items-center gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto whitespace-nowrap text-[8.5px] font-semibold uppercase tracking-[0.2em] text-[#FFF3E3]/85 scrollbar-hide">
+        <div className="flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[8.5px] font-semibold uppercase tracking-[0.2em] text-[#FFF3E3]/85 scrollbar-hide">
           <span className="flex flex-shrink-0 items-center gap-2" title={`Connection status: ${statusVisual.label}`}>
-            <span className={`h-2.5 w-2.5 rounded-full shadow-[0_0_10px_currentColor] ${statusVisual.dot}`} aria-hidden="true" />
-            {statusVisual.label}
+            <span className={`h-2.5 w-2.5 rounded-full ${statusVisual.dot}`} aria-hidden="true" />
+            <span className="sr-only">{statusVisual.label}</span>
           </span>
 
           {onToggleConnection && (
@@ -169,7 +167,9 @@ export function TopRibbon({
               {sessionStatus === "CONNECTED" ? "Disconnect" : "Connect"}
             </button>
           )}
+        </div>
 
+        <div className="ml-auto flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[8.5px] font-semibold uppercase tracking-[0.2em] text-[#FFF3E3]/85 scrollbar-hide">
           <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]">
             {sessionLabel}
           </span>
@@ -178,24 +178,14 @@ export function TopRibbon({
             {mcpText}
           </span>
 
-          <span className="flex min-w-0 flex-shrink items-center gap-2 text-[#FEFBF4]">
-            <span className="truncate tracking-[0.18em] text-[#FEFBF4]">{walletLabel}</span>
+          <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]">
+            <span className="tracking-[0.18em] text-[#FEFBF4]">{walletLabel}</span>
           </span>
 
           {walletSecondaryText && (
             <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]/60 tracking-[0.18em]">
               {walletSecondaryText}
             </span>
-          )}
-
-          {onOpenPersonaModal && (
-            <button
-              type="button"
-              onClick={onOpenPersonaModal}
-              className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]/80 underline decoration-[#FEFBF4]/35 underline-offset-[4px] transition hover:text-[#FEFBF4] hover:decoration-[#FEFBF4]"
-            >
-              Customize
-            </button>
           )}
         </div>
 
