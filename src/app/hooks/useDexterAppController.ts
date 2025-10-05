@@ -539,6 +539,8 @@ function buildPortfolioSnapshot(
 // Agent configs
 import { scenarioLoaders, defaultAgentSetKey } from "@/app/agentConfigs";
 import { dexterTradingCompanyName } from "@/app/agentConfigs/customerServiceRetail";
+import { CONFIG } from "@/app/config/env";
+import { MODEL_IDS } from "@/app/config/models";
 
 import useAudioDownload from "./useAudioDownload";
 import { useHandleSessionHistory } from "./useHandleSessionHistory";
@@ -572,6 +574,13 @@ export function useDexterAppController(): DexterAppController {
   const [walletPortfolio, setWalletPortfolio] = useState<WalletPortfolioSnapshot | null>(null);
   const [walletPortfolioStatus, setWalletPortfolioStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [walletPortfolioError, setWalletPortfolioError] = useState<string | null>(null);
+
+  const realtimeSessionIdRef = useRef<string | null>(null);
+  const sessionStartedAtRef = useRef<number | null>(null);
+  const sessionMetadataRef = useRef<Record<string, any>>({});
+  const sessionStatusPrevRef = useRef<SessionStatus>('DISCONNECTED');
+  const sessionFlushInFlightRef = useRef(false);
+  const hasFlushedSessionRef = useRef(false);
 
   const authEmail = useMemo(() => {
     if (!authSession) return null;
@@ -1261,6 +1270,31 @@ export function useDexterAppController(): DexterAppController {
     const data = await tokenResponse.json();
     logServerEvent(data, "fetch_session_token_response");
 
+    const sessionIdCandidate =
+      typeof data?.id === 'string'
+        ? data.id
+        : typeof data?.session?.id === 'string'
+          ? data.session.id
+          : typeof data?.session_id === 'string'
+            ? data.session_id
+            : typeof data?.client_secret?.session_id === 'string'
+              ? data.client_secret.session_id
+              : null;
+    realtimeSessionIdRef.current = sessionIdCandidate;
+    sessionMetadataRef.current = {
+      model: typeof data?.model === 'string' ? data.model : MODEL_IDS.realtime,
+      voice:
+        typeof data?.voice === 'string'
+          ? data.voice
+          : typeof data?.voice_id === 'string'
+            ? data.voice_id
+            : CONFIG.dexterVoicePrimary,
+      instructionsHash: typeof data?.instructions_hash === 'string' ? data.instructions_hash : undefined,
+      issuedAt: new Date().toISOString(),
+      dexterSessionType: data?.dexter_session?.type ?? null,
+    };
+    hasFlushedSessionRef.current = false;
+
     const dexterSession = data?.dexter_session;
     const walletFromSession =
       dexterSession && typeof dexterSession.wallet !== 'undefined'
@@ -1701,6 +1735,219 @@ export function useDexterAppController(): DexterAppController {
 
   const { transcriptItems } = useTranscript();
   const { loggedEvents } = useEvent();
+
+  const transcriptItemsRef = useRef(transcriptItems);
+  useEffect(() => {
+    transcriptItemsRef.current = transcriptItems;
+  }, [transcriptItems]);
+
+  const loggedEventsRef = useRef(loggedEvents);
+  useEffect(() => {
+    loggedEventsRef.current = loggedEvents;
+  }, [loggedEvents]);
+
+  const sessionIdentityRef = useRef(sessionIdentity);
+  useEffect(() => {
+    sessionIdentityRef.current = sessionIdentity;
+  }, [sessionIdentity]);
+
+  const selectedAgentNameRef = useRef(selectedAgentName);
+  useEffect(() => {
+    selectedAgentNameRef.current = selectedAgentName;
+  }, [selectedAgentName]);
+
+  const mcpStatusRef = useRef(mcpStatus);
+  useEffect(() => {
+    mcpStatusRef.current = mcpStatus;
+  }, [mcpStatus]);
+
+  const buildSessionLogPayload = useCallback(
+    (reason?: string) => {
+      const transcriptSnapshot = Array.isArray(transcriptItemsRef.current)
+        ? [...transcriptItemsRef.current]
+        : [];
+      const sortedItems = transcriptSnapshot.sort((a, b) => a.createdAtMs - b.createdAtMs);
+
+      const toIso = (ms: number) => new Date(ms).toISOString();
+
+      const transcriptEntries = sortedItems
+        .filter((item) => item.type === 'MESSAGE')
+        .map((item, index) => ({
+          id: item.itemId,
+          index,
+          role: item.role,
+          text: item.title ?? '',
+          createdAt: toIso(item.createdAtMs),
+          status: item.status,
+          isHidden: Boolean(item.isHidden),
+          guardrailResult: item.guardrailResult ?? null,
+          data: item.data ?? null,
+        }));
+
+      const toolEntries = sortedItems
+        .filter((item) => item.type === 'TOOL_NOTE')
+        .map((item, index) => ({
+          id: item.itemId,
+          index,
+          name: item.title ?? null,
+          status: item.status,
+          createdAt: toIso(item.createdAtMs),
+          arguments: item.data?.arguments ?? null,
+          output: item.data?.output ?? null,
+          data: item.data ?? null,
+        }));
+
+      const hasContent = transcriptEntries.length > 0 || toolEntries.length > 0;
+      const sessionId = realtimeSessionIdRef.current;
+
+      if (!hasContent && !sessionId) {
+        return null;
+      }
+
+      const firstTimestampMs =
+        sessionStartedAtRef.current ??
+        (transcriptEntries.length > 0
+          ? Date.parse(transcriptEntries[0].createdAt)
+          : Date.now());
+      const endedAtMs = Date.now();
+      const durationMs = Math.max(0, endedAtMs - firstTimestampMs);
+
+      const identitySnapshot = sessionIdentityRef.current;
+      const identityType = identitySnapshot?.type ?? 'guest';
+      const mcpSnapshot = mcpStatusRef.current;
+
+      const assistantMessages = transcriptEntries.filter((entry) => entry.role === 'assistant' && !entry.isHidden);
+      const userMessages = transcriptEntries.filter((entry) => entry.role === 'user' && !entry.isHidden);
+
+      const compact = (obj: Record<string, any>) => {
+        const next: Record<string, any> = {};
+        for (const [key, value] of Object.entries(obj)) {
+          if (value === undefined) continue;
+          next[key] = value;
+        }
+        return next;
+      };
+
+      const metadata = compact({
+        ...sessionMetadataRef.current,
+        logVersion: '2025-10-05',
+        identity: identityType,
+        identityLabel:
+          identityType === 'user'
+            ? identitySnapshot?.user?.email ?? null
+            : identitySnapshot?.guestProfile?.label ?? 'Guest',
+        guest: identityType !== 'user',
+        scenario: defaultAgentSetKey,
+        agentName: selectedAgentNameRef.current || null,
+        assistantMessageCount: assistantMessages.length,
+        userMessageCount: userMessages.length,
+        toolCallCount: toolEntries.length,
+        eventCount: Array.isArray(loggedEventsRef.current) ? loggedEventsRef.current.length : undefined,
+        reason: reason ?? undefined,
+        mcpState: mcpSnapshot?.state ?? undefined,
+        mcpDetail: mcpSnapshot?.detail ?? undefined,
+        mcpMintedBearer: typeof mcpSnapshot?.minted === 'boolean' ? mcpSnapshot.minted : undefined,
+      });
+
+      return {
+        sessionId: sessionId ?? null,
+        startedAt: new Date(firstTimestampMs).toISOString(),
+        endedAt: new Date(endedAtMs).toISOString(),
+        durationMs,
+        transcript: transcriptEntries,
+        toolCalls: toolEntries,
+        metadata,
+        status: 'pending_summary',
+        error: null,
+      };
+    }, []);
+
+  const flushSessionLog = useCallback(
+    async (options?: { reason?: string; beacon?: boolean }) => {
+      if (sessionFlushInFlightRef.current) return;
+      if (hasFlushedSessionRef.current) return;
+
+      const payload = buildSessionLogPayload(options?.reason);
+      if (!payload) {
+        return;
+      }
+
+      const serialized = JSON.stringify(payload);
+
+      if (options?.beacon && typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+        try {
+          const blob = new Blob([serialized], { type: 'application/json' });
+          const ok = navigator.sendBeacon('/api/realtime/logs', blob);
+          if (ok) {
+            hasFlushedSessionRef.current = true;
+            realtimeSessionIdRef.current = null;
+            sessionStartedAtRef.current = null;
+            sessionMetadataRef.current = {};
+            return;
+          }
+        } catch (error) {
+          console.warn('Session log beacon failed, falling back to fetch.', error);
+        }
+      }
+
+      sessionFlushInFlightRef.current = true;
+      try {
+        const response = await fetch('/api/realtime/logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: serialized,
+          keepalive: Boolean(options?.beacon),
+        });
+
+        if (!response.ok) {
+          const text = await response.text().catch(() => '');
+          console.warn('Session log upload failed', response.status, text.slice(0, 200));
+          return;
+        }
+
+        hasFlushedSessionRef.current = true;
+        realtimeSessionIdRef.current = null;
+        sessionStartedAtRef.current = null;
+        sessionMetadataRef.current = {};
+      } catch (error) {
+        console.warn('Session log upload error', error);
+      } finally {
+        sessionFlushInFlightRef.current = false;
+      }
+    },
+    [buildSessionLogPayload],
+  );
+
+  useEffect(() => {
+    const previous = sessionStatusPrevRef.current;
+    if (sessionStatus === 'CONNECTED' && previous !== 'CONNECTED') {
+      sessionStartedAtRef.current = Date.now();
+      hasFlushedSessionRef.current = false;
+    }
+    if (previous === 'CONNECTED' && sessionStatus !== 'CONNECTED') {
+      void flushSessionLog({ reason: 'status_change' });
+    }
+    sessionStatusPrevRef.current = sessionStatus;
+  }, [sessionStatus, flushSessionLog]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const handlePageHide = () => {
+      void flushSessionLog({ reason: 'pagehide', beacon: true });
+    };
+    window.addEventListener('pagehide', handlePageHide);
+    window.addEventListener('beforeunload', handlePageHide);
+    return () => {
+      window.removeEventListener('pagehide', handlePageHide);
+      window.removeEventListener('beforeunload', handlePageHide);
+    };
+  }, [flushSessionLog]);
+
+  useEffect(() => {
+    return () => {
+      void flushSessionLog({ reason: 'unmount', beacon: true });
+    };
+  }, [flushSessionLog]);
 
   const hasAssistantReply = useMemo(
     () =>
