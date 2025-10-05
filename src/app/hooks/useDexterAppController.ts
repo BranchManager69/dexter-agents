@@ -2031,6 +2031,9 @@ export function useDexterAppController(): DexterAppController {
     canUseAdminTools,
     showSuperAdminTools: isSuperAdmin,
     userBadge,
+    dossierSupabaseUserId: sessionIdentity.type === 'user'
+      ? sessionIdentity.user?.id ?? null
+      : null,
     onOpenSuperAdmin: () => setIsSuperAdminModalOpen(true),
   };
 
