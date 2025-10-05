@@ -78,3 +78,12 @@ textarea {
 .voice-wave-bar:nth-child(4) {
   animation-delay: 0.12s;
 }
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

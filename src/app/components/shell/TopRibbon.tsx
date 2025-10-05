@@ -1,8 +1,8 @@
 import React from "react";
-import Image from "next/image";
 import { SessionStatus } from "@/app/types";
 import type { DexterUserBadge } from "@/app/types";
 import { AuthMenu } from "@/app/components/AuthMenu";
+import { DexterAnimatedCrest } from "@/app/components/DexterAnimatedCrest";
 
 interface SessionIdentitySummary {
   type: "guest" | "user";
@@ -56,32 +56,33 @@ interface TopRibbonProps {
   userBadge?: DexterUserBadge | null;
 }
 
-function getStatusAccent(sessionStatus: SessionStatus) {
+function getStatusVisual(sessionStatus: SessionStatus) {
   switch (sessionStatus) {
     case "CONNECTED":
-      return { label: "Live", tone: "bg-flux/20 text-flux border-flux/30" };
+      return { label: "Live", dot: "bg-[#16C98C]" };
     case "CONNECTING":
-      return { label: "Linking", tone: "bg-accent-info/10 text-accent-info border-accent-info/30" };
+      return { label: "Linking", dot: "bg-[#26B5FF]" };
     case "ERROR":
-      return { label: "Fault", tone: "bg-accent-critical/20 text-accent-critical border-accent-critical/30" };
+      return { label: "Fault", dot: "bg-[#FF4D69]" };
     default:
-      return { label: "Offline", tone: "bg-neutral-800/60 text-neutral-400 border-neutral-800" };
+      return { label: "Offline", dot: "bg-[#FFE4B8]/70" };
   }
 }
 
-function getMcpAccent(state: McpStatusProps['state']) {
+function getMcpLabel(state: McpStatusProps['state'], fallback: string) {
   switch (state) {
     case 'user':
-      return 'border-flux/40 bg-flux/10 text-flux';
+      return 'Ready';
     case 'fallback':
-      return 'border-amber-600/40 bg-amber-500/10 text-amber-200';
+      return 'Fallback';
     case 'guest':
     case 'none':
-      return 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300';
+      return 'Guest';
     case 'error':
-      return 'border-accent-critical/40 bg-accent-critical/10 text-accent-critical';
+      return 'Error';
+    case 'loading':
     default:
-      return 'border-neutral-800/60 bg-surface-glass/60 text-neutral-400';
+      return fallback || 'Loading';
   }
 }
 
@@ -95,76 +96,18 @@ function formatWalletAddress(address?: string | null) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
-function getSessionBadgeTone(identity: SessionIdentitySummary, userBadge?: DexterUserBadge | null) {
+function resolveSessionLabel(identity: SessionIdentitySummary, userBadge?: DexterUserBadge | null) {
   if (identity.type !== 'user') {
-    return {
-      tone: 'border-neutral-800/60 bg-surface-glass/60 text-neutral-300',
-      label: 'Guest',
-    };
+    return 'Demo';
   }
 
-  if (userBadge === 'dev') {
-    return {
-      tone: 'border-amber-400/60 bg-amber-500/10 text-amber-200',
-      label: 'Dev',
-    };
-  }
-
-  if (userBadge === 'pro') {
-    return {
-      tone: 'border-iris/50 bg-iris/15 text-iris',
-      label: 'Pro',
-    };
-  }
+  if (userBadge === 'dev') return 'Dev';
+  if (userBadge === 'pro') return 'Pro';
 
   const normalizedRoles = (identity.user?.roles ?? []).map((role) => role.toLowerCase());
-  const isSuperAdmin = Boolean(identity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
-
-  if (isSuperAdmin) {
-    return {
-      tone: 'border-amber-400/60 bg-amber-500/10 text-amber-200',
-      label: 'Super Admin',
-    };
-  }
-
-  if (normalizedRoles.includes('admin')) {
-    return {
-      tone: 'border-rose-500/50 bg-rose-500/10 text-rose-200',
-      label: 'Admin',
-    };
-  }
-
-  return {
-    tone: 'border-orange-500/50 bg-orange-500/10 text-orange-200',
-    label: 'User',
-  };
-}
-
-function getRoleButtonTone(identity: SessionIdentitySummary, userBadge?: DexterUserBadge | null) {
-  if (identity.type !== 'user') {
-    return 'border-neutral-800/60 bg-surface-glass/60 text-neutral-200 hover:border-flux/40 hover:text-flux';
-  }
-
-  if (userBadge === 'dev') {
-    return 'border-amber-400/60 bg-amber-500/12 text-amber-100 hover:border-amber-300 hover:text-amber-50';
-  }
-
-  if (userBadge === 'pro') {
-    return 'border-iris/60 bg-iris/12 text-iris hover:border-iris/40 hover:text-iris';
-  }
-
-  const normalizedRoles = (identity.user?.roles ?? []).map((role) => role.toLowerCase());
-  const isSuperAdmin = Boolean(identity.user?.isSuperAdmin || normalizedRoles.includes('superadmin'));
-
-  if (isSuperAdmin) {
-    return 'border-amber-400/60 bg-amber-500/12 text-amber-100 hover:border-amber-300 hover:text-amber-50';
-  }
-
-  if (normalizedRoles.includes('admin')) {
-    return 'border-rose-500/60 bg-rose-500/12 text-rose-100 hover:border-rose-300 hover:text-rose-50';
-  }
-
-  return 'border-orange-500/60 bg-orange-500/12 text-orange-200 hover:border-orange-300 hover:text-orange-50';
+  if (identity.user?.isSuperAdmin || normalizedRoles.includes('superadmin')) return 'Super Admin';
+  if (normalizedRoles.includes('admin')) return 'Admin';
+  return 'User';
 }
 
 export function TopRibbon({
@@ -182,52 +125,22 @@ export function TopRibbon({
   onOpenPersonaModal,
   userBadge,
 }: TopRibbonProps) {
+  const statusVisual = getStatusVisual(sessionStatus);
+  const sessionLabel = resolveSessionLabel(sessionIdentity, userBadge);
+  const mcpText = getMcpLabel(mcpStatus.state, mcpStatus.label);
+  const walletLabel = formatWalletAddress(sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined);
 
-  const statusChip = getStatusAccent(sessionStatus);
-  const mcpTone = getMcpAccent(mcpStatus.state);
-  const mcpLabel = mcpStatus.label || (mcpStatus.state === 'loading' ? 'Checking…' : 'Unavailable');
-  const walletLabel = formatWalletAddress(activeWalletKey);
-  const walletTitleParts = [`Active wallet: ${walletLabel}`];
-  if (walletPortfolio?.solBalanceFormatted || walletPortfolio?.totalUsdFormatted) {
-    walletTitleParts.push(
-      `Balances: ${walletPortfolio.solBalanceFormatted ?? '—'} • ${walletPortfolio.totalUsdFormatted ?? '—'}`,
-    );
-  }
-  if (walletPortfolio?.tokenCount) {
-    walletTitleParts.push(`${walletPortfolio.tokenCount} tokens tracked`);
-  }
-  if (walletPortfolio?.lastUpdatedLabel) {
-    walletTitleParts.push(`Updated ${walletPortfolio.lastUpdatedLabel}`);
-  }
-  if (walletPortfolio?.status === 'error' && walletPortfolio.error) {
-    walletTitleParts.push(`Error: ${walletPortfolio.error}`);
-  }
-  const walletBadgeTitle = walletTitleParts.join('\n');
-
-  let walletSecondaryText: string | null = null;
-  let walletSecondaryTone = 'text-neutral-400';
-  if (walletPortfolio) {
+  const walletSecondaryText = (() => {
+    if (!walletPortfolio) return null;
     if (walletPortfolio.status === 'loading' && !walletPortfolio.solBalanceFormatted && !walletPortfolio.totalUsdFormatted) {
-      walletSecondaryText = 'Loading balances…';
-      walletSecondaryTone = 'text-neutral-500';
-    } else if (walletPortfolio.status === 'error') {
-      walletSecondaryText = 'Balance error';
-      walletSecondaryTone = 'text-accent-critical';
-    } else if (walletPortfolio.solBalanceFormatted || walletPortfolio.totalUsdFormatted) {
-      walletSecondaryText = [walletPortfolio.solBalanceFormatted, walletPortfolio.totalUsdFormatted]
-        .filter(Boolean)
-        .join(' • ');
-      walletSecondaryTone = 'text-neutral-300';
+      return 'Loading balances…';
     }
-  }
-
-  const sessionLabel = sessionIdentity.type === "user"
-    ? sessionIdentity.user?.email?.split("@")[0] || "User"
-    : "Demo";
-  const sessionBadge = getSessionBadgeTone(sessionIdentity, userBadge);
-  const authButtonTone = getRoleButtonTone(sessionIdentity, userBadge);
-  const authRoleLabel = sessionIdentity.type === 'user' ? sessionBadge.label : sessionLabel;
-  const authEmail = sessionIdentity.type === 'user' ? sessionIdentity.user?.email ?? undefined : undefined;
+    if (walletPortfolio.status === 'error') {
+      return 'Balance error';
+    }
+    const parts = [walletPortfolio.solBalanceFormatted, walletPortfolio.totalUsdFormatted].filter(Boolean);
+    return parts.length ? parts.join(' • ') : null;
+  })();
 
   const handleAuthSignIn = async (email: string, captchaToken: string | null) => {
     if (!onSignIn) return { success: false, message: "Sign-in not available" };
@@ -239,102 +152,54 @@ export function TopRibbon({
   };
 
   return (
-    <div className="flex w-full items-center gap-2 overflow-hidden px-6 py-3 sm:gap-3 md:gap-4">
-      {/* Logo */}
-      <button
-        type="button"
-        onClick={onReloadBrand}
-        className="group flex flex-shrink-0 items-center gap-2 text-left"
-      >
-        <div className="relative h-7 w-7 overflow-hidden rounded-lg bg-surface-glass/70 ring-1 ring-neutral-800/60 transition group-hover:ring-flux/40">
-          <Image src="/assets/logos/logo_orange.png" alt="Dexter" fill sizes="28px" priority />
-        </div>
-        <div className="hidden leading-tight sm:block">
-          <div className="font-display text-sm font-semibold tracking-[0.18em] uppercase text-foreground/90">
-            Dexter
-          </div>
-          <div className="text-[10px] uppercase tracking-[0.16em] text-neutral-500">
-            Situation Room
-          </div>
-        </div>
-      </button>
+    <div className="relative w-full px-5 pb-2 pt-1 sm:px-7">
+      <div className="relative mx-auto flex w-full max-w-6xl items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3 overflow-x-auto whitespace-nowrap text-[8.5px] font-semibold uppercase tracking-[0.2em] text-[#FFF3E3]/85 scrollbar-hide">
+          <span className="flex flex-shrink-0 items-center gap-2" title={`Connection status: ${statusVisual.label}`}>
+            <span className={`h-2.5 w-2.5 rounded-full shadow-[0_0_10px_currentColor] ${statusVisual.dot}`} aria-hidden="true" />
+            {statusVisual.label}
+          </span>
 
-      <span className="hidden h-4 w-px flex-shrink-0 bg-neutral-800/60 sm:inline-block" aria-hidden="true" />
+          {onToggleConnection && (
+            <button
+              type="button"
+              onClick={onToggleConnection}
+              className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4] underline decoration-[#FEFBF4]/45 underline-offset-[4px] transition hover:decoration-[#FEFBF4]"
+            >
+              {sessionStatus === "CONNECTED" ? "Disconnect" : "Connect"}
+            </button>
+          )}
 
-      {/* Status Indicator */}
-      <span
-        className={`flex-shrink-0 ${
-          sessionStatus === "CONNECTED" ? "bg-flux" :
-          sessionStatus === "CONNECTING" ? "bg-accent-info" :
-          sessionStatus === "ERROR" ? "bg-accent-critical" :
-          "bg-neutral-600"
-        } h-2 w-2 rounded-full`}
-        title={`Connection status: ${statusChip.label}`}
-      />
-
-      {/* Connect/Disconnect Button */}
-      {onToggleConnection && (
-        <button
-          type="button"
-          onClick={onToggleConnection}
-          className={`flex-shrink-0 rounded-md px-2 py-1 text-[10px] font-medium uppercase tracking-wider transition ${
-            sessionStatus === "CONNECTED"
-              ? "bg-accent-critical/20 text-accent-critical hover:bg-accent-critical/30"
-              : "bg-flux/20 text-flux hover:bg-flux/30"
-          }`}
-        >
-          {sessionStatus === "CONNECTED" ? "Disconnect" : "Connect"}
-        </button>
-      )}
-
-      <div className="ml-auto flex min-w-0 flex-shrink items-center gap-2 sm:gap-3">
-        {/* Session Badge */}
-        {sessionIdentity.type !== 'user' && (
-          <span
-            className={`hidden flex-shrink-0 rounded-md border px-2 py-1 text-[11px] font-medium md:inline-flex md:px-2.5 ${sessionBadge.tone}`}
-            title="Demo session"
-          >
+          <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]">
             {sessionLabel}
           </span>
-        )}
 
-        {/* MCP Badge */}
-        <span
-          className={`hidden flex-shrink-0 rounded-md border px-2 py-1 text-[11px] font-medium lg:inline-flex lg:px-2.5 ${mcpTone}`}
-          title={mcpStatus.detail || `MCP: ${mcpLabel}`}
-        >
-          {mcpLabel}
-        </span>
+          <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]/75" title={mcpStatus.detail || `MCP: ${mcpStatus.label}`}>
+            {mcpText}
+          </span>
 
-        {/* Wallet Badge */}
-        <span
-          className="hidden flex-shrink-0 flex-col rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-1 text-[11px] text-neutral-200 lg:inline-flex lg:px-2.5"
-          title={walletBadgeTitle}
-        >
-          <span>{walletLabel}</span>
+          <span className="flex min-w-0 flex-shrink items-center gap-2 text-[#FEFBF4]">
+            <span className="truncate tracking-[0.18em] text-[#FEFBF4]">{walletLabel}</span>
+          </span>
+
           {walletSecondaryText && (
-            <span className={`mt-1 text-[10px] tracking-normal ${walletSecondaryTone}`}>
+            <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]/60 tracking-[0.18em]">
               {walletSecondaryText}
             </span>
           )}
-        </span>
 
-        <span className="hidden h-4 w-px flex-shrink-0 bg-neutral-800/60 md:inline-block" aria-hidden="true" />
+          {onOpenPersonaModal && (
+            <button
+              type="button"
+              onClick={onOpenPersonaModal}
+              className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]/80 underline decoration-[#FEFBF4]/35 underline-offset-[4px] transition hover:text-[#FEFBF4] hover:decoration-[#FEFBF4]"
+            >
+              Customize
+            </button>
+          )}
+        </div>
 
-        {onOpenPersonaModal && (
-          <button
-            type="button"
-            onClick={onOpenPersonaModal}
-            className="hidden flex-shrink-0 items-center gap-2 rounded-full border border-neutral-800/60 bg-surface-glass/60 px-3 py-1.5 text-[11px] uppercase tracking-[0.28em] text-neutral-200 transition hover:border-flux/50 hover:text-flux md:inline-flex"
-          >
-            Customize
-          </button>
-        )}
-
-        {onOpenPersonaModal && <span className="hidden h-4 w-px flex-shrink-0 bg-neutral-800/60 md:inline-block" aria-hidden="true" />}
-
-        {/* Auth Menu */}
-        <div className="flex-shrink-0">
+        <div className="flex flex-shrink-0 items-center pl-2">
           <AuthMenu
             isAuthenticated={authState.isAuthenticated}
             loading={authState.loading}
@@ -342,13 +207,25 @@ export function TopRibbon({
             onSignIn={handleAuthSignIn}
             onSignOut={handleAuthSignOut}
             turnstileSiteKey={turnstileSiteKey}
-            roleLabel={authRoleLabel}
-            buttonToneClass={authButtonTone}
-            buttonTitle={authEmail}
+            roleLabel={sessionLabel}
+            buttonToneClass="rounded-none border-transparent px-0 py-0 bg-transparent text-[#FEFBF4] hover:text-[#FFF3E3]"
+            buttonTitle={sessionIdentity.type === 'user' ? sessionIdentity.user?.email ?? undefined : undefined}
             activeWalletKey={sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined}
             walletPortfolio={walletPortfolio ?? undefined}
             userBadge={userBadge ?? undefined}
           />
+        </div>
+
+        <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 justify-center">
+          <button
+            type="button"
+            onClick={onReloadBrand}
+            className="pointer-events-auto group relative flex h-[88px] w-[88px] items-center justify-center rounded-full border border-[#FEFBF4]/35 bg-gradient-to-br from-[#F26B1A] via-[#F23E01] to-[#F26B1A] shadow-[0_18px_48px_rgba(242,107,26,0.45)] focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#FF6500]"
+            aria-label="Reload Dexter brand"
+          >
+            <span className="absolute -inset-1.5 rounded-full border border-[#FEFBF4]/20 bg-gradient-to-b from-[#FEFBF4]/18 to-transparent opacity-70 blur-[1px] transition group-hover:opacity-95" aria-hidden="true" />
+            <DexterAnimatedCrest size={78} className="relative" />
+          </button>
         </div>
       </div>
     </div>

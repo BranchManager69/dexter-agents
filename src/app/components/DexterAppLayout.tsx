@@ -3,7 +3,7 @@
 import React from "react";
 
 import Hero from "./Hero";
-import HeroControls from "./HeroControls";
+import AdminDock from "./AdminDock";
 import TranscriptMessages from "./TranscriptMessages";
 import InputBar from "./InputBar";
 import VoiceDock from "./shell/VoiceDock";
@@ -16,6 +16,7 @@ import SignalsDrawer from "./signals/SignalsDrawer";
 import { DebugInfoModal } from "./DebugInfoModal";
 import SuperAdminModal from "./SuperAdminModal";
 import AgentPersonaModal from "./AgentPersonaModal";
+import FloatingSessionControls from "./FloatingSessionControls";
 
 import type { DexterAppController } from "../hooks/useDexterAppController";
 
@@ -48,18 +49,6 @@ export function DexterAppLayout({
 
   const heroSection = <Hero />;
 
-  const heroControlsSection = (
-    <HeroControls
-      {...heroControlsProps}
-      renderAdminConsole={heroControlsProps.canUseAdminTools ? renderSignalStack : undefined}
-      adminConsoleMetadata={{
-        toolCount: toolCatalog.tools.length,
-        lastUpdated: toolCatalog.lastUpdated,
-        source: toolCatalog.source,
-      }}
-    />
-  );
-
   const voiceDockSection = voiceDockProps ? <VoiceDock {...voiceDockProps} /> : null;
 
   const mobileSignalsOverlay = heroControlsProps.canUseAdminTools ? (
@@ -76,7 +65,7 @@ export function DexterAppLayout({
         topBar={<TopRibbon {...topRibbonProps} />}
         hero={heroSection}
         heroCollapsed={heroCollapsed}
-        heroControls={heroControlsSection}
+        heroControls={null}
         heroWrapperClassName={heroContainerClassName}
         messages={<TranscriptMessages {...transcriptProps} />}
         voiceDock={voiceDockSection}
@@ -89,6 +78,30 @@ export function DexterAppLayout({
       <DebugInfoModal {...debugModalProps} />
       <SuperAdminModal {...superAdminModalProps} />
       <AgentPersonaModal {...personaModalProps} />
+      <FloatingSessionControls
+        sessionStatus={heroControlsProps.sessionStatus}
+        isVoiceDockExpanded={heroControlsProps.isVoiceDockExpanded}
+        onToggleVoiceDock={heroControlsProps.onToggleVoiceDock}
+        onOpenSignals={heroControlsProps.onOpenSignals}
+        canUseAdminTools={heroControlsProps.canUseAdminTools}
+      />
+      <AdminDock
+        canUseAdminTools={heroControlsProps.canUseAdminTools}
+        showSuperAdminTools={heroControlsProps.showSuperAdminTools}
+        onOpenSuperAdmin={heroControlsProps.onOpenSuperAdmin}
+        onOpenSignals={heroControlsProps.onOpenSignals}
+        onCopyTranscript={heroControlsProps.onCopyTranscript}
+        onDownloadAudio={heroControlsProps.onDownloadAudio}
+        onSaveLog={heroControlsProps.onSaveLog}
+        renderAdminConsole={heroControlsProps.canUseAdminTools ? renderSignalStack : undefined}
+        adminConsoleMetadata={{
+          toolCount: toolCatalog.tools.length,
+          lastUpdated: toolCatalog.lastUpdated,
+          source: toolCatalog.source,
+        }}
+        dossierSupabaseUserId={heroControlsProps.dossierSupabaseUserId}
+        userBadge={heroControlsProps.userBadge}
+      />
     </>
   );
 }
