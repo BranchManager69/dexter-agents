@@ -53,3 +53,10 @@ Browser ──GET /api/session──▶ Next.js ──POST /realtime/sessions─
 - [x] Document body fields forwarded to Dexter API (`supabaseAccessToken`, optional `guestProfile`).
 - [ ] Wire guest session rate limiting (bucket + alerting) once Redis quota is finalised.
 - [ ] Add reference to the eventual UI sign-in modal when it lands (currently using Twitter OAuth shortcut).
+
+## Session Log Capture (October 5, 2025)
+- The agents UI now records transcripts and MCP tool calls locally during each realtime session. When the connection closes or the page unloads, it posts a summary payload to `/api/realtime/logs`.
+- That route proxies to the Dexter API’s `POST /api/realtime/logs`, forwarding Supabase/MCP auth so authenticated users receive summarised memories.
+- Guest/demo runs still upload their logs for analytics, but the backend only injects memory context when a Supabase user id is present.
+- Logging uses `navigator.sendBeacon` when possible, with a fetch fallback, so abandoned tabs still flush before unload.
+- Metadata includes model/voice hints, the active agent name, MCP token state, and message/tool call counts, simplifying downstream summarisation.

@@ -37,6 +37,7 @@
     "bs58": "^6.0.0",
     "dotenv": "^16.4.7",
     "framer-motion": "^12.23.22",
+    "gpt-tokenizer": "^3.0.1",
     "next": "15.5.3",
     "openai": "^4.77.3",
     "react": "^19.0.0",
@@ -59,6 +60,7 @@
     "playwright": "^1.55.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tiktoken": "^1.0.22",
     "typescript": "^5"
   }
 }
