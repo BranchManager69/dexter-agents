@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export type Database = any;
+
 // Define the allowed moderation categories only once
 export const MODERATION_CATEGORIES = [
   "OFFENSIVE",

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { ClipboardCopyIcon, DownloadIcon, MixerHorizontalIcon, ReaderIcon, ChevronDownIcon } from "@radix-ui/react-icons";
+import { ClipboardCopyIcon, DownloadIcon, MixerHorizontalIcon, ReaderIcon, ChevronDownIcon, FileTextIcon } from "@radix-ui/react-icons";
 import { SessionStatus } from "@/app/types";
 import type { DexterUserBadge } from "@/app/types";
 import { MEMORY_LIMITS } from "@/app/config/memory";
@@ -25,6 +25,7 @@ export interface HeroControlsProps {
     source: "live" | "cache" | "none";
   };
   userBadge?: DexterUserBadge | null;
+  dossierSupabaseUserId: string | null;
 }
 
 type MemoryEntry = {
@@ -37,6 +38,31 @@ type MemoryEntry = {
   startedAt: string | null;
   endedAt: string | null;
   status: 'summarized' | 'skipped';
+};
+
+type DossierPayload = {
+  ok: boolean;
+  user: {
+    id: string;
+    email: string | null;
+    roles: string[];
+    isSuperAdmin: boolean;
+    isAdmin: boolean;
+  };
+  target: {
+    supabaseUserId: string;
+    preferredName: string | null;
+    displayName: string | null;
+    twitterHandle: string | null;
+    metadata: Record<string, any> | null;
+    updatedAt: string | null;
+    onboardedAt: string | null;
+  };
+  dossier: any;
+  stats: {
+    memoriesTotal: number;
+    skippedTotal: number;
+  };
 };
 
 const ADMIN_MEMORIES_LIMIT = MEMORY_LIMITS.adminPanel.recentCount ?? 50;
@@ -55,6 +81,8 @@ export function HeroControls({
   className,
   renderAdminConsole,
   adminConsoleMetadata,
+  userBadge,
+  dossierSupabaseUserId,
 }: HeroControlsProps) {
   const [justCopied, setJustCopied] = useState(false);
   const [justSaved, setJustSaved] = useState(false);
@@ -90,6 +118,21 @@ const [memoriesPlacement, setMemoriesPlacement] = useState<
   const [totalMemories, setTotalMemories] = useState<number | null>(null);
   const [totalSkipped, setTotalSkipped] = useState<number | null>(null);
   const [expandedMemoryId, setExpandedMemoryId] = useState<string | null>(null);
+  const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const dossierButtonRef = useRef<HTMLButtonElement | null>(null);
+  const dossierPanelRef = useRef<HTMLDivElement | null>(null);
+  const [dossierPlacement, setDossierPlacement] = useState<
+    | {
+        top: number;
+        width: number;
+        maxHeight: number;
+        left?: number;
+      }
+    | null
+  >(null);
+  const [isDossierLoading, setIsDossierLoading] = useState(false);
+  const [dossierError, setDossierError] = useState<string | null>(null);
+  const [dossierData, setDossierData] = useState<DossierPayload | null>(null);
 
   const badgeCount = totalMemories ?? memories.filter((entry) => entry.status === 'summarized').length;
   const badgeLabel = badgeCount > ADMIN_MEMORIES_LIMIT ? `${ADMIN_MEMORIES_LIMIT}+` : `${badgeCount}`;
@@ -194,6 +237,39 @@ const [memoriesPlacement, setMemoriesPlacement] = useState<
     setMemoriesPlacement({ top, width, maxHeight, left });
   }, []);
 
+  const updateDossierPlacement = useCallback(() => {
+    if (!dossierButtonRef.current) return;
+
+    const rect = dossierButtonRef.current.getBoundingClientRect();
+    const horizontalMargin = 16;
+    const verticalMargin = 16;
+    const desiredTop = rect.bottom + 12;
+    const panelMaxHeight = 520;
+
+    let width = Math.min(460, window.innerWidth - horizontalMargin * 2);
+
+    let top = desiredTop;
+    if (top + panelMaxHeight + verticalMargin > window.innerHeight) {
+      top = Math.max(verticalMargin, window.innerHeight - panelMaxHeight - verticalMargin);
+    }
+
+    const availableHeight = Math.max(window.innerHeight - top - verticalMargin, 280);
+    const maxHeight = Math.min(panelMaxHeight, availableHeight);
+
+    const preferFullWidth = window.innerWidth <= 720;
+    let left: number | undefined;
+
+    if (preferFullWidth) {
+      width = window.innerWidth - horizontalMargin * 2;
+      left = horizontalMargin;
+    } else {
+      const candidateLeft = Math.min(rect.left, window.innerWidth - width - horizontalMargin);
+      left = Math.max(candidateLeft, horizontalMargin);
+    }
+
+    setDossierPlacement({ top, width, maxHeight, left });
+  }, []);
+
   const loadMemories = useCallback(async () => {
     try {
       setIsLoadingMemories(true);
@@ -277,6 +353,41 @@ const [memoriesPlacement, setMemoriesPlacement] = useState<
       setIsLoadingMemories(false);
     }
   }, []);
+
+  const loadDossier = useCallback(async () => {
+    if (!dossierSupabaseUserId) {
+      setDossierError('No authenticated user session.');
+      setDossierData(null);
+      return;
+    }
+
+    try {
+      setIsDossierLoading(true);
+      setDossierError(null);
+      const params = new URLSearchParams();
+      params.set('supabaseUserId', dossierSupabaseUserId);
+      const response = await fetch(`/api/admin/dossier?${params.toString()}`, {
+        cache: 'no-store',
+      });
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        throw new Error(`Request failed (${response.status}) ${text.slice(0, 120)}`);
+      }
+      const payload = (await response.json()) as DossierPayload;
+      if (!payload?.ok) {
+        setDossierError('No dossier available for this user.');
+        setDossierData(null);
+        return;
+      }
+      setDossierData(payload);
+    } catch (error: any) {
+      console.error('[dossier] load failed', error);
+      setDossierError(error?.message || 'Failed to load dossier.');
+      setDossierData(null);
+    } finally {
+      setIsDossierLoading(false);
+    }
+  }, [dossierSupabaseUserId]);
 
   useEffect(() => {
     if (!isAdminConsoleOpen) {
@@ -366,6 +477,46 @@ const [memoriesPlacement, setMemoriesPlacement] = useState<
     };
   }, [isMemoriesOpen, updateMemoriesPlacement]);
 
+  useEffect(() => {
+    if (!isDossierOpen) {
+      return;
+    }
+
+    updateDossierPlacement();
+    void loadDossier();
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        dossierPanelRef.current?.contains(target) ||
+        dossierButtonRef.current?.contains(target)
+      ) {
+        return;
+      }
+      setIsDossierOpen(false);
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsDossierOpen(false);
+      }
+    };
+
+    const handleReposition = () => updateDossierPlacement();
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleEscape);
+    window.addEventListener('resize', handleReposition);
+    window.addEventListener('scroll', handleReposition, true);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleEscape);
+      window.removeEventListener('resize', handleReposition);
+      window.removeEventListener('scroll', handleReposition, true);
+    };
+  }, [isDossierOpen, updateDossierPlacement, loadDossier]);
+
   const isConnected = sessionStatus === "CONNECTED";
   const adminButtonTone =
     "flex flex-shrink-0 items-center justify-center rounded border border-rose-500/60 bg-rose-500/10 p-1.5 text-rose-200 transition hover:border-rose-400/80 hover:text-rose-50";
@@ -380,6 +531,13 @@ const [memoriesPlacement, setMemoriesPlacement] = useState<
     adminButtonTone,
     "relative",
     isMemoriesOpen ? "ring-2 ring-rose-400/40" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const dossierButtonTone = [
+    adminButtonTone,
+    "relative",
+    isDossierOpen ? "ring-2 ring-rose-400/40" : null,
   ]
     .filter(Boolean)
     .join(" ");
@@ -432,14 +590,29 @@ const [memoriesPlacement, setMemoriesPlacement] = useState<
     if (isMemoriesOpen) {
       setIsMemoriesOpen(false);
     }
+    if (isDossierOpen) {
+      setIsDossierOpen(false);
+    }
     onOpenSignals();
-  }, [isAdminConsoleOpen, isMemoriesOpen, onOpenSignals]);
+  }, [isAdminConsoleOpen, isMemoriesOpen, isDossierOpen, onOpenSignals]);
 
   const handleMemoriesToggle = useCallback(() => {
     setIsMemoriesOpen((prev) => {
       const next = !prev;
       if (next) {
         setIsAdminConsoleOpen(false);
+        setIsDossierOpen(false);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleDossierToggle = useCallback(() => {
+    setIsDossierOpen((prev) => {
+      const next = !prev;
+      if (next) {
+        setIsAdminConsoleOpen(false);
+        setIsMemoriesOpen(false);
       }
       return next;
     });
@@ -668,6 +841,166 @@ const [memoriesPlacement, setMemoriesPlacement] = useState<
       )
     ) : null;
 
+  const dossierIdentity = useMemo(() => {
+    const source = dossierData?.dossier?.identity;
+    if (!source || typeof source !== 'object' || Array.isArray(source)) return null;
+    return source as Record<string, any>;
+  }, [dossierData]);
+
+  const dossierHoldings = useMemo(() => {
+    const source = dossierData?.dossier?.holdings;
+    if (!Array.isArray(source)) return [];
+    return source as Array<Record<string, any>>;
+  }, [dossierData]);
+
+  const dossierPreferences = useMemo(() => {
+    const source = dossierData?.dossier?.preferences;
+    if (!source || typeof source !== 'object' || Array.isArray(source)) return null;
+    return source as Record<string, any>;
+  }, [dossierData]);
+
+  const renderKeyValueList = useCallback((value: Record<string, any> | null) => {
+    if (!value) return null;
+    const entries = Object.entries(value);
+    if (!entries.length) return null;
+    return (
+      <dl className="space-y-1.5 text-[13px] leading-relaxed">
+        {entries.map(([key, val]) => (
+          <div key={key} className="flex items-start gap-2">
+            <dt className="mt-0.5 w-28 shrink-0 text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+              {key}
+            </dt>
+            <dd className="flex-1 break-words text-neutral-100">
+              {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    );
+  }, []);
+
+  const dossierPortal =
+    typeof window !== 'undefined' && isDossierOpen ? (
+      createPortal(
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          <div
+            className="pointer-events-auto"
+            style={{
+              position: 'fixed',
+              top: dossierPlacement?.top ?? 96,
+              width: dossierPlacement?.width ?? Math.min(460, window.innerWidth - 32),
+              maxHeight: dossierPlacement?.maxHeight ?? 520,
+              ...(typeof dossierPlacement?.left === 'number'
+                ? { left: dossierPlacement.left }
+                : { right: 24 }),
+            }}
+          >
+            <div
+              ref={dossierPanelRef}
+              className="rounded-2xl border border-rose-500/40 bg-[#1b0c0f]/95 shadow-elevated backdrop-blur-xl"
+              style={{ maxHeight: dossierPlacement?.maxHeight ?? 520 }}
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-rose-500/40 px-5 py-4 text-rose-100">
+                <div>
+                  <div className="font-display text-sm uppercase tracking-[0.28em]">Dossier Inspector</div>
+                  <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-rose-200/80">
+                    {isDossierLoading
+                      ? 'Loading…'
+                      : dossierError
+                      ? 'Failed to load'
+                      : dossierData?.target?.preferredName
+                      ? `User: ${dossierData.target.preferredName}`
+                      : dossierData?.target?.supabaseUserId
+                      ? `User: ${dossierData.target.supabaseUserId}`
+                      : 'No dossier'}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsDossierOpen(false)}
+                  className="rounded-md border border-rose-500/40 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-rose-100 transition hover:border-rose-300/70 hover:text-rose-50"
+                >
+                  Close
+                </button>
+              </div>
+              <div className="max-h-[520px] overflow-y-auto px-5 pb-5 pt-4 text-sm text-neutral-100">
+                {isDossierLoading ? (
+                  <div className="text-neutral-300">Loading dossier…</div>
+                ) : dossierError ? (
+                  <div className="rounded-md border border-rose-500/50 bg-rose-500/10 px-3 py-2 text-rose-100">
+                    {dossierError}
+                  </div>
+                ) : dossierData ? (
+                  <div className="space-y-5">
+                    <section>
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Summary</div>
+                      <div className="mt-2 space-y-1.5 text-[13px] leading-relaxed">
+                        <div><span className="text-neutral-400">Email:</span> {dossierData.target.displayName || dossierData.user.email || '—'}</div>
+                        <div><span className="text-neutral-400">Supabase ID:</span> {dossierData.target.supabaseUserId}</div>
+                        {userBadge && <div><span className="text-neutral-400">Badge:</span> {userBadge.toUpperCase()}</div>}
+                        <div><span className="text-neutral-400">Memories:</span> {dossierData.stats.memoriesTotal}</div>
+                        <div><span className="text-neutral-400">Skipped Sessions:</span> {dossierData.stats.skippedTotal}</div>
+                      </div>
+                    </section>
+
+                    {dossierIdentity && (
+                      <section>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Identity</div>
+                        <div className="mt-2">
+                          {renderKeyValueList(dossierIdentity)}
+                        </div>
+                      </section>
+                    )}
+
+                    {dossierHoldings.length > 0 && (
+                      <section>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Holdings</div>
+                        <ul className="mt-2 space-y-3">
+                          {dossierHoldings.map((holding, index) => (
+                            <li key={index} className="rounded-md border border-neutral-800/60 bg-surface-glass/20 p-3">
+                              <div className="text-sm font-medium text-neutral-100">
+                                {holding.symbol || 'Unknown asset'}
+                              </div>
+                              <div className="mt-1 text-[12px] text-neutral-300">
+                                {holding.usdValue ? `Value: ${holding.usdValue}` : null}
+                                {holding.portfolioWeightPct ? ` • ${holding.portfolioWeightPct}` : null}
+                              </div>
+                              <div className="mt-2 text-[12px] text-neutral-400 break-words">
+                                {holding.mintAddress || ''}
+                              </div>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                    {dossierPreferences && (
+                      <section>
+                        <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Preferences</div>
+                        <div className="mt-2">
+                          {renderKeyValueList(dossierPreferences)}
+                        </div>
+                      </section>
+                    )}
+
+                    <section>
+                      <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Raw JSON</div>
+                      <pre className="mt-2 max-h-48 overflow-auto rounded-md border border-neutral-800/60 bg-black/40 p-3 text-[12px] leading-snug text-neutral-200">
+                        {JSON.stringify(dossierData.dossier ?? {}, null, 2)}
+                      </pre>
+                    </section>
+                  </div>
+                ) : (
+                  <div className="text-neutral-300">No dossier available.</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )
+    ) : null;
+
   return (
     <div className={rootClassName}>
       {canUseAdminTools && (
@@ -689,6 +1022,21 @@ const [memoriesPlacement, setMemoriesPlacement] = useState<
               </span>
             )}
             <span className="sr-only">Open memories panel</span>
+          </button>
+
+          <button
+            type="button"
+            ref={dossierButtonRef}
+            onClick={handleDossierToggle}
+            className={dossierButtonTone}
+            title="View dossier"
+            aria-haspopup="dialog"
+            aria-expanded={isDossierOpen}
+            aria-label="Open dossier panel"
+            disabled={!dossierSupabaseUserId}
+          >
+            <FileTextIcon className="h-3.5 w-3.5" />
+            <span className="sr-only">Open dossier panel</span>
           </button>
 
           <button
@@ -824,6 +1172,7 @@ const [memoriesPlacement, setMemoriesPlacement] = useState<
 
       {adminConsolePortal}
       {memoriesPortal}
+      {dossierPortal}
     </div>
   );
 }
