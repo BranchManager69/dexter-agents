@@ -74,6 +74,16 @@ export function AuthMenu({
   const inboxUrl = providerInfo?.inboxUrl ?? "";
 
   const badgeVariant = userBadge === "dev" ? "dev" : userBadge === "pro" ? "pro" : null;
+  const accountPillClass = (() => {
+    switch (badgeVariant) {
+      case 'dev':
+        return 'bg-amber-400/25 border border-amber-300/60 text-amber-100';
+      case 'pro':
+        return 'bg-iris/20 border border-iris/50 text-iris';
+      default:
+        return 'bg-neutral-900/50 border border-neutral-700 text-neutral-200';
+    }
+  })();
 
   // Calculate dropdown position when opening
   useEffect(() => {
@@ -295,7 +305,9 @@ export function AuthMenu({
                           <span className="inline-block animate-pulse">…</span>
                         </div>
                       ) : walletPortfolio.status === 'loading' && !walletPortfolio.solBalanceFormatted && !walletPortfolio.totalUsdFormatted ? (
-                        <div className="text-neutral-500">Loading…</div>
+                        <div className="text-neutral-500">
+                          <span className="inline-block animate-pulse">…</span>
+                        </div>
                       ) : walletPortfolio.status === 'error' ? (
                         <div className="text-accent-critical">
                           {walletPortfolio.error || 'Unable to load balances'}
@@ -461,7 +473,7 @@ export function AuthMenu({
     </div>
   );
 
-  const closedToneClass = buttonToneClass || 'border-neutral-800/60 bg-surface-glass/60 text-neutral-200 hover:border-flux/40 hover:text-flux';
+  const closedToneClass = buttonToneClass || 'border-transparent bg-transparent text-neutral-200 hover:text-flux';
   const openToneClass = buttonToneClass
     ? `${buttonToneClass} ring-2 ring-offset-0 ring-flux/40`
     : 'border-flux/40 bg-flux/10 text-flux';
@@ -472,15 +484,16 @@ export function AuthMenu({
         ref={buttonRef}
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className={`inline-flex items-center ${badgeVariant ? 'gap-2' : 'gap-0'} rounded-md border px-3 py-1.5 text-[11px] transition ${open ? openToneClass : closedToneClass}`}
+        className={`inline-flex items-center gap-0 rounded-md border px-0 py-0 text-[11px] transition ${open ? openToneClass : closedToneClass}`}
         aria-haspopup="menu"
         aria-expanded={open}
         title={buttonTitle || authenticatedEmail || undefined}
       >
-        <span>{accountLabel}</span>
-        {badgeVariant && (
-          <UserBadge variant={badgeVariant} size="xs" />
-        )}
+        {accountLabel ? (
+          <span className={`inline-flex items-center px-2.5 py-1 font-semibold uppercase tracking-[0.28em] ${accountPillClass}`}>
+            {accountLabel}
+          </span>
+        ) : null}
       </button>
 
       {typeof window !== 'undefined' && dropdownContent && createPortal(dropdownContent, document.body)}

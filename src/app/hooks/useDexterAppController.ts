@@ -2037,7 +2037,7 @@ export function useDexterAppController(): DexterAppController {
   };
 
   const heroContainerClassName = [
-    "border-b border-neutral-800/60 px-6 sm:px-7",
+    "px-6 sm:px-7",
     heroCollapsed ? "py-3 lg:py-4" : "py-7",
     "transition-all duration-500 ease-out",
   ].join(" ");
