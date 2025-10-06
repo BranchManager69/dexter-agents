@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
-export const BASE_CARD_CLASS = "w-full max-w-xl rounded-2xl border border-neutral-800/60 bg-surface-glass/50 p-4 text-neutral-100 shadow-elevated";
-export const SECTION_TITLE_CLASS = "font-display text-sm uppercase tracking-[0.28em] text-neutral-400";
+export const BASE_CARD_CLASS = "w-full max-w-xl space-y-4 text-[#FFF6EC]";
+export const SECTION_TITLE_CLASS = "font-display text-sm uppercase tracking-[0.28em] text-[#F9D9C3]";
 
 const usdCompactFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -47,7 +47,7 @@ export function resolveSourceBadge(source: string | null) {
   if (!source) {
     return {
       label: "Unknown source",
-      className: "border border-neutral-700 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-neutral-300",
+      className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[#FFE4CF]",
     };
   }
   const normalized = source.toLowerCase();
@@ -71,7 +71,7 @@ export function resolveSourceBadge(source: string | null) {
     case "demo":
       return {
         label: "Demo wallet",
-        className: "border border-neutral-700 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-neutral-300",
+        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[#FFE4CF]",
       };
     case "env":
     case "environment":
@@ -82,12 +82,12 @@ export function resolveSourceBadge(source: string | null) {
     case "none":
       return {
         label: "No wallet bound",
-        className: "border border-neutral-700 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-neutral-400",
+        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[#F9D9C3]",
       };
     default:
       return {
         label: source,
-        className: "border border-neutral-700 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-neutral-300",
+        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[#FFE4CF]",
       };
   }
 }
@@ -152,11 +152,11 @@ export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
   const display = formatAddress(value, { prefix: 6, suffix: 6 }) ?? value;
 
   return (
-    <div className="flex items-center gap-2 text-xs text-neutral-300">
+    <div className="flex items-center gap-2 text-xs text-[#FFE4CF]">
       <button
         type="button"
         onClick={handleCopy}
-        className="font-mono text-sm text-neutral-100 underline decoration-dotted decoration-neutral-500 transition hover:text-flux"
+        className="font-mono text-sm text-[#FFF6EC] underline decoration-dotted decoration-neutral-500 transition hover:text-flux"
         title={value}
         aria-label={ariaLabel ? `Copy ${ariaLabel}` : "Copy value"}
       >
@@ -171,7 +171,7 @@ export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
           target="_blank"
           rel="noreferrer"
           aria-label={ariaLabel ? `Open ${ariaLabel}` : "Open in new tab"}
-          className="rounded-full border border-neutral-700 px-2 py-[2px] text-[10px] uppercase tracking-[0.2em] text-neutral-400 transition hover:border-flux/50 hover:text-flux"
+          className="rounded-full border border-[#F7BE8A]/30 px-2 py-[2px] text-[10px] uppercase tracking-[0.2em] text-[#F9D9C3] transition hover:border-flux/50 hover:text-flux"
         >
           ↗
         </a>

@@ -76,46 +76,46 @@ const resolveWalletRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, d
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className={SECTION_TITLE_CLASS}>Active Wallet</div>
-          <div className="mt-2 text-xs text-neutral-400">{item.timestamp}</div>
+          <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
         </div>
         <span className={sourceBadge.className}>{sourceBadge.label}</span>
       </div>
 
       <div className="mt-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs uppercase tracking-[0.24em] text-neutral-500">Resolved</span>
+          <span className="text-xs uppercase tracking-[0.24em] text-[#F0BFA1]">Resolved</span>
           {walletAddress ? (
             <HashBadge value={walletAddress} />
           ) : (
-            <span className="text-sm text-neutral-500">No wallet resolved</span>
+            <span className="text-sm text-[#F0BFA1]">No wallet resolved</span>
           )}
         </div>
         {userId && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs uppercase tracking-[0.24em] text-neutral-500">Supabase user</span>
+            <span className="text-xs uppercase tracking-[0.24em] text-[#F0BFA1]">Supabase user</span>
             <HashBadge value={userId} />
           </div>
         )}
       </div>
 
       {requestedWallet && (
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-neutral-400">
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#F9D9C3]">
           <span className="uppercase tracking-[0.24em]">Requested</span>
           <HashBadge value={requestedWallet} />
         </div>
       )}
 
       {hasRawDetails && (
-        <div className="mt-4 border-t border-neutral-800/50 pt-3">
+        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
           <button
             type="button"
             onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-neutral-400 transition hover:text-neutral-200"
+            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
           </button>
           {isExpanded && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/60 bg-surface-base/80 p-3 text-[11px] text-neutral-200">
+            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
               {JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}

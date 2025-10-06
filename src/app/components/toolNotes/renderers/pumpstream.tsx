@@ -36,7 +36,7 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
           : undefined;
 
     const card = (
-      <div className="flex h-full flex-col gap-3 rounded-xl border border-neutral-800/40 bg-surface-glass/40 p-3">
+      <div className="flex h-full flex-col gap-3 rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3">
         <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-neutral-900/60">
           {typeof stream?.thumbnail === "string" && stream.thumbnail ? (
             <Image
@@ -47,25 +47,25 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
               className="object-cover"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-neutral-500">
+            <div className="flex h-full w-full items-center justify-center text-xs text-[#F0BFA1]">
               Preview unavailable
             </div>
           )}
         </div>
         <div className="flex flex-col gap-1">
-          <div className="text-sm font-semibold text-neutral-100" title={title}>
+          <div className="text-sm font-semibold text-[#FFF6EC]" title={title}>
             {title}
           </div>
-          <div className="text-xs text-neutral-400">
+          <div className="text-xs text-[#F9D9C3]">
             {typeof viewersRaw === "number"
               ? `${countCompactFormatter.format(viewersRaw)} watching`
               : viewersRaw
                 ? String(viewersRaw)
                 : "Viewer data pending"}
           </div>
-          <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-neutral-500">
+          <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">
             {marketCap && <span>MCAP {marketCap}</span>}
-            {momentumLabel && <span className="rounded-full border border-neutral-700 px-2 py-[1px] text-[10px] text-neutral-200">Momentum {momentumLabel}</span>}
+            {momentumLabel && <span className="rounded-full border border-[#F7BE8A]/30 px-2 py-[1px] text-[10px] text-[#FFF2E2]">Momentum {momentumLabel}</span>}
           </div>
         </div>
       </div>
@@ -98,11 +98,11 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
         <div>
           <div className={SECTION_TITLE_CLASS}>Pump.fun Streams</div>
           {generatedAt && (
-            <div className="text-xs text-neutral-500">Updated {new Date(generatedAt).toLocaleTimeString()}</div>
+            <div className="text-xs text-[#F0BFA1]">Updated {new Date(generatedAt).toLocaleTimeString()}</div>
           )}
         </div>
         {streams.length > 0 && (
-          <div className="rounded-full border border-neutral-700 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-neutral-300">
+          <div className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#FFE4CF]">
             {streams.length} live
           </div>
         )}
@@ -113,7 +113,7 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
           {headline.map((stream: any, index: number) => renderStreamCard(stream, index))}
         </div>
       ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-neutral-800/60 px-4 py-6 text-center text-sm text-neutral-400">
+        <div className="mt-4 rounded-lg border border-dashed border-[#F7BE8A]/24 px-4 py-6 text-center text-sm text-[#F9D9C3]">
           No live streams reported in the last response.
         </div>
       )}
@@ -136,7 +136,7 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
               <button
                 type="button"
                 onClick={onToggle}
-                className="mt-3 text-xs uppercase tracking-[0.24em] text-neutral-400 transition hover:text-neutral-200"
+                className="mt-3 text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
               >
                 Hide extra streams
               </button>
@@ -147,10 +147,10 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
 
       {debug && isExpanded && (
         <details className="mt-4 w-full" open>
-          <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-neutral-400">
+          <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-[#F9D9C3]">
             Raw payload
           </summary>
-          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/60 bg-surface-base/80 p-3 text-[11px] text-neutral-200">
+          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
             {JSON.stringify(payload, null, 2)}
           </pre>
         </details>
