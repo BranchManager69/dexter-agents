@@ -58,19 +58,35 @@ export function DexterShell({
           <div className="flex w-full flex-1 flex-col overflow-hidden">
             <div className="relative">
               <motion.div
-                className="pointer-events-none absolute -inset-6 sm:-inset-8 lg:-inset-10"
-                initial={{ opacity: 0, scale: 0.9, x: '-12%', y: '-18%' }}
+                className="pointer-events-none absolute -inset-12 sm:-inset-16 lg:-inset-20"
+                initial={{ opacity: 0, scale: 0.85, x: '-18%', y: '-22%' }}
                 animate={{
-                  opacity: heroCollapsed ? 0 : 0.35,
-                  scale: heroCollapsed ? 0.9 : [0.95, 1.02, 0.95],
-                  x: heroCollapsed ? '-12%' : ['-10%', '-14%', '-10%'],
-                  y: heroCollapsed ? '-18%' : ['-14%', '-20%', '-14%'],
+                  opacity: heroCollapsed ? 0 : 0.55,
+                  scale: heroCollapsed ? 0.85 : [0.92, 1.05, 0.92],
+                  x: heroCollapsed ? '-18%' : ['-14%', '-20%', '-14%'],
+                  y: heroCollapsed ? '-22%' : ['-18%', '-24%', '-18%'],
                 }}
-                transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
                 style={{
                   background:
-                    'radial-gradient(circle at center, rgba(255, 230, 188, 0.35), transparent 65%)',
-                  filter: 'blur(50px)',
+                    'radial-gradient(circle at center, rgba(255, 215, 164, 0.52), transparent 68%)',
+                  filter: 'blur(70px)',
+                }}
+              />
+              <motion.div
+                className="pointer-events-none absolute -inset-6 sm:-inset-8 lg:-inset-10"
+                initial={{ opacity: 0, scale: 0.95, x: '12%', y: '18%' }}
+                animate={{
+                  opacity: heroCollapsed ? 0 : 0.35,
+                  scale: heroCollapsed ? 0.95 : [0.98, 1.06, 0.98],
+                  x: heroCollapsed ? '12%' : ['10%', '16%', '10%'],
+                  y: heroCollapsed ? '18%' : ['16%', '22%', '16%'],
+                }}
+                transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+                style={{
+                  background:
+                    'radial-gradient(circle at center, rgba(255, 231, 179, 0.38), transparent 70%)',
+                  filter: 'blur(60px)',
                 }}
               />
               <div className={heroSectionClasses}>
