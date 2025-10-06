@@ -96,10 +96,10 @@ function formatTimestamp(iso: string | null) {
 }
 
 const dockButtonClass =
-  'pointer-events-auto flex h-8 w-8 items-center justify-center rounded-xl border border-[#F87171]/45 bg-[#190103]/80 text-[#FEFBF4] shadow-[0_2px_8px_rgba(220,38,38,0.26)] transition hover:border-[#F87171]/70 hover:text-[#FDFEF9] disabled:pointer-events-none disabled:opacity-30';
+  'pointer-events-auto relative inline-flex min-h-[28px] items-center gap-1 rounded-lg border border-[#F87171]/45 bg-[#190103]/88 px-2 py-1 text-[10px] font-medium leading-none text-[#FEFBF4] shadow-[0_2px_8px_rgba(220,38,38,0.26)] transition hover:border-[#F87171]/70 hover:text-[#FDFEF9] disabled:pointer-events-none disabled:opacity-30 whitespace-nowrap';
 
 const panelContainerBase =
-  "rounded-2xl border border-[#F87171]/35 bg-[#170203]/92 shadow-[0_22px_44px_rgba(220,38,38,0.3)] backdrop-blur-xl";
+  "rounded-lg border border-[#F87171]/35 bg-[#170203]/94 shadow-[0_18px_36px_rgba(220,38,38,0.26)] backdrop-blur-xl";
 
 export default function AdminDock({
   canUseAdminTools,
@@ -887,19 +887,20 @@ export default function AdminDock({
                 <div
                   ref={panelRef}
                   id="admin-dock-panel"
-                  className={`${panelContainerBase} pointer-events-auto flex max-w-[15rem] flex-wrap justify-center gap-1.5 px-3.5 py-2.5`}
+                  className={`${panelContainerBase} pointer-events-auto flex max-w-[15rem] flex-wrap justify-start gap-1 px-2 py-1.5`}
                 >
                   <button
                     type="button"
                     ref={memoriesButtonRef}
                     onClick={handleMemoriesToggle}
-                    className={`${dockButtonClass} relative`}
+                    className={dockButtonClass}
                     title="View stored memories"
                     aria-haspopup="dialog"
                     aria-expanded={isMemoriesOpen}
                     aria-label="Open memories panel"
                   >
-                    <ReaderIcon className="h-3.5 w-3.5" />
+                    <ReaderIcon className="h-3 w-3" />
+                    <span className="text-[10px]">Memories</span>
                     {!isLoadingMemories && badgeCount > 0 && (
                       <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full border border-[#F87171]/55 bg-[#F87171]/50 px-1 text-[9px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
                         {badgeLabel}
@@ -918,7 +919,8 @@ export default function AdminDock({
                     aria-label="Open dossier panel"
                     disabled={!dossierSupabaseUserId}
                   >
-                    <FileTextIcon className="h-3.5 w-3.5" />
+                    <FileTextIcon className="h-3 w-3" />
+                    <span className="text-[10px]">Dossier</span>
                   </button>
 
                   {onOpenPersonaModal && (
@@ -932,7 +934,8 @@ export default function AdminDock({
                       title="Customize Dexter persona"
                       aria-label="Customize Dexter persona"
                     >
-                      <MagicWandIcon className="h-3.5 w-3.5" />
+                      <MagicWandIcon className="h-3 w-3" />
+                      <span className="text-[10px]">Persona</span>
                     </button>
                   )}
 
@@ -943,7 +946,8 @@ export default function AdminDock({
                     className={dockButtonClass}
                     title="Copy transcript"
                   >
-                    <ClipboardCopyIcon className="h-3.5 w-3.5" />
+                    <ClipboardCopyIcon className="h-3 w-3" />
+                    <span className="text-[10px]">Copy</span>
                   </button>
 
                   <button
@@ -952,7 +956,7 @@ export default function AdminDock({
                     title="Download audio"
                   >
                     <svg
-                      className="h-3.5 w-3.5"
+                      className="h-3 w-3"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -964,6 +968,7 @@ export default function AdminDock({
                       <circle cx="6" cy="18" r="3" />
                       <circle cx="18" cy="16" r="3" />
                     </svg>
+                    <span className="text-[10px]">Audio</span>
                   </button>
 
                   <button
@@ -971,7 +976,8 @@ export default function AdminDock({
                     className={dockButtonClass}
                     title="Save conversation log"
                   >
-                    <DownloadIcon className="h-3.5 w-3.5" />
+                    <DownloadIcon className="h-3 w-3" />
+                    <span className="text-[10px]">Log</span>
                   </button>
 
                   {renderAdminConsole && (
@@ -979,13 +985,14 @@ export default function AdminDock({
                       type="button"
                       ref={consoleButtonRef}
                       onClick={handleAdminConsoleToggle}
-                      className={`${dockButtonClass} relative ${isAdminConsoleOpen ? 'ring-1 ring-[#F87171]/50' : ''}`}
+                      className={`${dockButtonClass} ${isAdminConsoleOpen ? 'ring-1 ring-[#F87171]/50' : ''}`}
                       title="Open admin console"
                       aria-haspopup="dialog"
                       aria-expanded={isAdminConsoleOpen}
                       aria-label="Open admin console"
                     >
-                      <MixerHorizontalIcon className="h-3.5 w-3.5" />
+                      <MixerHorizontalIcon className="h-3 w-3" />
+                      <span className="text-[10px]">Console</span>
                       {typeof adminConsoleMetadata?.toolCount === 'number' && (
                         <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full border border-[#F87171]/55 bg-[#F87171]/50 px-1 text-[9px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
                           {adminConsoleMetadata.toolCount}
@@ -1002,7 +1009,8 @@ export default function AdminDock({
                     className={dockButtonClass}
                     title="Open signals"
                   >
-                    <MixerHorizontalIcon className="h-3.5 w-3.5 rotate-90" />
+                    <MixerHorizontalIcon className="h-3 w-3 rotate-90" />
+                    <span className="text-[10px]">Signals</span>
                   </button>
 
                   {showSuperAdminTools && onOpenSuperAdmin && (
@@ -1014,7 +1022,8 @@ export default function AdminDock({
                       className={dockButtonClass}
                       title="Open superadmin panel"
                     >
-                      <span className="text-[10px] font-semibold tracking-wider">SA</span>
+                      <StarFilledIcon className="h-3 w-3" />
+                      <span className="text-[10px]">Super</span>
                     </button>
                   )}
                 </div>
