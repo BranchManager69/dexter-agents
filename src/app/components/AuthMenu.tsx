@@ -488,6 +488,7 @@ export function AuthMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         title={buttonTitle || authenticatedEmail || undefined}
+        data-auth-trigger
       >
         {accountLabel ? (
           <span className={`inline-flex items-center px-2.5 py-1 font-semibold uppercase tracking-[0.28em] ${accountPillClass}`}>

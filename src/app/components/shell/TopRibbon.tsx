@@ -59,19 +59,6 @@ interface TopRibbonProps {
   userBadge?: DexterUserBadge | null;
 }
 
-function getStatusVisual(sessionStatus: SessionStatus) {
-  switch (sessionStatus) {
-    case "CONNECTED":
-      return { label: "Live", dotClass: "bg-[#16C98C]", textClass: "text-[#73F7C2]" };
-    case "CONNECTING":
-      return { label: "Linking", dotClass: "bg-[#26B5FF]", textClass: "text-[#7FD0FF]" };
-    case "ERROR":
-      return { label: "Fault", dotClass: "bg-[#FF4D69]", textClass: "text-[#FF96AD]" };
-    default:
-      return { label: "Offline", dotClass: "bg-[#FF3B30]", textClass: "text-[#FF8A7F]" };
-  }
-}
-
 function getMcpLabel(state: McpStatusProps['state'], fallback: string) {
   switch (state) {
     case 'user':
@@ -143,19 +130,13 @@ export function TopRibbon({
   turnstileSiteKey,
   userBadge,
 }: TopRibbonProps) {
-  const statusVisual = getStatusVisual(sessionStatus);
   const sessionVariant = resolveSessionRoleVariant(sessionIdentity, userBadge);
   const sessionLabel = resolveSessionLabel(sessionVariant);
   const sessionToneClass = resolveUserBadgeTextClass(sessionVariant);
   const mcpText = getMcpLabel(mcpStatus.state, mcpStatus.label);
   const walletAddressValue = sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined;
   const walletLabel = formatWalletAddress(walletAddressValue);
-
-  const connectionButtonLabel = sessionStatus === 'CONNECTED'
-    ? 'Disconnect'
-    : sessionStatus === 'CONNECTING'
-      ? 'Connecting…'
-      : 'Connect';
+  const hasConnectionToggle = Boolean(onToggleConnection);
 
   const walletSecondaryText = (() => {
     if (!walletPortfolio) return null;
@@ -220,25 +201,12 @@ export function TopRibbon({
             document.body,
           )
         : null}
-      <div className="relative w-full px-5 pb-2 pt-1 sm:px-7">
+      <div
+        className="relative w-full px-5 pb-2 pt-1 sm:px-7"
+        data-session-status={sessionStatus}
+        data-can-toggle-connection={hasConnectionToggle}
+      >
         <div className="relative mx-auto flex w-full max-w-6xl items-center gap-3">
-          <div className="flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[8.5px] font-semibold uppercase tracking-[0.2em] text-[#FFF3E3]/85 scrollbar-hide">
-            <span className="flex flex-shrink-0 items-center gap-2" title={`Connection status: ${statusVisual.label}`}>
-              <span className={`h-2.5 w-2.5 rounded-full ${statusVisual.dotClass}`} aria-hidden="true" />
-              <span className="sr-only">{statusVisual.label}</span>
-            </span>
-
-            {onToggleConnection && (
-              <button
-                type="button"
-                onClick={onToggleConnection}
-                className={`flex flex-shrink-0 items-center gap-2 underline decoration-[#FEFBF4]/45 underline-offset-[4px] transition hover:decoration-[#FEFBF4] ${statusVisual.textClass}`}
-              >
-                {connectionButtonLabel}
-              </button>
-            )}
-          </div>
-
           <div className="ml-auto flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[8.5px] font-semibold uppercase tracking-[0.2em] text-[#FFF3E3]/85 scrollbar-hide">
             <span className="relative flex flex-shrink-0 items-center leading-none">
               <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] uppercase tracking-[0.38em] text-[#FEFBF4]/50 leading-none">
