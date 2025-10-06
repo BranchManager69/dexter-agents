@@ -46,7 +46,7 @@ export function DexterShell({
     .join(" ");
 
   return (
-    <div className="relative flex h-[100dvh] flex-col overflow-hidden bg-background text-foreground">
+    <div className="relative flex h-[100dvh] flex-col overflow-hidden text-foreground">
 
       <header className="relative z-30 flex-shrink-0 border-b border-header-border/50 bg-header/90 backdrop-blur-xl">
         {topBar}
