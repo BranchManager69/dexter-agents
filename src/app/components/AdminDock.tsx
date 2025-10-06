@@ -12,6 +12,7 @@ import {
   FileTextIcon,
   MagicWandIcon,
   Cross2Icon,
+  StarFilledIcon,
 } from "@radix-ui/react-icons";
 
 import { MEMORY_LIMITS } from "@/app/config/memory";
@@ -95,10 +96,10 @@ function formatTimestamp(iso: string | null) {
 }
 
 const dockButtonClass =
-  'pointer-events-auto flex h-9 w-9 items-center justify-center rounded-xl border border-[#F26B1A]/45 bg-[#160400]/85 text-[#FEFBF4] shadow-[0_2px_10px_rgba(242,62,1,0.28)] transition hover:border-[#F26B1A]/70 hover:text-[#FDFEF9] disabled:pointer-events-none disabled:opacity-30';
+  'pointer-events-auto flex h-8 w-8 items-center justify-center rounded-xl border border-[#F87171]/45 bg-[#190103]/80 text-[#FEFBF4] shadow-[0_2px_8px_rgba(220,38,38,0.26)] transition hover:border-[#F87171]/70 hover:text-[#FDFEF9] disabled:pointer-events-none disabled:opacity-30';
 
 const panelContainerBase =
-  "rounded-2xl border border-[#F26B1A]/35 bg-[#120300]/92 shadow-[0_22px_48px_rgba(242,62,1,0.32)] backdrop-blur-xl";
+  "rounded-2xl border border-[#F87171]/35 bg-[#170203]/92 shadow-[0_22px_44px_rgba(220,38,38,0.3)] backdrop-blur-xl";
 
 export default function AdminDock({
   canUseAdminTools,
@@ -253,29 +254,37 @@ export default function AdminDock({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
     setIsHydrated(true);
 
+    let storedPosition: { x: number; y: number } | null = null;
     const stored = window.sessionStorage.getItem(DOCK_POSITION_STORAGE_KEY);
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
         if (parsed && typeof parsed.x === "number" && typeof parsed.y === "number") {
-          setDockPosition(clampPosition(parsed));
+          storedPosition = clampPosition(parsed);
         }
       } catch (error) {
         console.warn("[admin-dock] failed to parse stored position", error);
       }
     }
 
-    if (!dockPosition) {
-      const defaultWidth = 80;
-      const defaultHeight = 96;
-      const fallback = clampPosition({
+    const defaultWidth = 80;
+    const defaultHeight = 96;
+    const initialPosition = storedPosition
+      ?? clampPosition({
         x: Math.max(window.innerWidth - defaultWidth - 32, 16),
         y: Math.max(window.innerHeight - defaultHeight - 32, 16),
       });
-      setDockPosition(fallback);
-    }
+
+    setDockPosition((prev) => {
+      if (prev) return prev;
+      if (!storedPosition) {
+        persistPosition(initialPosition);
+      }
+      return initialPosition;
+    });
 
     const handleResize = () => {
       setDockPosition((prev) => {
@@ -293,7 +302,7 @@ export default function AdminDock({
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [clampPosition, dockPosition, persistPosition]);
+  }, [clampPosition, persistPosition]);
 
   useEffect(() => {
     if (!dockPosition) return;
@@ -848,7 +857,7 @@ export default function AdminDock({
         <div className="relative flex flex-col items-center">
           <button
             type="button"
-            className={`group flex h-12 w-12 items-center justify-center rounded-full border border-[#F26B1A]/45 bg-gradient-to-br from-[#F26B1A] via-[#F23E01] to-[#F26B1A] shadow-[0_18px_40px_rgba(242,62,1,0.45)] transition focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#2C0A00] ${isDockExpanded ? 'ring-2 ring-[#FEFBF4]/45' : ''}`}
+            className={`group flex h-12 w-12 touch-none items-center justify-center rounded-full border border-[#EF4444]/55 bg-gradient-to-br from-[#F87171] via-[#EF4444] to-[#B91C1C] shadow-[0_18px_38px_rgba(220,38,38,0.45)] transition focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]/70 focus:ring-offset-2 focus:ring-offset-[#2C0A00] ${isDockExpanded ? 'ring-2 ring-[#FEE2E2]/45' : ''}`}
             aria-expanded={isDockExpanded}
             aria-controls="admin-dock-panel"
             onClick={handleDockToggle}
@@ -860,7 +869,7 @@ export default function AdminDock({
             {isDockExpanded ? (
               <Cross2Icon className="h-4 w-4 text-[#FDFEF9]" />
             ) : (
-              <MixerHorizontalIcon className="h-5 w-5 text-[#FDFEF9]" />
+              <StarFilledIcon className="h-3.5 w-3.5 text-[#FDFEF9]" />
             )}
             <span className="sr-only">{isDockExpanded ? 'Hide admin tools' : 'Show admin tools'}</span>
           </button>
@@ -878,7 +887,7 @@ export default function AdminDock({
                 <div
                   ref={panelRef}
                   id="admin-dock-panel"
-                  className={`${panelContainerBase} pointer-events-auto flex max-w-[17rem] flex-wrap justify-center gap-2 px-4 py-3`}
+                  className={`${panelContainerBase} pointer-events-auto flex max-w-[15rem] flex-wrap justify-center gap-1.5 px-3.5 py-2.5`}
                 >
                   <button
                     type="button"
@@ -890,9 +899,9 @@ export default function AdminDock({
                     aria-expanded={isMemoriesOpen}
                     aria-label="Open memories panel"
                   >
-                    <ReaderIcon className="h-4 w-4" />
+                    <ReaderIcon className="h-3.5 w-3.5" />
                     {!isLoadingMemories && badgeCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full border border-[#F26B1A]/55 bg-[#F26B1A]/45 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
+                      <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full border border-[#F87171]/55 bg-[#F87171]/50 px-1 text-[9px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
                         {badgeLabel}
                       </span>
                     )}
@@ -909,7 +918,7 @@ export default function AdminDock({
                     aria-label="Open dossier panel"
                     disabled={!dossierSupabaseUserId}
                   >
-                    <FileTextIcon className="h-4 w-4" />
+                    <FileTextIcon className="h-3.5 w-3.5" />
                   </button>
 
                   {onOpenPersonaModal && (
@@ -923,7 +932,7 @@ export default function AdminDock({
                       title="Customize Dexter persona"
                       aria-label="Customize Dexter persona"
                     >
-                      <MagicWandIcon className="h-4 w-4" />
+                      <MagicWandIcon className="h-3.5 w-3.5" />
                     </button>
                   )}
 
@@ -934,7 +943,7 @@ export default function AdminDock({
                     className={dockButtonClass}
                     title="Copy transcript"
                   >
-                    <ClipboardCopyIcon className="h-4 w-4" />
+                    <ClipboardCopyIcon className="h-3.5 w-3.5" />
                   </button>
 
                   <button
@@ -943,7 +952,7 @@ export default function AdminDock({
                     title="Download audio"
                   >
                     <svg
-                      className="h-4 w-4"
+                      className="h-3.5 w-3.5"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
@@ -962,7 +971,7 @@ export default function AdminDock({
                     className={dockButtonClass}
                     title="Save conversation log"
                   >
-                    <DownloadIcon className="h-4 w-4" />
+                    <DownloadIcon className="h-3.5 w-3.5" />
                   </button>
 
                   {renderAdminConsole && (
@@ -970,15 +979,15 @@ export default function AdminDock({
                       type="button"
                       ref={consoleButtonRef}
                       onClick={handleAdminConsoleToggle}
-                      className={`${dockButtonClass} relative ${isAdminConsoleOpen ? 'ring-1 ring-[#F26B1A]/50' : ''}`}
+                      className={`${dockButtonClass} relative ${isAdminConsoleOpen ? 'ring-1 ring-[#F87171]/50' : ''}`}
                       title="Open admin console"
                       aria-haspopup="dialog"
                       aria-expanded={isAdminConsoleOpen}
                       aria-label="Open admin console"
                     >
-                      <MixerHorizontalIcon className="h-4 w-4" />
+                      <MixerHorizontalIcon className="h-3.5 w-3.5" />
                       {typeof adminConsoleMetadata?.toolCount === 'number' && (
-                        <span className="absolute -top-1.5 -right-1.5 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full border border-[#F26B1A]/55 bg-[#F26B1A]/45 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
+                        <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full border border-[#F87171]/55 bg-[#F87171]/50 px-1 text-[9px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
                           {adminConsoleMetadata.toolCount}
                         </span>
                       )}
@@ -993,7 +1002,7 @@ export default function AdminDock({
                     className={dockButtonClass}
                     title="Open signals"
                   >
-                    <MixerHorizontalIcon className="h-4 w-4 rotate-90" />
+                    <MixerHorizontalIcon className="h-3.5 w-3.5 rotate-90" />
                   </button>
 
                   {showSuperAdminTools && onOpenSuperAdmin && (
@@ -1005,7 +1014,7 @@ export default function AdminDock({
                       className={dockButtonClass}
                       title="Open superadmin panel"
                     >
-                      <span className="text-[11px] font-semibold tracking-wider">SA</span>
+                      <span className="text-[10px] font-semibold tracking-wider">SA</span>
                     </button>
                   )}
                 </div>
