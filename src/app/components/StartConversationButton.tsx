@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
 import { motion } from "framer-motion";
+import { DexterAnimatedCrest } from "@/app/components/DexterAnimatedCrest";
 
 type StartConversationButtonProps = {
   onClick?: () => void;
@@ -40,14 +40,7 @@ export function StartConversationButton({ onClick, isLoading = false, disabled }
         onFocus={() => setIsInteracting(true)}
         onBlur={() => setIsInteracting(false)}
       >
-        <Image
-          src="/assets/logos/logo_orange_round.svg"
-          alt="Dexter"
-          role="presentation"
-          width={96}
-          height={96}
-          priority={false}
-        />
+        <DexterAnimatedCrest size={96} />
       </motion.div>
       <span className="sr-only">Start conversation</span>
     </motion.button>

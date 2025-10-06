@@ -92,6 +92,8 @@ type SignalsDrawerShellProps = Omit<SignalsDrawerProps, "children">;
 export interface DexterAppController {
   topRibbonProps: TopRibbonProps;
   heroContainerClassName: string;
+  heroTitle: string;
+  heroSubtitle: string;
   heroCollapsed: boolean;
   heroControlsProps: HeroControlsProps;
   transcriptProps: TranscriptMessagesProps;
@@ -120,6 +122,12 @@ const createGuestIdentity = (instructions: string = DEFAULT_GUEST_SESSION_INSTRU
 });
 
 const SOLANA_NATIVE_MINT = 'So11111111111111111111111111111111111111112';
+
+const HERO_RETURNING_PROMPTS = [
+  'Need a portfolio checkup?',
+  'Want to scan fresh Solana pairs?',
+  'Ready to continue where we left off?',
+];
 
 const USD_COMPACT_FORMATTER = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -2042,6 +2050,59 @@ export function useDexterAppController(): DexterAppController {
     "transition-all duration-500 ease-out",
   ].join(" ");
   const heroControlsClassName = heroCollapsed ? "mt-0 lg:mt-0" : "mt-5";
+
+  const [timeOfDaySlot, setTimeOfDaySlot] = useState<'morning' | 'afternoon' | 'evening' | 'night'>('morning');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const determineSlot = (hours: number): 'morning' | 'afternoon' | 'evening' | 'night' => {
+      if (hours < 5) return 'night';
+      if (hours < 12) return 'morning';
+      if (hours < 18) return 'afternoon';
+      if (hours < 22) return 'evening';
+      return 'night';
+    };
+    setTimeOfDaySlot(determineSlot(new Date().getHours()));
+  }, []);
+
+  const resolvePreferredName = useCallback(() => {
+    const email = sessionIdentity.user?.email ?? authEmail;
+    if (email && email.includes('@')) {
+      const name = email.split('@')[0]?.trim();
+      if (name) {
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+    }
+    return 'there';
+  }, [sessionIdentity.user?.email, authEmail]);
+
+  const deterministicPromptIndex = useMemo(() => {
+    const name = resolvePreferredName();
+    const seed = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return seed % HERO_RETURNING_PROMPTS.length;
+  }, [resolvePreferredName]);
+
+  const heroTitle = useMemo(() => {
+    if (sessionIdentity.type !== 'user') {
+      return "Hi, I'm Dexter.";
+    }
+
+    const slotLabel = timeOfDaySlot === 'night' ? 'evening' : timeOfDaySlot;
+    const greetingPrefix = `Good ${slotLabel}`;
+
+    const preferredName = resolvePreferredName();
+    return `${greetingPrefix}, ${preferredName}.`;
+  }, [sessionIdentity.type, timeOfDaySlot, resolvePreferredName]);
+
+  const heroSubtitle = useMemo(() => {
+    if (sessionIdentity.type !== 'user') {
+      return 'I can jump into live Solana tools for you. Ask anything when you are ready.';
+    }
+
+    // TODO: Replace fallback with personalized memory prompt once summarizer provides `nextConversationPrompt`.
+    return HERO_RETURNING_PROMPTS[deterministicPromptIndex];
+  }, [sessionIdentity.type, deterministicPromptIndex]);
+
   const heroControlsProps: HeroControlsProps = {
     sessionStatus,
     className: heroControlsClassName,
@@ -2174,6 +2235,8 @@ export function useDexterAppController(): DexterAppController {
   return {
     topRibbonProps,
     heroContainerClassName,
+    heroTitle,
+    heroSubtitle,
     heroCollapsed,
     heroControlsProps,
     transcriptProps,

@@ -14,6 +14,7 @@ export function DexterAnimatedCrest({ size = 72, className }: DexterAnimatedCres
   const containerSize = `${size}px`;
   const innerSize = `${Math.round(size * 0.72)}px`;
   const logoSize = Math.round(size * 0.88);
+  const crestFilter = "drop-shadow(0 12px 18px rgba(255, 128, 40, 0.28)) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.18))";
 
   return (
     <motion.div
@@ -40,6 +41,7 @@ export function DexterAnimatedCrest({ size = 72, className }: DexterAnimatedCres
             role="presentation"
             width={logoSize}
             height={logoSize}
+            style={{ filter: crestFilter }}
             priority
           />
         </motion.div>

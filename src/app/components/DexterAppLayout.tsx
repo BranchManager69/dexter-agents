@@ -25,6 +25,8 @@ export type DexterAppLayoutProps = DexterAppController;
 export function DexterAppLayout({
   topRibbonProps,
   heroContainerClassName,
+  heroTitle,
+  heroSubtitle,
   heroCollapsed,
   heroControlsProps,
   transcriptProps,
@@ -47,7 +49,7 @@ export function DexterAppLayout({
     />
   );
 
-  const heroSection = <Hero />;
+  const heroSection = <Hero title={heroTitle} subtitle={heroSubtitle} />;
 
   const voiceDockSection = voiceDockProps ? <VoiceDock {...voiceDockProps} /> : null;
 
