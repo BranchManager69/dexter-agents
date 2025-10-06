@@ -94,6 +94,7 @@ export interface DexterAppController {
   heroContainerClassName: string;
   heroTitle: string;
   heroSubtitle: string;
+  heroLoading: boolean;
   heroCollapsed: boolean;
   heroControlsProps: HeroControlsProps;
   transcriptProps: TranscriptMessagesProps;
@@ -2126,7 +2127,13 @@ export function useDexterAppController(): DexterAppController {
     return seed % HERO_RETURNING_PROMPTS.length;
   }, [resolvePreferredName]);
 
+  const heroLoading = authLoading;
+
   const heroTitle = useMemo(() => {
+    if (heroLoading) {
+      return '';
+    }
+
     if (sessionIdentity.type !== 'user') {
       return "Hi, I'm Dexter.";
     }
@@ -2136,9 +2143,13 @@ export function useDexterAppController(): DexterAppController {
 
     const preferredName = resolvePreferredName();
     return `${greetingPrefix}, ${preferredName}.`;
-  }, [sessionIdentity.type, timeOfDaySlot, resolvePreferredName]);
+  }, [heroLoading, sessionIdentity.type, timeOfDaySlot, resolvePreferredName]);
 
   const heroSubtitle = useMemo(() => {
+    if (heroLoading) {
+      return '';
+    }
+
     if (sessionIdentity.type !== 'user') {
       return 'I can jump into live Solana tools for you. Ask anything when you are ready.';
     }
@@ -2148,7 +2159,7 @@ export function useDexterAppController(): DexterAppController {
     }
 
     return HERO_RETURNING_PROMPTS[deterministicPromptIndex];
-  }, [sessionIdentity.type, deterministicPromptIndex, nextConversationPrompt]);
+  }, [heroLoading, sessionIdentity.type, deterministicPromptIndex, nextConversationPrompt]);
 
   const heroControlsProps: HeroControlsProps = {
     sessionStatus,
@@ -2284,6 +2295,7 @@ export function useDexterAppController(): DexterAppController {
     heroContainerClassName,
     heroTitle,
     heroSubtitle,
+    heroLoading,
     heroCollapsed,
     heroControlsProps,
     transcriptProps,

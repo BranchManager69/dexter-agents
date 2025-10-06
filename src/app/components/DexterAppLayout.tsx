@@ -27,6 +27,7 @@ export function DexterAppLayout({
   heroContainerClassName,
   heroTitle,
   heroSubtitle,
+  heroLoading,
   heroCollapsed,
   heroControlsProps,
   transcriptProps,
@@ -49,7 +50,7 @@ export function DexterAppLayout({
     />
   );
 
-  const heroSection = <Hero title={heroTitle} subtitle={heroSubtitle} />;
+  const heroSection = <Hero title={heroTitle} subtitle={heroSubtitle} loading={heroLoading} />;
 
   const voiceDockSection = voiceDockProps ? <VoiceDock {...voiceDockProps} /> : null;
 
