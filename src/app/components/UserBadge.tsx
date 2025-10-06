@@ -1,4 +1,4 @@
-type UserBadgeVariant = "pro" | "dev";
+export type UserBadgeVariant = "pro" | "dev" | "admin" | "user" | "demo";
 type UserBadgeSize = "xs" | "sm" | "md";
 
 const VARIANT_STYLES: Record<UserBadgeVariant, { label: string; title: string; text: string; dot: string }> = {
@@ -13,6 +13,24 @@ const VARIANT_STYLES: Record<UserBadgeVariant, { label: string; title: string; t
     title: "Super admin access",
     text: "text-amber-200",
     dot: "bg-amber-300",
+  },
+  admin: {
+    label: "ADMIN",
+    title: "Admin access",
+    text: "text-rose-300",
+    dot: "bg-rose-400",
+  },
+  user: {
+    label: "USER",
+    title: "Signed-in user",
+    text: "text-neutral-200",
+    dot: "bg-neutral-300",
+  },
+  demo: {
+    label: "DEMO",
+    title: "Shared demo persona",
+    text: "text-[#FEFBF4]",
+    dot: "bg-[#FEFBF4]/40",
   },
 };
 
@@ -65,3 +83,8 @@ export function UserBadge({ variant, size = "sm", className }: UserBadgeProps) {
 }
 
 export default UserBadge;
+
+export function resolveUserBadgeTextClass(variant?: UserBadgeVariant | null) {
+  if (!variant) return "text-[#FEFBF4]";
+  return VARIANT_STYLES[variant]?.text ?? "text-[#FEFBF4]";
+}

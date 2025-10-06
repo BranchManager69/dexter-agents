@@ -137,7 +137,7 @@ export function AuthMenu({
     ? "Checking…"
     : isAuthenticated
     ? authenticatedEmail?.split("@")[0] || "Signed in"
-    : "Guest";
+    : "Sign in";
 
   const handleSendMagicLink = async () => {
     if (!email.trim()) {
