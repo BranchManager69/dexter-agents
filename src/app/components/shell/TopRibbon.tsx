@@ -306,11 +306,10 @@ export function TopRibbon({
             <button
               type="button"
               onClick={onReloadBrand}
-              className="pointer-events-auto group relative flex h-[88px] w-[88px] items-center justify-center rounded-full border border-[#FEFBF4]/35 bg-gradient-to-br from-[#F26B1A] via-[#F23E01] to-[#F26B1A] shadow-[0_18px_48px_rgba(242,107,26,0.45)] focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#FF6500]"
+              className="pointer-events-auto group relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#FF6500]"
               aria-label="Reload Dexter brand"
             >
-              <span className="absolute -inset-1.5 rounded-full border border-[#FEFBF4]/20 bg-gradient-to-b from-[#FEFBF4]/18 to-transparent opacity-70 blur-[1px] transition group-hover:opacity-95" aria-hidden="true" />
-              <DexterAnimatedCrest size={78} className="relative" />
+              <DexterAnimatedCrest size={82} className="relative" />
             </button>
           </div>
         </div>
