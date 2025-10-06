@@ -30,6 +30,21 @@ export function DexterShell({
 }: DexterShellProps) {
   const heroPadding = heroCollapsed ? "pt-1" : "pt-4";
 
+  const [chromeReady, setChromeReady] = React.useState(false);
+  const [heroReady, setHeroReady] = React.useState(false);
+  const [composerReady, setComposerReady] = React.useState(false);
+
+  React.useEffect(() => {
+    const headerTimer = window.setTimeout(() => setChromeReady(true), 1000);
+    const heroTimer = window.setTimeout(() => setHeroReady(true), 1500);
+    const composerTimer = window.setTimeout(() => setComposerReady(true), 2600);
+    return () => {
+      window.clearTimeout(headerTimer);
+      window.clearTimeout(heroTimer);
+      window.clearTimeout(composerTimer);
+    };
+  }, []);
+
   const heroSectionClasses = [
     heroWrapperClassName,
     "flex flex-col lg:flex-row lg:items-start lg:justify-between",
@@ -49,9 +64,14 @@ export function DexterShell({
   return (
     <div className="relative flex h-[100dvh] flex-col overflow-hidden text-foreground">
 
-      <header className="dexter-header relative z-30 flex-shrink-0 backdrop-blur-xl">
+      <motion.header
+        className="dexter-header relative z-30 flex-shrink-0 backdrop-blur-xl"
+        initial={{ opacity: 0, y: -110 }}
+        animate={chromeReady ? { opacity: 1, y: 0 } : { opacity: 0, y: -110 }}
+        transition={{ duration: 0.9, ease: [0.19, 1, 0.22, 1] }}
+      >
         {topBar}
-      </header>
+      </motion.header>
 
       <main className="z-10 flex flex-1 flex-col overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
@@ -106,7 +126,7 @@ export function DexterShell({
                 {hero ? (
                   <div className={heroContentClasses} aria-hidden={heroCollapsed}>
                     <div className="relative pr-0 lg:pr-6">
-                      {hero}
+                      {heroReady ? hero : null}
                     </div>
                   </div>
                 ) : null}
@@ -124,7 +144,7 @@ export function DexterShell({
                   {voiceDock}
                 </div>
               ) : null}
-              {inputBar}
+              {composerReady ? inputBar : null}
             </div>
           </div>
           {signals ? (
@@ -135,9 +155,14 @@ export function DexterShell({
         </div>
       </main>
 
-      <footer className="relative z-10 flex-shrink-0 border-t border-footer-border/50 bg-footer/90 backdrop-blur-xl">
+      <motion.footer
+        className="relative z-10 flex-shrink-0 border-t border-footer-border/50 bg-footer/90 backdrop-blur-xl"
+        initial={{ opacity: 0, y: 120 }}
+        animate={chromeReady ? { opacity: 1, y: 0 } : { opacity: 0, y: 120 }}
+        transition={{ duration: 0.9, delay: 0.1, ease: [0.19, 1, 0.22, 1] }}
+      >
         {statusBar}
-      </footer>
+      </motion.footer>
       {mobileOverlay}
     </div>
   );

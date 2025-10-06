@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { SessionStatus } from "@/app/types";
 import type { DexterUserBadge } from "@/app/types";
@@ -303,14 +304,20 @@ export function TopRibbon({
           </div>
 
           <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 justify-center">
-            <button
+            <motion.button
               type="button"
               onClick={onReloadBrand}
               className="pointer-events-auto group relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#FF6500]"
               aria-label="Reload Dexter brand"
+              initial={{ opacity: 0, scale: 0.78, rotate: -12, y: -28 }}
+              animate={{ opacity: 1, scale: 1, rotate: 0, y: 0 }}
+              transition={{ duration: 1.6, ease: [0.19, 1, 0.22, 1], delay: 0.35 }}
+              whileHover={{ scale: 1.04, rotate: 4 }}
+              whileFocus={{ scale: 1.04, rotate: -3 }}
+              whileTap={{ scale: 0.96, rotate: -2 }}
             >
               <DexterAnimatedCrest size={82} className="relative" />
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
