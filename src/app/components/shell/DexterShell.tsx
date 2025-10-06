@@ -1,4 +1,5 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 interface DexterShellProps {
   topBar: React.ReactNode;
@@ -55,19 +56,37 @@ export function DexterShell({
       <main className="z-10 flex flex-1 flex-col overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
           <div className="flex w-full flex-1 flex-col overflow-hidden">
-            <div className={heroSectionClasses}>
-              {hero ? (
-                <div className={heroContentClasses} aria-hidden={heroCollapsed}>
-                  <div className="pr-0 lg:pr-6">
-                    {hero}
+            <div className="relative">
+              <motion.div
+                className="pointer-events-none absolute -inset-6 sm:-inset-8 lg:-inset-10"
+                initial={{ opacity: 0, scale: 0.9, x: '-12%', y: '-18%' }}
+                animate={{
+                  opacity: heroCollapsed ? 0 : 0.35,
+                  scale: heroCollapsed ? 0.9 : [0.95, 1.02, 0.95],
+                  x: heroCollapsed ? '-12%' : ['-10%', '-14%', '-10%'],
+                  y: heroCollapsed ? '-18%' : ['-14%', '-20%', '-14%'],
+                }}
+                transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+                style={{
+                  background:
+                    'radial-gradient(circle at center, rgba(255, 230, 188, 0.35), transparent 65%)',
+                  filter: 'blur(50px)',
+                }}
+              />
+              <div className={heroSectionClasses}>
+                {hero ? (
+                  <div className={heroContentClasses} aria-hidden={heroCollapsed}>
+                    <div className="relative pr-0 lg:pr-6">
+                      {hero}
+                    </div>
                   </div>
-                </div>
-              ) : null}
-              {heroControls ? (
-                <div className="max-w-full lg:w-80 lg:flex-shrink-0">
-                  {heroControls}
-                </div>
-              ) : null}
+                ) : null}
+                {heroControls ? (
+                  <div className="max-w-full lg:w-80 lg:flex-shrink-0">
+                    {heroControls}
+                  </div>
+                ) : null}
+              </div>
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {messages}
