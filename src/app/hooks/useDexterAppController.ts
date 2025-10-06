@@ -2076,6 +2076,50 @@ export function useDexterAppController(): DexterAppController {
     return 'there';
   }, [sessionIdentity.user?.email, authEmail]);
 
+  const [nextConversationPrompt, setNextConversationPrompt] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (sessionIdentity.type !== 'user') {
+      setNextConversationPrompt(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const fetchNextPrompt = async () => {
+      try {
+        const response = await fetch('/api/realtime/memories', {
+          credentials: 'include',
+          cache: 'no-store',
+        });
+
+        if (!response.ok) {
+          throw new Error(`Memories request failed (${response.status})`);
+        }
+
+        const payload = await response.json();
+        const value = typeof payload?.nextConversationPrompt === 'string'
+          ? payload.nextConversationPrompt.trim()
+          : '';
+
+        if (!cancelled) {
+          setNextConversationPrompt(value.length ? value : null);
+        }
+      } catch (error) {
+        console.warn('[hero] failed to fetch next conversation prompt', error);
+        if (!cancelled) {
+          setNextConversationPrompt(null);
+        }
+      }
+    };
+
+    fetchNextPrompt();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionIdentity.type, sessionIdentity.user?.id]);
+
   const deterministicPromptIndex = useMemo(() => {
     const name = resolvePreferredName();
     const seed = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -2099,9 +2143,12 @@ export function useDexterAppController(): DexterAppController {
       return 'I can jump into live Solana tools for you. Ask anything when you are ready.';
     }
 
-    // TODO: Replace fallback with personalized memory prompt once summarizer provides `nextConversationPrompt`.
+    if (nextConversationPrompt && nextConversationPrompt.length) {
+      return nextConversationPrompt;
+    }
+
     return HERO_RETURNING_PROMPTS[deterministicPromptIndex];
-  }, [sessionIdentity.type, deterministicPromptIndex]);
+  }, [sessionIdentity.type, deterministicPromptIndex, nextConversationPrompt]);
 
   const heroControlsProps: HeroControlsProps = {
     sessionStatus,

@@ -124,6 +124,10 @@ export function TranscriptMessages({
     }
   }, [postPromptsVisible, realMessageCount]);
 
+  const prefersTouch =
+    typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)")?.matches === true;
+  const startPromptLabel = prefersTouch ? "Tap to say hi to Dexter" : "Click to say hi to Dexter";
+
   const handleStartClick = async () => {
     if (!onStartConversation || isStartingConversation) return;
     try {
@@ -152,8 +156,8 @@ export function TranscriptMessages({
               onClick={handleStartClick}
               isLoading={isStartingConversation}
             />
-            <p className="mt-6 text-sm text-neutral-400">
-              Tap to let Dexter know you&rsquo;re here.
+            <p className="mt-6 text-sm font-semibold tracking-[0.12em] text-[#FFEDE2] drop-shadow-[0_6px_18px_rgba(0,0,0,0.55)]">
+              {isStartingConversation ? "Dexter's remembering you..." : startPromptLabel}
             </p>
           </div>
         </div>
