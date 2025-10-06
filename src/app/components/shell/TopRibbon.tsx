@@ -61,13 +61,13 @@ interface TopRibbonProps {
 function getStatusVisual(sessionStatus: SessionStatus) {
   switch (sessionStatus) {
     case "CONNECTED":
-      return { label: "Live", dotClass: "bg-[#16C98C]", textClass: "text-[#16C98C]" };
+      return { label: "Live", dotClass: "bg-[#16C98C]", textClass: "text-[#73F7C2]" };
     case "CONNECTING":
-      return { label: "Linking", dotClass: "bg-[#26B5FF]", textClass: "text-[#26B5FF]" };
+      return { label: "Linking", dotClass: "bg-[#26B5FF]", textClass: "text-[#7FD0FF]" };
     case "ERROR":
-      return { label: "Fault", dotClass: "bg-[#FF4D69]", textClass: "text-[#FF4D69]" };
+      return { label: "Fault", dotClass: "bg-[#FF4D69]", textClass: "text-[#FF96AD]" };
     default:
-      return { label: "Offline", dotClass: "bg-[#FF3B30]", textClass: "text-[#FF3B30]" };
+      return { label: "Offline", dotClass: "bg-[#FF3B30]", textClass: "text-[#FF8A7F]" };
   }
 }
 
