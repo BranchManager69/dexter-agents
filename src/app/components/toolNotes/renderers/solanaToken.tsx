@@ -74,25 +74,25 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
     const body = (
       <>
         <div className="flex items-center justify-between gap-2">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Pair {index + 1}</div>
-          <div className="rounded-full border border-neutral-700 px-2 py-[2px] text-[10px] uppercase tracking-[0.2em] text-neutral-300">
+          <div className="text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Pair {index + 1}</div>
+          <div className="rounded-full border border-[#F7BE8A]/30 px-2 py-[2px] text-[10px] uppercase tracking-[0.2em] text-[#FFE4CF]">
             {dex}
           </div>
         </div>
-        <div className="mt-2 flex flex-col gap-1 text-xs text-neutral-300">
+        <div className="mt-2 flex flex-col gap-1 text-xs text-[#FFE4CF]">
           {liquidity && (
             <div>
-              Liquidity: <span className="text-neutral-100">{liquidity}</span>
+              Liquidity: <span className="text-[#FFF6EC]">{liquidity}</span>
             </div>
           )}
           {price && (
             <div>
-              Price: <span className="text-neutral-100">{price}</span>
+              Price: <span className="text-[#FFF6EC]">{price}</span>
             </div>
           )}
           {volume && (
             <div>
-              24h volume: <span className="text-neutral-100">{volume}</span>
+              24h volume: <span className="text-[#FFF6EC]">{volume}</span>
             </div>
           )}
           {priceChange && (
@@ -111,7 +111,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
           href={link}
           target="_blank"
           rel="noreferrer"
-          className="block rounded-lg border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 transition hover:border-flux/60"
+          className="block rounded-lg border border-[#F7BE8A]/24 bg-[#201012]/70 px-3 py-2 transition hover:border-flux/60"
         >
           {body}
         </a>
@@ -119,7 +119,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
     }
 
     return (
-      <div key={key} className="rounded-lg border border-neutral-800/60 bg-surface-glass/60 px-3 py-2">
+      <div key={key} className="rounded-lg border border-[#F7BE8A]/24 bg-[#201012]/70 px-3 py-2">
         {body}
       </div>
     );
@@ -163,55 +163,55 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
     );
 
     return (
-      <div key={address ?? symbol} className="rounded-xl border border-neutral-800/40 bg-surface-glass/40 p-4">
+      <div key={address ?? symbol} className="rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-neutral-800/60 bg-neutral-900/80">
+            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-[#F7BE8A]/24 bg-neutral-900/80">
               {iconUrl ? (
                 <Image src={iconUrl} alt={symbol} fill sizes="40px" className="object-cover" />
               ) : (
-                <span className="flex h-full w-full items-center justify-center text-xs text-neutral-400">
+                <span className="flex h-full w-full items-center justify-center text-xs text-[#F9D9C3]">
                   {symbol.slice(0, 2)}
                 </span>
               )}
             </div>
             <div>
-              <div className="text-sm font-semibold text-neutral-100" title={name || symbol}>
+              <div className="text-sm font-semibold text-[#FFF6EC]" title={name || symbol}>
                 {symbol}
               </div>
-              {name && <div className="text-xs text-neutral-400" title={name}>{name}</div>}
+              {name && <div className="text-xs text-[#F9D9C3]" title={name}>{name}</div>}
             </div>
           </div>
-          {price && <div className="text-sm text-neutral-100">{price}</div>}
+          {price && <div className="text-sm text-[#FFF6EC]">{price}</div>}
         </div>
-        <div className="mt-3 space-y-2 text-xs text-neutral-300">
+        <div className="mt-3 space-y-2 text-xs text-[#FFE4CF]">
           {address && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-neutral-500">Mint:</span>
+              <span className="text-[#F0BFA1]">Mint:</span>
               <HashBadge value={address} href={`https://solscan.io/token/${address}`} ariaLabel="Token mint" />
             </div>
           )}
           {marketCap && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-neutral-500">Market cap:</span>
-              <span className="text-neutral-100">{marketCap}</span>
+              <span className="text-[#F0BFA1]">Market cap:</span>
+              <span className="text-[#FFF6EC]">{marketCap}</span>
             </div>
           )}
           {liquidity && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-neutral-500">Liquidity:</span>
-              <span className="text-neutral-100">{liquidity}</span>
+              <span className="text-[#F0BFA1]">Liquidity:</span>
+              <span className="text-[#FFF6EC]">{liquidity}</span>
             </div>
           )}
           {volume && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-neutral-500">24h volume:</span>
-              <span className="text-neutral-100">{volume}</span>
+              <span className="text-[#F0BFA1]">24h volume:</span>
+              <span className="text-[#FFF6EC]">{volume}</span>
             </div>
           )}
           {priceChange && (
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-neutral-500">24h change:</span>
+              <span className="text-[#F0BFA1]">24h change:</span>
               <span className={priceChangeClass}>{priceChange}</span>
             </div>
           )}
@@ -232,10 +232,10 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className={SECTION_TITLE_CLASS}>Solana Token Lookup</div>
-          <div className="mt-2 text-sm text-neutral-400">{item.timestamp}</div>
+          <div className="mt-2 text-sm text-[#F9D9C3]">{item.timestamp}</div>
         </div>
         {query && (
-          <div className="rounded-full border border-neutral-800/60 bg-surface-glass/60 px-3 py-1 text-xs uppercase tracking-[0.2em] text-neutral-200">
+          <div className="rounded-full border border-[#F7BE8A]/24 bg-[#201012]/70 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#FFF2E2]">
             Query: {query}
           </div>
         )}
@@ -246,7 +246,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
           {primary.map((token: any) => renderTokenCard(token))}
         </div>
       ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-neutral-800/60 px-4 py-6 text-center text-sm text-neutral-400">
+        <div className="mt-4 rounded-lg border border-dashed border-[#F7BE8A]/24 px-4 py-6 text-center text-sm text-[#F9D9C3]">
           No matching Solana tokens reported.
         </div>
       )}
@@ -269,7 +269,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
               <button
                 type="button"
                 onClick={onToggle}
-                className="mt-3 text-xs uppercase tracking-[0.24em] text-neutral-400 transition hover:text-neutral-200"
+                className="mt-3 text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
               >
                 Hide additional results
               </button>
@@ -279,16 +279,16 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onTogg
       )}
 
       {hasDebug && (
-        <div className="mt-4 border-t border-neutral-800/50 pt-3">
+        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
           <button
             type="button"
             onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-neutral-400 transition hover:text-neutral-200"
+            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
           </button>
           {isExpanded && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/60 bg-surface-base/80 p-3 text-[11px] text-neutral-200">
+            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
               {JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}

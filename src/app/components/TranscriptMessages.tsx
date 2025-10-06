@@ -28,8 +28,6 @@ export function TranscriptMessages({
   const [isPinnedToBottom, setIsPinnedToBottom] = useState(true);
   const debugEnvEnabled = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
   const showDebugPayloads = debugEnvEnabled && canViewDebugPayloads;
-  const [visibleTimestamps, setVisibleTimestamps] = useState<Record<string, boolean>>({});
-  const timestampTimersRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
   const [isStartingConversation, setIsStartingConversation] = useState(false);
   const [postPromptsVisible, setPostPromptsVisible] = useState(false);
   const hasShownPostPromptsRef = useRef(false);
@@ -77,26 +75,6 @@ export function TranscriptMessages({
 
     setPrevLogs(transcriptItems);
   }, [transcriptItems, prevLogs, isPinnedToBottom, scrollToBottom]);
-
-  useEffect(() => () => {
-    timestampTimersRef.current.forEach((timer) => clearTimeout(timer));
-    timestampTimersRef.current.clear();
-  }, []);
-
-  const revealTimestamp = (itemId: string) => {
-    setVisibleTimestamps((prev) => ({ ...prev, [itemId]: true }));
-    const existing = timestampTimersRef.current.get(itemId);
-    if (existing) clearTimeout(existing);
-    const timer = setTimeout(() => {
-      setVisibleTimestamps((prev) => ({ ...prev, [itemId]: false }));
-      timestampTimersRef.current.delete(itemId);
-    }, 4000);
-    timestampTimersRef.current.set(itemId, timer);
-  };
-
-  const handleBubbleInteract = (itemId: string) => {
-    revealTimestamp(itemId);
-  };
 
   // Only show empty state if there are no user or assistant messages (filter out debug/system items)
   const realMessageCount = transcriptItems.filter(
@@ -267,34 +245,17 @@ export function TranscriptMessages({
             const bubbleBase = `relative max-w-2xl rounded-3xl px-4 py-3 transition-colors`;
             const isBracketedMessage =
               title.startsWith("[") && title.endsWith("]");
-            const messageStyle = isBracketedMessage ? "italic text-neutral-400" : "";
+            const messageStyle = isBracketedMessage ? "italic text-[#F4CDAA]" : "";
             const displayTitle = isBracketedMessage ? title.slice(1, -1) : title;
-
-            const timestampVisible = Boolean(visibleTimestamps[itemId]);
-            const messageTextClass = `${
-              isUser ? "text-neutral-50 font-medium" : "text-neutral-200"
-            }`;
-            const timestampAlignment = isUser ? "self-end text-right" : "self-start text-left";
-            const timestampOpacity = timestampVisible
-              ? "opacity-100"
-              : "opacity-70 group-hover/message:opacity-100";
+            const bubbleTone = isUser
+              ? "bg-[#3B1609]/85 border border-[#F6A878]/25"
+              : "bg-[#16070C]/85 border border-[#F7BE8A]/18";
+            const messageTextClass = isUser ? "text-[#FFE4C4]" : "text-[#FFEBDD]";
 
             return (
               <div key={itemId} className={containerClasses}>
                 <div className="max-w-2xl space-y-2">
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className={`${bubbleBase} ${guardrailResult ? "rounded-b-none" : ""}`}
-                    onClick={() => handleBubbleInteract(itemId)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        handleBubbleInteract(itemId);
-                      }
-                    }}
-                    onTouchStart={() => handleBubbleInteract(itemId)}
-                  >
+                  <div className={`${bubbleBase} ${bubbleTone} ${guardrailResult ? "rounded-b-none" : ""}`}>
                     <MessageMarkdown
                       className={`whitespace-pre-wrap break-words text-[15px] leading-relaxed ${messageStyle} ${messageTextClass}`}
                     >
@@ -302,17 +263,10 @@ export function TranscriptMessages({
                     </MessageMarkdown>
                   </div>
                   {guardrailResult && (
-                    <div className="rounded-b-3xl border border-neutral-800/40 bg-surface-glass/50 px-4 py-3">
+                    <div className="rounded-b-3xl border border-[#F6A878]/25 bg-[#2A0D08]/85 px-4 py-3 text-[#FFE5D2]">
                       <GuardrailChip guardrailResult={guardrailResult} />
                     </div>
                   )}
-                  <span
-                    className={`${
-                      timestampAlignment
-                    } text-[11px] font-sans text-neutral-500 transition-opacity duration-200 ${timestampOpacity}`}
-                  >
-                    {timestamp}
-                  </span>
                 </div>
               </div>
             );
@@ -333,15 +287,15 @@ export function TranscriptMessages({
             );
             if (renderer) {
               return (
-                <div key={itemId} className="flex flex-col items-start text-[11px] text-neutral-400">
+                <div key={itemId} className="flex flex-col items-start text-[11px] text-[#FFE1CC]">
                   <div
-                    className={`mb-2 flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.28em] ${
-                      isPending ? 'border-flux/60 text-flux' : ''
+                    className={`flex items-center gap-2 rounded-full border border-[#F7BE8A]/25 bg-[#220907]/80 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.28em] ${
+                      isPending ? 'border-flux/60 text-flux' : 'text-[#FFD6B2]'
                     }`}
                   >
                     {pendingSpinner}
                     <span>Tool</span>
-                    <span className="tracking-normal text-neutral-200">{title}</span>
+                    <span className="tracking-normal text-[#FFF0D7]">{title}</span>
                     {isPending && (
                       <span className="text-[9px] uppercase tracking-[0.28em] text-flux/80">
                         Working…
@@ -361,10 +315,10 @@ export function TranscriptMessages({
             const hasDetails = data && Object.keys(data).length > 0;
             const canToggle = showDebugPayloads && hasDetails;
             return (
-              <div key={itemId} className="flex flex-col items-start text-[11px] text-neutral-400">
+              <div key={itemId} className="flex flex-col items-start text-[11px] text-[#FFE1CC]">
                 <div
-                  className={`flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 font-mono uppercase tracking-[0.28em] text-[10px] ${
-                    isPending ? 'border-flux/60 text-flux' : 'text-neutral-300'
+                  className={`flex items-center gap-2 rounded-full border border-[#F7BE8A]/25 bg-[#220907]/80 px-3 py-1 font-mono uppercase tracking-[0.28em] text-[10px] ${
+                    isPending ? 'border-flux/60 text-flux' : 'text-[#FFD6B2]'
                   } ${
                     canToggle ? "cursor-pointer hover:border-flux/60" : ""
                   }`}
@@ -372,7 +326,7 @@ export function TranscriptMessages({
                 >
                   {pendingSpinner}
                   <span>Tool</span>
-                  <span className="tracking-normal text-neutral-200">{title}</span>
+                  <span className="tracking-normal text-[#FFF0D7]">{title}</span>
                   {isPending && (
                     <span className="text-[9px] uppercase tracking-[0.28em] text-flux/80">
                       Working…
@@ -380,7 +334,7 @@ export function TranscriptMessages({
                   )}
                   {canToggle && (
                     <span
-                      className={`ml-1 select-none text-neutral-500 transition-transform duration-200 ${
+                      className={`ml-1 select-none text-[#F0BFA1] transition-transform duration-200 ${
                         expanded ? "rotate-90" : "rotate-0"
                       }`}
                     >
@@ -389,7 +343,7 @@ export function TranscriptMessages({
                   )}
                 </div>
                 {showDebugPayloads && expanded && hasDetails && (
-                  <pre className="mt-2 w-full max-w-xl break-words whitespace-pre-wrap rounded-md border border-neutral-800/40 bg-surface-glass/40 px-3 py-2 text-[11px] font-mono text-neutral-200">
+                  <pre className="mt-2 w-full max-w-xl break-words whitespace-pre-wrap rounded-md border border-[#F7BE8A]/18 bg-[#1F0906]/85 px-3 py-2 text-[11px] font-mono text-[#FFEBD7]">
                     {JSON.stringify(data, null, 2)}
                   </pre>
                 )}
@@ -399,20 +353,20 @@ export function TranscriptMessages({
             return (
               <div
                 key={itemId}
-                className="flex flex-col items-start justify-start text-sm text-neutral-500"
+                className="flex flex-col items-start justify-start text-sm text-[#F7D5C0]"
               >
-                <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-neutral-600">
+                <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#F1BFA0]">
                   {timestamp}
                 </span>
                 <div
-                  className={`mt-1 flex items-center whitespace-pre-wrap font-mono text-xs text-neutral-300 ${
+                  className={`mt-1 flex items-center whitespace-pre-wrap font-mono text-xs text-[#FFE6D1] ${
                     data ? "cursor-pointer hover:text-flux" : ""
                   }`}
                   onClick={() => data && toggleTranscriptItemExpand(itemId)}
                 >
                   {data && (
                     <span
-                      className={`mr-1 select-none font-mono text-neutral-500 transition-transform duration-200 ${
+                      className={`mr-1 select-none font-mono text-[#F0BFA1] transition-transform duration-200 ${
                         expanded ? "rotate-90" : "rotate-0"
                       }`}
                     >
@@ -422,8 +376,8 @@ export function TranscriptMessages({
                   {title}
                 </div>
                 {expanded && data && (
-                  <div className="text-left text-neutral-300">
-                    <pre className="ml-1 mt-2 mb-2 break-words whitespace-pre-wrap rounded-md border border-neutral-800/40 bg-surface-glass/40 pl-3 text-[11px] font-mono text-neutral-200">
+                  <div className="text-left text-[#FFE6D1]">
+                    <pre className="ml-1 mt-2 mb-2 break-words whitespace-pre-wrap rounded-md border border-[#F7BE8A]/18 bg-[#1F0906]/85 pl-3 text-[11px] font-mono text-[#FFEBD7]">
                       {JSON.stringify(data, null, 2)}
                     </pre>
                   </div>
@@ -434,7 +388,7 @@ export function TranscriptMessages({
             return (
               <div
                 key={itemId}
-                className="flex justify-center font-mono text-xs italic text-neutral-600"
+                className="flex justify-center font-mono text-xs italic text-[#F1BFA0]"
               >
                 Unknown item type: {type} <span className="ml-2 text-[10px]">{timestamp}</span>
               </div>

@@ -78,10 +78,10 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
       infoRows.push({ label: "Spend", value: <SolanaAmount value={spendSolValue} /> });
     }
     if (mode === "sell" && percentage) {
-      infoRows.push({ label: "Portion", value: <span className="text-neutral-100">{percentage}</span> });
+      infoRows.push({ label: "Portion", value: <span className="text-[#FFF6EC]">{percentage}</span> });
     }
     if (mode === "sell" && amountRaw) {
-      infoRows.push({ label: "Amount (raw)", value: <span className="font-mono text-neutral-100" title={amountRaw}>{amountRaw}</span> });
+      infoRows.push({ label: "Amount (raw)", value: <span className="font-mono text-[#FFF6EC]" title={amountRaw}>{amountRaw}</span> });
     }
     if (swapDisplay) {
       infoRows.push({
@@ -104,7 +104,7 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className={SECTION_TITLE_CLASS}>{heading}</div>
-            <div className="mt-2 text-sm text-neutral-400">{item.timestamp}</div>
+            <div className="mt-2 text-sm text-[#F9D9C3]">{item.timestamp}</div>
           </div>
           <span className={badgeClass}>{badgeLabel}</span>
         </div>
@@ -112,7 +112,7 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
         <div className="mt-4 space-y-3">
           {infoRows.map(({ label, value }) => (
             <div key={label} className="flex flex-wrap items-center gap-2">
-              <span className="text-xs uppercase tracking-[0.24em] text-neutral-500">{label}</span>
+              <span className="text-xs uppercase tracking-[0.24em] text-[#F0BFA1]">{label}</span>
               {value}
             </div>
           ))}
@@ -137,7 +137,7 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
 
         {solscanUrl && (
           <a
-            className="mt-4 inline-flex items-center gap-1 rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase tracking-[0.2em] text-flux transition hover:border-flux/60 hover:text-flux/80"
+            className="mt-4 inline-flex items-center gap-1 rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-xs uppercase tracking-[0.2em] text-flux transition hover:border-flux/60 hover:text-flux/80"
             href={solscanUrl}
             target="_blank"
             rel="noreferrer"
@@ -147,28 +147,28 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
         )}
 
         {hasExpandable && (
-          <div className="mt-4 border-t border-neutral-800/50 pt-3">
+          <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
             <button
               type="button"
               onClick={onToggle}
-              className="text-xs uppercase tracking-[0.24em] text-neutral-400 transition hover:text-neutral-200"
+              className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
             >
               {isExpanded ? "Hide details" : "Show details"}
             </button>
             {isExpanded && (
-              <div className="mt-3 space-y-3 text-[11px] text-neutral-300">
+              <div className="mt-3 space-y-3 text-[11px] text-[#FFE4CF]">
                 {hasRequestArgs && (
                   <div>
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Request</div>
-                    <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/60 bg-surface-base/70 p-3 text-neutral-200">
+                    <div className="text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Request</div>
+                    <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-surface-base/70 p-3 text-[#FFF2E2]">
                       {JSON.stringify(args, null, 2)}
                     </pre>
                   </div>
                 )}
                 {hasRawDetails && (
                   <div>
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Raw response</div>
-                    <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/60 bg-surface-base/70 p-3 text-neutral-200">
+                    <div className="text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Raw response</div>
+                    <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-surface-base/70 p-3 text-[#FFF2E2]">
                       {JSON.stringify(rawOutput, null, 2)}
                     </pre>
                   </div>

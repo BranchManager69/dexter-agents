@@ -21,62 +21,62 @@ function createCodexRenderer(kind: "start" | "reply" | "exec"): ToolNoteRenderer
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className={SECTION_TITLE_CLASS}>Codex {kind === "exec" ? "Exec" : "Session"}</div>
-            <div className="mt-2 text-xs text-neutral-400">{item.timestamp}</div>
+            <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
           </div>
-          <span className="rounded-full border border-neutral-700 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-neutral-300">
+          <span className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#FFE4CF]">
             {badgeLabel}
           </span>
         </div>
 
-        <div className="mt-4 space-y-3 text-sm text-neutral-200">
+        <div className="mt-4 space-y-3 text-sm text-[#FFF2E2]">
           {conversationId && (
-            <div className="flex flex-wrap items-center gap-2 text-xs text-neutral-400">
+            <div className="flex flex-wrap items-center gap-2 text-xs text-[#F9D9C3]">
               <span className="uppercase tracking-[0.24em]">Conversation</span>
-              <span className="font-mono text-neutral-100">{conversationId}</span>
+              <span className="font-mono text-[#FFF6EC]">{conversationId}</span>
             </div>
           )}
 
           {model && (
-            <div className="text-xs text-neutral-400">Model: <span className="text-neutral-200">{model}</span></div>
+            <div className="text-xs text-[#F9D9C3]">Model: <span className="text-[#FFF2E2]">{model}</span></div>
           )}
           {reasoningEffort && (
-            <div className="text-xs text-neutral-400">Effort: <span className="text-neutral-200">{reasoningEffort}</span></div>
+            <div className="text-xs text-[#F9D9C3]">Effort: <span className="text-[#FFF2E2]">{reasoningEffort}</span></div>
           )}
           {typeof durationMs === "number" && (
-            <div className="text-xs text-neutral-400">Duration: <span className="text-neutral-200">{(durationMs / 1000).toFixed(2)}s</span></div>
+            <div className="text-xs text-[#F9D9C3]">Duration: <span className="text-[#FFF2E2]">{(durationMs / 1000).toFixed(2)}s</span></div>
           )}
 
           {message && (
-            <div className="rounded-xl border border-neutral-800/40 bg-surface-glass/40 p-3 text-xs text-neutral-100 whitespace-pre-wrap">
+            <div className="rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3 text-xs text-[#FFF6EC] whitespace-pre-wrap">
               {message}
             </div>
           )}
           {reasoning && (
-            <details className="rounded-xl border border-neutral-800/40 bg-surface-glass/30 p-3 text-xs text-neutral-200">
-              <summary className="cursor-pointer text-[10px] uppercase tracking-[0.22em] text-neutral-500">Reasoning trail</summary>
-              <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-neutral-200">{reasoning}</pre>
+            <details className="rounded-xl border border-[#F7BE8A]/18 bg-surface-glass/30 p-3 text-xs text-[#FFF2E2]">
+              <summary className="cursor-pointer text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Reasoning trail</summary>
+              <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-[#FFF2E2]">{reasoning}</pre>
             </details>
           )}
 
           {tokenUsage && (
-            <div className="rounded-xl border border-neutral-800/40 bg-surface-glass/40 p-3 text-xs text-neutral-300">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-neutral-500">Token usage</div>
-              <pre className="mt-1 whitespace-pre-wrap break-words text-neutral-200">{JSON.stringify(tokenUsage, null, 2)}</pre>
+            <div className="rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3 text-xs text-[#FFE4CF]">
+              <div className="text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Token usage</div>
+              <pre className="mt-1 whitespace-pre-wrap break-words text-[#FFF2E2]">{JSON.stringify(tokenUsage, null, 2)}</pre>
             </div>
           )}
         </div>
 
         {debug && (
-          <div className="mt-4 border-t border-neutral-800/50 pt-3">
+          <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
             <button
               type="button"
               onClick={onToggle}
-              className="text-xs uppercase tracking-[0.24em] text-neutral-400 transition hover:text-neutral-200"
+              className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
             >
               {isExpanded ? "Hide raw payload" : "Show raw payload"}
             </button>
             {isExpanded && (
-              <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/60 bg-surface-base/80 p-3 text-[11px] text-neutral-200">
+              <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
                 {JSON.stringify(rawOutput, null, 2)}
               </pre>
             )}

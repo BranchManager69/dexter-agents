@@ -16,42 +16,42 @@ const streamGetSceneRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className={SECTION_TITLE_CLASS}>Current Stream Scene</div>
-          <div className="mt-2 text-xs text-neutral-400">{item.timestamp}</div>
+          <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
         </div>
         {updatedAt && (
-          <div className="rounded-full border border-neutral-700 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-neutral-300">
+          <div className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#FFE4CF]">
             Updated {new Date(updatedAt).toLocaleTimeString()}
           </div>
         )}
       </div>
 
-      <div className="mt-4 space-y-3 text-sm text-neutral-200">
+      <div className="mt-4 space-y-3 text-sm text-[#FFF2E2]">
         <div className="font-semibold">Active scene</div>
         {activeScene ? (
-          <div className="rounded-lg border border-neutral-800/40 bg-surface-glass/40 px-3 py-2 text-sm text-neutral-100">
+          <div className="rounded-lg border border-[#F7BE8A]/18 bg-[#1A090D]/70 px-3 py-2 text-sm text-[#FFF6EC]">
             {activeScene}
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed border-neutral-800/60 px-3 py-2 text-sm text-neutral-400">
+          <div className="rounded-lg border border-dashed border-[#F7BE8A]/24 px-3 py-2 text-sm text-[#F9D9C3]">
             No active scene reported.
           </div>
         )}
 
         <div>
-          <div className="text-xs uppercase tracking-[0.24em] text-neutral-500">Available scenes</div>
+          <div className="text-xs uppercase tracking-[0.24em] text-[#F0BFA1]">Available scenes</div>
           {scenes.length > 0 ? (
-            <ul className="mt-2 grid gap-2 text-sm text-neutral-200">
+            <ul className="mt-2 grid gap-2 text-sm text-[#FFF2E2]">
               {scenes.map((scene: any) => (
                 <li
                   key={typeof scene === "string" ? scene : JSON.stringify(scene)}
-                  className="rounded-lg border border-neutral-800/40 bg-surface-glass/30 px-3 py-2"
+                  className="rounded-lg border border-[#F7BE8A]/18 bg-surface-glass/30 px-3 py-2"
                 >
                   {typeof scene === "string" ? scene : JSON.stringify(scene)}
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="mt-2 rounded-lg border border-neutral-800/40 bg-surface-glass/30 px-3 py-2 text-xs text-neutral-400">
+            <div className="mt-2 rounded-lg border border-[#F7BE8A]/18 bg-surface-glass/30 px-3 py-2 text-xs text-[#F9D9C3]">
               Scene list unavailable.
             </div>
           )}
@@ -59,16 +59,16 @@ const streamGetSceneRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
       </div>
 
       {debug && (
-        <div className="mt-4 border-t border-neutral-800/50 pt-3">
+        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
           <button
             type="button"
             onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-neutral-400 transition hover:text-neutral-200"
+            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
           </button>
           {isExpanded && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/60 bg-surface-base/80 p-3 text-[11px] text-neutral-200">
+            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
               {JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}
@@ -94,42 +94,42 @@ const streamSetSceneRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className={SECTION_TITLE_CLASS}>Set Stream Scene</div>
-          <div className="mt-2 text-xs text-neutral-400">{item.timestamp}</div>
+          <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
         </div>
         <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-emerald-200">
           {statusLabel}
         </span>
       </div>
 
-      <div className="mt-4 space-y-3 text-xs text-neutral-300">
+      <div className="mt-4 space-y-3 text-xs text-[#FFE4CF]">
         {requestedScene && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="uppercase tracking-[0.24em] text-neutral-500">Requested</span>
-            <span className="text-neutral-100">{requestedScene}</span>
+            <span className="uppercase tracking-[0.24em] text-[#F0BFA1]">Requested</span>
+            <span className="text-[#FFF6EC]">{requestedScene}</span>
           </div>
         )}
         {updatedScene && (
           <div className="flex flex-wrap items-center gap-2">
-            <span className="uppercase tracking-[0.24em] text-neutral-500">Active</span>
-            <span className="text-neutral-100">{updatedScene}</span>
+            <span className="uppercase tracking-[0.24em] text-[#F0BFA1]">Active</span>
+            <span className="text-[#FFF6EC]">{updatedScene}</span>
           </div>
         )}
         {updatedAt && (
-          <div className="text-neutral-400">Updated {new Date(updatedAt).toLocaleTimeString()}</div>
+          <div className="text-[#F9D9C3]">Updated {new Date(updatedAt).toLocaleTimeString()}</div>
         )}
       </div>
 
       {debug && (
-        <div className="mt-4 border-t border-neutral-800/50 pt-3">
+        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
           <button
             type="button"
             onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-neutral-400 transition hover:text-neutral-200"
+            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
           </button>
           {isExpanded && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/60 bg-surface-base/80 p-3 text-[11px] text-neutral-200">
+            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
               {JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}
