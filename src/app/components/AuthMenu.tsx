@@ -21,6 +21,7 @@ interface WalletPortfolioSummary {
     amountUi: number | null;
     usdValue: number | null;
   }>;
+  pending?: boolean;
 }
 
 interface AuthMenuProps {
@@ -289,7 +290,11 @@ export function AuthMenu({
                   {walletPortfolio && (
                     <div className="mt-3 space-y-1 text-[11px] text-neutral-300">
                       <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">Balances</div>
-                      {walletPortfolio.status === 'loading' && !walletPortfolio.solBalanceFormatted && !walletPortfolio.totalUsdFormatted ? (
+                      {walletPortfolio.pending && walletPortfolio.status !== 'ready' ? (
+                        <div className="text-neutral-500">
+                          <span className="inline-block animate-pulse">…</span>
+                        </div>
+                      ) : walletPortfolio.status === 'loading' && !walletPortfolio.solBalanceFormatted && !walletPortfolio.totalUsdFormatted ? (
                         <div className="text-neutral-500">Loading…</div>
                       ) : walletPortfolio.status === 'error' ? (
                         <div className="text-accent-critical">

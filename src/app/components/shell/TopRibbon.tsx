@@ -33,6 +33,7 @@ interface WalletPortfolioSummary {
     amountUi: number | null;
     usdValue: number | null;
   }>;
+  pending?: boolean;
 }
 
 interface McpStatusProps {
@@ -145,10 +146,14 @@ export function TopRibbon({
   const sessionLabel = resolveSessionLabel(sessionVariant);
   const sessionToneClass = resolveUserBadgeTextClass(sessionVariant);
   const mcpText = getMcpLabel(mcpStatus.state, mcpStatus.label);
-  const walletLabel = formatWalletAddress(sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined);
+  const walletAddressValue = sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined;
+  const walletLabel = formatWalletAddress(walletAddressValue);
 
   const walletSecondaryText = (() => {
     if (!walletPortfolio) return null;
+    if (walletPortfolio.pending && mcpStatus.state !== 'user') {
+      return <span className="inline-block animate-pulse">…</span>;
+    }
     if (walletPortfolio.status === 'loading' && !walletPortfolio.solBalanceFormatted && !walletPortfolio.totalUsdFormatted) {
       return 'Loading balances…';
     }
@@ -158,6 +163,35 @@ export function TopRibbon({
     const parts = [walletPortfolio.solBalanceFormatted, walletPortfolio.totalUsdFormatted].filter(Boolean);
     return parts.length ? parts.join(' • ') : null;
   })();
+
+  const [walletCopied, setWalletCopied] = React.useState(false);
+  const walletCopyTimeoutRef = React.useRef<number | null>(null);
+
+  React.useEffect(() => {
+    return () => {
+      if (walletCopyTimeoutRef.current) {
+        window.clearTimeout(walletCopyTimeoutRef.current);
+        walletCopyTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleWalletCopy = React.useCallback(async () => {
+    if (!walletAddressValue) return;
+    try {
+      await navigator.clipboard.writeText(walletAddressValue);
+      setWalletCopied(true);
+      if (walletCopyTimeoutRef.current) {
+        window.clearTimeout(walletCopyTimeoutRef.current);
+      }
+      walletCopyTimeoutRef.current = window.setTimeout(() => {
+        setWalletCopied(false);
+        walletCopyTimeoutRef.current = null;
+      }, 1200);
+    } catch (error) {
+      console.warn('Failed to copy wallet address', error);
+    }
+  }, [walletAddressValue]);
 
   const handleAuthSignIn = async (email: string, captchaToken: string | null) => {
     if (!onSignIn) return { success: false, message: "Sign-in not available" };
@@ -206,12 +240,27 @@ export function TopRibbon({
             <span className="leading-none">{mcpText}</span>
           </span>
 
-          <span className="relative flex flex-shrink-0 items-center text-[#FEFBF4] leading-none">
+          <button
+            type="button"
+            onClick={handleWalletCopy}
+            disabled={!walletAddressValue}
+            className="relative flex flex-shrink-0 items-center text-[#FEFBF4] leading-none transition hover:text-[#FFF3E3] disabled:cursor-not-allowed disabled:text-[#FEFBF4]/40"
+            title={walletAddressValue ? `Copy ${walletAddressValue}` : undefined}
+          >
             <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] uppercase tracking-[0.38em] text-[#FEFBF4]/50 leading-none">
               Wallet
             </span>
-            <span className="tracking-[0.18em] text-[#FEFBF4] leading-none">{walletLabel}</span>
-          </span>
+            <span className="tracking-[0.18em] text-[#FEFBF4] leading-none">
+              {walletPortfolio?.pending && mcpStatus.state !== 'user'
+                ? <span className="inline-block animate-pulse align-middle">…</span>
+                : walletLabel}
+            </span>
+            {walletCopied && (
+              <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 text-[7px] uppercase tracking-[0.32em] text-[#FEFBF4]/70">
+                Copied
+              </span>
+            )}
+          </button>
 
           {walletSecondaryText && (
             <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]/60 tracking-[0.18em]">

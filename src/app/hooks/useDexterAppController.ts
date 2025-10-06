@@ -574,6 +574,7 @@ export function useDexterAppController(): DexterAppController {
   const [walletPortfolio, setWalletPortfolio] = useState<WalletPortfolioSnapshot | null>(null);
   const [walletPortfolioStatus, setWalletPortfolioStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [walletPortfolioError, setWalletPortfolioError] = useState<string | null>(null);
+  const [walletPortfolioPending, setWalletPortfolioPending] = useState(false);
 
   const realtimeSessionIdRef = useRef<string | null>(null);
   const sessionStartedAtRef = useRef<number | null>(null);
@@ -796,6 +797,7 @@ export function useDexterAppController(): DexterAppController {
       setWalletPortfolio(null);
       setWalletPortfolioStatus('idle');
       setWalletPortfolioError(null);
+      setWalletPortfolioPending(false);
       return;
     }
 
@@ -806,6 +808,7 @@ export function useDexterAppController(): DexterAppController {
       setWalletPortfolio(null);
       setWalletPortfolioStatus('idle');
       setWalletPortfolioError(null);
+      setWalletPortfolioPending(false);
       return;
     }
 
@@ -879,12 +882,14 @@ export function useDexterAppController(): DexterAppController {
       if (walletFetchIdRef.current === requestId) {
         setWalletPortfolio(snapshot);
         setWalletPortfolioStatus('ready');
+        setWalletPortfolioPending(false);
       }
     } catch (error: any) {
       console.error('Failed to load wallet portfolio', error);
       if (walletFetchIdRef.current === requestId) {
         setWalletPortfolioStatus('error');
         setWalletPortfolioError(error?.message || 'Unable to load wallet balances.');
+        setWalletPortfolioPending(false);
       }
     }
   }, [callMcpTool, sessionIdentity.type, sessionIdentity.wallet?.label, sessionIdentity.wallet?.public_key, walletPortfolioStatus]);
@@ -917,6 +922,7 @@ export function useDexterAppController(): DexterAppController {
       setWalletPortfolio(null);
       setWalletPortfolioStatus('idle');
       setWalletPortfolioError(null);
+      setWalletPortfolioPending(false);
       return;
     }
 
@@ -926,16 +932,27 @@ export function useDexterAppController(): DexterAppController {
       setWalletPortfolio(null);
       setWalletPortfolioStatus('idle');
       setWalletPortfolioError(null);
+      setWalletPortfolioPending(false);
       return;
     }
 
-    if (lastFetchedWalletRef.current === activeAddress) {
+    if (mcpStatus.state !== 'user') {
+      setWalletPortfolioPending(true);
+      if (!walletPortfolio || walletPortfolio.address !== activeAddress) {
+        setWalletPortfolioStatus((prev) => (prev === 'ready' ? prev : 'loading'));
+      }
+      return;
+    }
+
+    setWalletPortfolioPending(false);
+
+    if (lastFetchedWalletRef.current === activeAddress && walletPortfolioStatus === 'ready') {
       return;
     }
 
     lastFetchedWalletRef.current = activeAddress;
     fetchWalletPortfolio('initial');
-  }, [sessionIdentity.type, sessionIdentity.wallet?.public_key, fetchWalletPortfolio]);
+  }, [sessionIdentity.type, sessionIdentity.wallet?.public_key, mcpStatus.state, walletPortfolio, walletPortfolioStatus, fetchWalletPortfolio]);
 
   useEffect(() => {
     fetch("/api/mcp/status", { credentials: "include" })
@@ -1157,12 +1174,17 @@ export function useDexterAppController(): DexterAppController {
       return;
     }
 
+    if (mcpStatus.state !== 'user') {
+      setWalletPortfolioPending(true);
+      return;
+    }
+
     walletSignalRefreshRef.current = lastUpdated;
     fetchWalletPortfolio('refresh');
-  }, [signalData.wallet.lastUpdated, sessionIdentity.type, fetchWalletPortfolio]);
+  }, [signalData.wallet.lastUpdated, sessionIdentity.type, mcpStatus.state, fetchWalletPortfolio]);
 
   const walletPortfolioSummary = useMemo(() => {
-    if (!walletPortfolio && walletPortfolioStatus === 'idle') {
+    if (!walletPortfolio && walletPortfolioStatus === 'idle' && !walletPortfolioPending) {
       return null;
     }
 
@@ -1185,8 +1207,9 @@ export function useDexterAppController(): DexterAppController {
       lastUpdatedIso,
       error: walletPortfolioError,
       balances: walletPortfolio?.balances ?? [],
+      pending: walletPortfolioPending,
     };
-  }, [walletPortfolio, walletPortfolioStatus, walletPortfolioError]);
+  }, [walletPortfolio, walletPortfolioStatus, walletPortfolioError, walletPortfolioPending]);
 
   const handleSignIn = useCallback(async (email: string, captchaToken: string | null): Promise<{ success: boolean; message: string }> => {
     try {
