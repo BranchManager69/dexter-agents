@@ -181,7 +181,7 @@ function computeSummary(renderLabel: string, item: any, structured: any, args: a
       <div className="space-y-2 rounded-md border border-amber-400/30 bg-amber-500/10 p-3 text-sm text-amber-100">
         <div className="text-xs uppercase tracking-[0.24em] text-amber-200">Warnings</div>
         <ul className="space-y-1">
-          {warnings.map((warn, index) => (
+          {warnings.map((warn: string, index: number) => (
             <li key={index}>{warn}</li>
           ))}
         </ul>
@@ -192,7 +192,7 @@ function computeSummary(renderLabel: string, item: any, structured: any, args: a
   };
 }
 
-export const solanaSwapPreviewRenderer: ToolNoteRenderer = ({ item, debug = false, isExpanded, onToggle }) => {
+export const solanaSwapPreviewRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
   const structured = unwrapStructured(rawOutput);
   const args = (item.data as any)?.arguments ?? {};
@@ -234,7 +234,7 @@ export const solanaSwapPreviewRenderer: ToolNoteRenderer = ({ item, debug = fals
   );
 };
 
-export const solanaSwapExecuteRenderer: ToolNoteRenderer = ({ item, debug = false, isExpanded, onToggle }) => {
+export const solanaSwapExecuteRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
   const structured = unwrapStructured(rawOutput);
   const args = (item.data as any)?.arguments ?? {};
@@ -289,4 +289,3 @@ export const solanaSwapExecuteRenderer: ToolNoteRenderer = ({ item, debug = fals
     </div>
   );
 };
-
