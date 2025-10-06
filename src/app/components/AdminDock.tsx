@@ -12,7 +12,6 @@ import {
   FileTextIcon,
   MagicWandIcon,
   Cross2Icon,
-  StarFilledIcon,
 } from "@radix-ui/react-icons";
 
 import { MEMORY_LIMITS } from "@/app/config/memory";
@@ -96,10 +95,29 @@ function formatTimestamp(iso: string | null) {
 }
 
 const dockButtonClass =
-  'pointer-events-auto relative inline-flex min-h-[28px] items-center gap-1 rounded-lg border border-[#F87171]/45 bg-[#190103]/88 px-2 py-1 text-[10px] font-medium leading-none text-[#FEFBF4] shadow-[0_2px_8px_rgba(220,38,38,0.26)] transition hover:border-[#F87171]/70 hover:text-[#FDFEF9] disabled:pointer-events-none disabled:opacity-30 whitespace-nowrap';
+  'pointer-events-auto inline-flex h-7 items-center gap-1 rounded-sm px-2 py-0 text-[10px] font-semibold uppercase tracking-[0.12em] leading-none transition disabled:pointer-events-none disabled:opacity-40 whitespace-nowrap focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FEE2E2]/70';
+
+const adminButtonTone =
+  'bg-[#C81E1E] text-[#FEFBF4] hover:bg-[#EF4444] focus-visible:ring-offset-1 focus-visible:ring-offset-[#280404]';
+
+const superAdminButtonTone =
+  'bg-[#FACC15] text-[#2C1A00] hover:bg-[#EAB308] focus-visible:ring-offset-1 focus-visible:ring-offset-[#2C1500]';
+
+const CrownGlyph = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    role="presentation"
+    aria-hidden="true"
+    className={className}
+    fill="currentColor"
+    stroke="none"
+  >
+    <path d="M4 17.25h16v2.25H4zm1.6-8.9 3.43 4.22 2.19-2.74 2.18 2.74 3.44-4.22 1.66 7.4H3.95z" />
+  </svg>
+);
 
 const panelContainerBase =
-  "rounded-lg border border-[#F87171]/35 bg-[#170203]/94 shadow-[0_18px_36px_rgba(220,38,38,0.26)] backdrop-blur-xl";
+  "rounded-2xl border border-neutral-800/70 bg-surface-raised/95 shadow-elevated backdrop-blur-xl";
 
 export default function AdminDock({
   canUseAdminTools,
@@ -869,7 +887,7 @@ export default function AdminDock({
             {isDockExpanded ? (
               <Cross2Icon className="h-4 w-4 text-[#FDFEF9]" />
             ) : (
-              <StarFilledIcon className="h-3.5 w-3.5 text-[#FDFEF9]" />
+              <CrownGlyph className="h-3.5 w-3.5 text-[#FDFEF9]" />
             )}
             <span className="sr-only">{isDockExpanded ? 'Hide admin tools' : 'Show admin tools'}</span>
           </button>
@@ -887,13 +905,13 @@ export default function AdminDock({
                 <div
                   ref={panelRef}
                   id="admin-dock-panel"
-                  className={`${panelContainerBase} pointer-events-auto flex max-w-[15rem] flex-wrap justify-start gap-1 px-2 py-1.5`}
+                  className="pointer-events-auto flex max-w-[15rem] flex-wrap justify-start gap-1"
                 >
                   <button
                     type="button"
                     ref={memoriesButtonRef}
                     onClick={handleMemoriesToggle}
-                    className={dockButtonClass}
+                    className={`${dockButtonClass} ${adminButtonTone}`}
                     title="View stored memories"
                     aria-haspopup="dialog"
                     aria-expanded={isMemoriesOpen}
@@ -902,7 +920,7 @@ export default function AdminDock({
                     <ReaderIcon className="h-3 w-3" />
                     <span className="text-[10px]">Memories</span>
                     {!isLoadingMemories && badgeCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full border border-[#F87171]/55 bg-[#F87171]/50 px-1 text-[9px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
+                      <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#F87171]/70 px-1 text-[9px] font-semibold leading-none tracking-[0.08em] text-[#FDFEF9]">
                         {badgeLabel}
                       </span>
                     )}
@@ -912,7 +930,7 @@ export default function AdminDock({
                     type="button"
                     ref={dossierButtonRef}
                     onClick={handleDossierToggle}
-                    className={dockButtonClass}
+                    className={`${dockButtonClass} ${adminButtonTone}`}
                     title="Inspect dossier"
                     aria-haspopup="dialog"
                     aria-expanded={isDossierOpen}
@@ -930,7 +948,7 @@ export default function AdminDock({
                         closeAllPanels();
                         onOpenPersonaModal();
                       }}
-                      className={dockButtonClass}
+                      className={`${dockButtonClass} ${adminButtonTone}`}
                       title="Customize Dexter persona"
                       aria-label="Customize Dexter persona"
                     >
@@ -943,7 +961,7 @@ export default function AdminDock({
                     onClick={async () => {
                       await onCopyTranscript();
                     }}
-                    className={dockButtonClass}
+                    className={`${dockButtonClass} ${adminButtonTone}`}
                     title="Copy transcript"
                   >
                     <ClipboardCopyIcon className="h-3 w-3" />
@@ -952,7 +970,7 @@ export default function AdminDock({
 
                   <button
                     onClick={onDownloadAudio}
-                    className={dockButtonClass}
+                    className={`${dockButtonClass} ${adminButtonTone}`}
                     title="Download audio"
                   >
                     <svg
@@ -973,7 +991,7 @@ export default function AdminDock({
 
                   <button
                     onClick={onSaveLog}
-                    className={dockButtonClass}
+                    className={`${dockButtonClass} ${adminButtonTone}`}
                     title="Save conversation log"
                   >
                     <DownloadIcon className="h-3 w-3" />
@@ -985,7 +1003,7 @@ export default function AdminDock({
                       type="button"
                       ref={consoleButtonRef}
                       onClick={handleAdminConsoleToggle}
-                      className={`${dockButtonClass} ${isAdminConsoleOpen ? 'ring-1 ring-[#F87171]/50' : ''}`}
+                      className={`${dockButtonClass} ${adminButtonTone} ${isAdminConsoleOpen ? 'ring-1 ring-[#FEE2E2]/60' : ''}`}
                       title="Open admin console"
                       aria-haspopup="dialog"
                       aria-expanded={isAdminConsoleOpen}
@@ -994,7 +1012,7 @@ export default function AdminDock({
                       <MixerHorizontalIcon className="h-3 w-3" />
                       <span className="text-[10px]">Console</span>
                       {typeof adminConsoleMetadata?.toolCount === 'number' && (
-                        <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full border border-[#F87171]/55 bg-[#F87171]/50 px-1 text-[9px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
+                        <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#F87171]/70 px-1 text-[9px] font-semibold leading-none tracking-[0.08em] text-[#FDFEF9]">
                           {adminConsoleMetadata.toolCount}
                         </span>
                       )}
@@ -1006,7 +1024,7 @@ export default function AdminDock({
                       closeAllPanels();
                       onOpenSignals();
                     }}
-                    className={dockButtonClass}
+                    className={`${dockButtonClass} ${adminButtonTone}`}
                     title="Open signals"
                   >
                     <MixerHorizontalIcon className="h-3 w-3 rotate-90" />
@@ -1019,10 +1037,10 @@ export default function AdminDock({
                         closeAllPanels();
                         onOpenSuperAdmin();
                       }}
-                      className={dockButtonClass}
+                      className={`${dockButtonClass} ${superAdminButtonTone}`}
                       title="Open superadmin panel"
                     >
-                      <StarFilledIcon className="h-3 w-3" />
+                      <CrownGlyph className="h-3 w-3" />
                       <span className="text-[10px]">Super</span>
                     </button>
                   )}
