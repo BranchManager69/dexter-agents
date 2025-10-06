@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { TranscriptItem } from "@/app/types";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { GuardrailChip } from "./GuardrailChip";
@@ -32,6 +33,9 @@ export function TranscriptMessages({
   const [isStartingConversation, setIsStartingConversation] = useState(false);
   const [postPromptsVisible, setPostPromptsVisible] = useState(false);
   const hasShownPostPromptsRef = useRef(false);
+  const [prefersTouch, setPrefersTouch] = useState(false);
+  const [showStartButton, setShowStartButton] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   const scrollToBottom = useCallback(() => {
     const node = transcriptRef.current;
@@ -124,13 +128,54 @@ export function TranscriptMessages({
     }
   }, [postPromptsVisible, realMessageCount]);
 
-  const prefersTouch =
-    typeof window !== "undefined" && window.matchMedia?.("(pointer: coarse)")?.matches === true;
+  useEffect(() => {
+    if (!showEmptyState) {
+      setShowStartButton(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setShowStartButton(true), 4000);
+    return () => window.clearTimeout(timer);
+  }, [showEmptyState]);
+
+  useEffect(() => {
+    if (!showEmptyState || !showStartButton) {
+      setShowPrompt(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => setShowPrompt(true), 2000);
+    return () => window.clearTimeout(timer);
+  }, [showEmptyState, showStartButton]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+
+    const mediaQuery = window.matchMedia("(pointer: coarse)");
+
+    const updatePreference = (event: MediaQueryList | MediaQueryListEvent) => {
+      setPrefersTouch(event.matches);
+    };
+
+    updatePreference(mediaQuery);
+
+    if (typeof mediaQuery.addEventListener === "function") {
+      mediaQuery.addEventListener("change", updatePreference);
+      return () => mediaQuery.removeEventListener("change", updatePreference);
+    }
+
+    mediaQuery.addListener(updatePreference);
+    return () => mediaQuery.removeListener(updatePreference);
+  }, []);
+
   const startPromptLabel = prefersTouch ? "Tap to say hi to Dexter" : "Click to say hi to Dexter";
+  const promptCopy = isStartingConversation ? "Dexter's remembering you..." : startPromptLabel;
+  const promptKey = isStartingConversation ? "starting" : prefersTouch ? "touch" : "pointer";
 
   const handleStartClick = async () => {
     if (!onStartConversation || isStartingConversation) return;
     try {
+      setShowPrompt(true);
       setIsStartingConversation(true);
       await onStartConversation();
     } finally {
@@ -149,16 +194,33 @@ export function TranscriptMessages({
       data-transcript-messages
       className="flex h-full flex-1 flex-col gap-y-4 overflow-auto p-6"
     >
-      {showEmptyState && (
+      {showEmptyState && showStartButton && (
         <div className="flex h-full flex-1 items-center justify-center animate-in fade-in duration-500">
           <div className="text-center">
-            <StartConversationButton
-              onClick={handleStartClick}
-              isLoading={isStartingConversation}
-            />
-            <p className="mt-6 text-sm font-semibold tracking-[0.12em] text-[#FFEDE2] drop-shadow-[0_6px_18px_rgba(0,0,0,0.55)]">
-              {isStartingConversation ? "Dexter's remembering you..." : startPromptLabel}
-            </p>
+            <motion.div
+              initial={{ opacity: 0, y: 22, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 1.8, ease: [0.19, 1, 0.22, 1] }}
+            >
+              <StartConversationButton
+                onClick={handleStartClick}
+                isLoading={isStartingConversation}
+              />
+            </motion.div>
+            <AnimatePresence mode="wait">
+              {showPrompt && (
+                <motion.p
+                  key={promptKey}
+                  className="mt-6 text-base font-semibold tracking-[0.08em] text-[#FFA869] drop-shadow-[0_14px_36px_rgba(0,0,0,0.55)]"
+                  initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                  transition={{ duration: 0.38, ease: [0.22, 0.61, 0.36, 1] }}
+                >
+                  {promptCopy}
+                </motion.p>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       )}

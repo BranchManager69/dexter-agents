@@ -9,6 +9,7 @@ interface TextInputProps {
   placeholder?: string;
   disabled?: boolean;
   autoFocus?: boolean;
+  className?: string;
 }
 
 export function TextInput({
@@ -18,6 +19,7 @@ export function TextInput({
   placeholder = "Ask Dexter anything",
   disabled = false,
   autoFocus = false,
+  className,
 }: TextInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -43,7 +45,7 @@ export function TextInput({
       onKeyDown={handleKeyDown}
       disabled={disabled}
       placeholder={placeholder}
-      className="flex-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-4 py-2.5 text-base text-neutral-100 outline-none transition-all duration-150 ease-out focus:border-flux/50 focus:ring-2 focus:ring-flux/30 disabled:opacity-50 disabled:cursor-not-allowed"
+      className={`flex-1 border-0 bg-transparent px-3 py-1.5 text-base text-neutral-100 outline-none transition-all duration-200 ease-out placeholder:text-neutral-500 focus:text-neutral-50 focus:placeholder:text-neutral-400 disabled:cursor-not-allowed disabled:opacity-60 ${className ?? ""}`}
     />
   );
 }
