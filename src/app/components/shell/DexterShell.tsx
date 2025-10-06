@@ -58,35 +58,37 @@ export function DexterShell({
           <div className="flex w-full flex-1 flex-col overflow-hidden">
             <div className="relative">
               <motion.div
-                className="pointer-events-none absolute -inset-12 sm:-inset-16 lg:-inset-20"
-                initial={{ opacity: 0, scale: 0.85, x: '-18%', y: '-22%' }}
+                className="pointer-events-none absolute -inset-16 sm:-inset-20 lg:-inset-24"
+                initial={{ opacity: 0, scale: 0.9, x: '-18%', y: '-20%' }}
                 animate={{
-                  opacity: heroCollapsed ? 0 : 0.55,
-                  scale: heroCollapsed ? 0.85 : [0.92, 1.05, 0.92],
-                  x: heroCollapsed ? '-18%' : ['-14%', '-20%', '-14%'],
-                  y: heroCollapsed ? '-22%' : ['-18%', '-24%', '-18%'],
+                  opacity: heroCollapsed ? 0 : 0.72,
+                  scale: heroCollapsed ? 0.9 : [0.96, 1.14, 0.96],
+                  x: heroCollapsed ? '-18%' : ['-12%', '-22%', '-12%'],
+                  y: heroCollapsed ? '-20%' : ['-16%', '-24%', '-16%'],
                 }}
-                transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
                 style={{
                   background:
-                    'radial-gradient(circle at center, rgba(255, 215, 164, 0.52), transparent 68%)',
-                  filter: 'blur(70px)',
+                    'radial-gradient(circle at center, rgba(242, 124, 61, 0.78), transparent 74%)',
+                  filter: 'blur(34px)',
+                  mixBlendMode: 'screen',
                 }}
               />
               <motion.div
-                className="pointer-events-none absolute -inset-6 sm:-inset-8 lg:-inset-10"
-                initial={{ opacity: 0, scale: 0.95, x: '12%', y: '18%' }}
+                className="pointer-events-none absolute -inset-8 sm:-inset-10 lg:-inset-12"
+                initial={{ opacity: 0, scale: 0.95, x: '14%', y: '18%' }}
                 animate={{
-                  opacity: heroCollapsed ? 0 : 0.35,
-                  scale: heroCollapsed ? 0.95 : [0.98, 1.06, 0.98],
-                  x: heroCollapsed ? '12%' : ['10%', '16%', '10%'],
-                  y: heroCollapsed ? '18%' : ['16%', '22%', '16%'],
+                  opacity: heroCollapsed ? 0 : 0.58,
+                  scale: heroCollapsed ? 0.95 : [1.02, 1.12, 1.02],
+                  x: heroCollapsed ? '14%' : ['8%', '20%', '8%'],
+                  y: heroCollapsed ? '18%' : ['14%', '26%', '14%'],
                 }}
-                transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{ duration: 16, delay: 1.4, repeat: Infinity, ease: 'easeInOut' }}
                 style={{
                   background:
-                    'radial-gradient(circle at center, rgba(255, 231, 179, 0.38), transparent 70%)',
-                  filter: 'blur(60px)',
+                    'radial-gradient(circle at center, rgba(255, 235, 204, 0.6), transparent 70%)',
+                  filter: 'blur(44px)',
+                  mixBlendMode: 'screen',
                 }}
               />
               <div className={heroSectionClasses}>
