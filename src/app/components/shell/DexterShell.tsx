@@ -62,14 +62,22 @@ export function DexterShell({
     .join(" ");
 
   return (
-    <div className="relative flex h-[100dvh] flex-col overflow-hidden text-foreground">
-
+    <div className="dexter-shell relative flex h-[100dvh] flex-col overflow-hidden text-foreground">
       <motion.header
-        className="dexter-header relative z-30 flex-shrink-0 backdrop-blur-xl"
+        className="dexter-header relative z-30 flex-shrink-0 overflow-visible backdrop-blur-xl"
         initial={{ opacity: 0, y: -110 }}
         animate={chromeReady ? { opacity: 1, y: 0 } : { opacity: 0, y: -110 }}
         transition={{ duration: 0.9, ease: [0.19, 1, 0.22, 1] }}
       >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-[-60px] -top-48 h-[calc(100%+192px)] -z-10 rounded-b-[36px]"
+          style={{
+            background:
+              'linear-gradient(125deg, rgba(255, 146, 63, 0.96) 0%, rgba(255, 101, 0, 0.94) 62%, rgba(255, 173, 120, 0.42) 100%)',
+            boxShadow: '0 14px 28px rgba(26, 12, 6, 0.26)',
+          }}
+        />
         {topBar}
       </motion.header>
 
