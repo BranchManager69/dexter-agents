@@ -58,36 +58,47 @@ export function DexterShell({
           <div className="flex w-full flex-1 flex-col overflow-hidden">
             <div className="relative">
               <motion.div
-                className="pointer-events-none absolute -inset-16 sm:-inset-20 lg:-inset-24"
-                initial={{ opacity: 0, scale: 0.9, x: '-18%', y: '-20%' }}
+                className="pointer-events-none absolute -inset-20 sm:-inset-24 lg:-inset-28"
+                initial={{ opacity: 0, scale: 0.92, x: '-16%', y: '-18%' }}
                 animate={{
-                  opacity: heroCollapsed ? 0 : 0.72,
-                  scale: heroCollapsed ? 0.9 : [0.96, 1.14, 0.96],
-                  x: heroCollapsed ? '-18%' : ['-12%', '-22%', '-12%'],
-                  y: heroCollapsed ? '-20%' : ['-16%', '-24%', '-16%'],
+                  opacity: heroCollapsed ? 0 : [0.5, 0.8],
+                  scale: heroCollapsed ? 0.92 : [0.98, 1.18],
+                  x: heroCollapsed ? '-16%' : ['-12%', '-24%'],
+                  y: heroCollapsed ? '-18%' : ['-12%', '-22%'],
                 }}
-                transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{
+                  duration: 13.5,
+                  repeat: heroCollapsed ? 0 : Infinity,
+                  repeatType: 'mirror',
+                  ease: 'easeInOut',
+                }}
                 style={{
                   background:
-                    'radial-gradient(circle at center, rgba(242, 124, 61, 0.78), transparent 74%)',
-                  filter: 'blur(34px)',
+                    'radial-gradient(140% 120% at 32% 30%, rgba(242, 118, 45, 0.75), transparent 72%)',
+                  filter: 'blur(42px)',
                   mixBlendMode: 'screen',
                 }}
               />
               <motion.div
-                className="pointer-events-none absolute -inset-8 sm:-inset-10 lg:-inset-12"
-                initial={{ opacity: 0, scale: 0.95, x: '14%', y: '18%' }}
+                className="pointer-events-none absolute -inset-10 sm:-inset-14 lg:-inset-16"
+                initial={{ opacity: 0, scale: 0.96, x: '14%', y: '16%' }}
                 animate={{
-                  opacity: heroCollapsed ? 0 : 0.58,
-                  scale: heroCollapsed ? 0.95 : [1.02, 1.12, 1.02],
-                  x: heroCollapsed ? '14%' : ['8%', '20%', '8%'],
-                  y: heroCollapsed ? '18%' : ['14%', '26%', '14%'],
+                  opacity: heroCollapsed ? 0 : [0.45, 0.7],
+                  scale: heroCollapsed ? 0.96 : [1.04, 1.16],
+                  x: heroCollapsed ? '14%' : ['10%', '22%'],
+                  y: heroCollapsed ? '16%' : ['12%', '24%'],
                 }}
-                transition={{ duration: 16, delay: 1.4, repeat: Infinity, ease: 'easeInOut' }}
+                transition={{
+                  duration: 17,
+                  delay: heroCollapsed ? 0 : 1.6,
+                  repeat: heroCollapsed ? 0 : Infinity,
+                  repeatType: 'mirror',
+                  ease: 'easeInOut',
+                }}
                 style={{
                   background:
-                    'radial-gradient(circle at center, rgba(255, 235, 204, 0.6), transparent 70%)',
-                  filter: 'blur(44px)',
+                    'radial-gradient(120% 110% at 68% 58%, rgba(255, 232, 196, 0.62), transparent 70%)',
+                  filter: 'blur(48px)',
                   mixBlendMode: 'screen',
                 }}
               />
