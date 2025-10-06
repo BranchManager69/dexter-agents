@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ClipboardCopyIcon,
   DownloadIcon,
@@ -10,6 +11,7 @@ import {
   ChevronDownIcon,
   FileTextIcon,
   MagicWandIcon,
+  Cross2Icon,
 } from "@radix-ui/react-icons";
 
 import { MEMORY_LIMITS } from "@/app/config/memory";
@@ -71,6 +73,17 @@ type DossierPayload = {
   };
 };
 
+const DOCK_POSITION_STORAGE_KEY = "dexter-admin-dock-position";
+
+type DragState = {
+  pointerId: number;
+  offsetX: number;
+  offsetY: number;
+  startX: number;
+  startY: number;
+  moved: boolean;
+};
+
 function formatTimestamp(iso: string | null) {
   if (!iso) return "Recently";
   const date = new Date(iso);
@@ -82,10 +95,10 @@ function formatTimestamp(iso: string | null) {
 }
 
 const dockButtonClass =
-  'pointer-events-auto flex h-7 w-7 items-center justify-center rounded-md border border-rose-500/50 bg-[#17090c]/85 text-rose-100 transition hover:border-rose-300/70 hover:text-rose-50 disabled:opacity-30 disabled:pointer-events-none shadow-sm';
+  'pointer-events-auto flex h-9 w-9 items-center justify-center rounded-xl border border-[#F26B1A]/45 bg-[#160400]/85 text-[#FEFBF4] shadow-[0_2px_10px_rgba(242,62,1,0.28)] transition hover:border-[#F26B1A]/70 hover:text-[#FDFEF9] disabled:pointer-events-none disabled:opacity-30';
 
 const panelContainerBase =
-  "rounded-2xl border border-rose-500/40 bg-[#1b0c0f]/95 shadow-elevated backdrop-blur-xl";
+  "rounded-2xl border border-[#F26B1A]/35 bg-[#120300]/92 shadow-[0_22px_48px_rgba(242,62,1,0.32)] backdrop-blur-xl";
 
 export default function AdminDock({
   canUseAdminTools,
@@ -104,6 +117,9 @@ export default function AdminDock({
   const [isAdminConsoleOpen, setIsAdminConsoleOpen] = useState(false);
   const [isMemoriesOpen, setIsMemoriesOpen] = useState(false);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const [isDockExpanded, setIsDockExpanded] = useState(false);
+  const [dockPosition, setDockPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   const consoleButtonRef = useRef<HTMLButtonElement | null>(null);
   const consolePanelRef = useRef<HTMLDivElement | null>(null);
@@ -111,6 +127,218 @@ export default function AdminDock({
   const memoriesPanelRef = useRef<HTMLDivElement | null>(null);
   const dossierButtonRef = useRef<HTMLButtonElement | null>(null);
   const dossierPanelRef = useRef<HTMLDivElement | null>(null);
+  const dockRef = useRef<HTMLDivElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const dragStateRef = useRef<DragState | null>(null);
+  const ignoreClickRef = useRef(false);
+  const wasDraggedRef = useRef(false);
+
+  const clampPosition = useCallback(
+    (position: { x: number; y: number }, dimensions?: { width: number; height: number }) => {
+      if (typeof window === "undefined") return position;
+
+      const margin = 12;
+      const dockWidth = dimensions?.width ?? dockRef.current?.offsetWidth ?? 96;
+      const dockHeight = dimensions?.height ?? dockRef.current?.offsetHeight ?? 96;
+
+      let leftOverflow = 0;
+      let rightOverflow = 0;
+      let bottomOverflow = 0;
+
+      if (isDockExpanded && dockRef.current && panelRef.current) {
+        const dockRect = dockRef.current.getBoundingClientRect();
+        const panelRect = panelRef.current.getBoundingClientRect();
+
+        leftOverflow = Math.max(0, dockRect.left - panelRect.left);
+        rightOverflow = Math.max(0, panelRect.right - dockRect.right);
+        bottomOverflow = Math.max(0, panelRect.bottom - dockRect.bottom);
+      }
+
+      const minX = margin + leftOverflow;
+      const maxX = Math.max(window.innerWidth - margin - dockWidth - rightOverflow, margin);
+      const minY = margin;
+      const maxY = Math.max(window.innerHeight - margin - dockHeight - bottomOverflow, margin);
+
+      const nextX = Math.min(Math.max(position.x, minX), maxX);
+      const nextY = Math.min(Math.max(position.y, minY), maxY);
+
+      return { x: nextX, y: nextY };
+    },
+    [isDockExpanded],
+  );
+
+  const persistPosition = useCallback((position: { x: number; y: number }) => {
+    if (typeof window === "undefined") return;
+    try {
+      window.sessionStorage.setItem(DOCK_POSITION_STORAGE_KEY, JSON.stringify(position));
+    } catch (error) {
+      console.warn("[admin-dock] failed to persist position", error);
+    }
+  }, []);
+
+  const handleDragPointerDown = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isHydrated || !dockRef.current) return;
+    if (event.button && event.button !== 0) return;
+    ignoreClickRef.current = false;
+    const rect = dockRef.current.getBoundingClientRect();
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      startX: event.clientX,
+      startY: event.clientY,
+      moved: false,
+    };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }, [isHydrated]);
+
+  const handleDragPointerMove = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId || !dockRef.current) {
+      return;
+    }
+
+    const deltaX = Math.abs(event.clientX - dragState.startX);
+    const deltaY = Math.abs(event.clientY - dragState.startY);
+    if (!dragState.moved && (deltaX > 3 || deltaY > 3)) {
+      dragState.moved = true;
+    }
+
+    const bounds = {
+      width: dockRef.current.offsetWidth,
+      height: dockRef.current.offsetHeight,
+    };
+
+    const nextPosition = clampPosition({
+      x: event.clientX - dragState.offsetX,
+      y: event.clientY - dragState.offsetY,
+    }, bounds);
+
+    setDockPosition((prev) => {
+      if (prev && prev.x === nextPosition.x && prev.y === nextPosition.y) {
+        return prev;
+      }
+      return nextPosition;
+    });
+  }, [clampPosition]);
+
+  const handleDragPointerUp = useCallback((event: React.PointerEvent<HTMLButtonElement>) => {
+    const dragState = dragStateRef.current;
+    if (!dragState || dragState.pointerId !== event.pointerId) {
+      return;
+    }
+
+    dragStateRef.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+
+    if (dockRef.current) {
+      const rect = dockRef.current.getBoundingClientRect();
+      const finalPosition = clampPosition({ x: rect.left, y: rect.top }, {
+        width: rect.width,
+        height: rect.height,
+      });
+      setDockPosition(finalPosition);
+      persistPosition(finalPosition);
+    }
+
+    if (dragState.moved) {
+      ignoreClickRef.current = true;
+      wasDraggedRef.current = true;
+      window.setTimeout(() => {
+        ignoreClickRef.current = false;
+        wasDraggedRef.current = false;
+      }, 120);
+    }
+  }, [clampPosition, persistPosition]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setIsHydrated(true);
+
+    const stored = window.sessionStorage.getItem(DOCK_POSITION_STORAGE_KEY);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed && typeof parsed.x === "number" && typeof parsed.y === "number") {
+          setDockPosition(clampPosition(parsed));
+        }
+      } catch (error) {
+        console.warn("[admin-dock] failed to parse stored position", error);
+      }
+    }
+
+    if (!dockPosition) {
+      const defaultWidth = 80;
+      const defaultHeight = 96;
+      const fallback = clampPosition({
+        x: Math.max(window.innerWidth - defaultWidth - 32, 16),
+        y: Math.max(window.innerHeight - defaultHeight - 32, 16),
+      });
+      setDockPosition(fallback);
+    }
+
+    const handleResize = () => {
+      setDockPosition((prev) => {
+        if (!prev) return prev;
+        const clamped = clampPosition(prev);
+        if (clamped.x === prev.x && clamped.y === prev.y) {
+          return prev;
+        }
+        persistPosition(clamped);
+        return clamped;
+      });
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [clampPosition, dockPosition, persistPosition]);
+
+  useEffect(() => {
+    if (!dockPosition) return;
+    setDockPosition((prev) => {
+      if (!prev) return prev;
+      const clamped = clampPosition(prev);
+      if (clamped.x === prev.x && clamped.y === prev.y) {
+        return prev;
+      }
+      persistPosition(clamped);
+      return clamped;
+    });
+  }, [isDockExpanded, clampPosition, dockPosition, persistPosition]);
+
+  const closeAllPanels = useCallback(() => {
+    setIsAdminConsoleOpen(false);
+    setIsMemoriesOpen(false);
+    setIsDossierOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isDockExpanded) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (dockRef.current?.contains(target)) return;
+      setIsDockExpanded(false);
+      closeAllPanels();
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsDockExpanded(false);
+        closeAllPanels();
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown, true);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown, true);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDockExpanded, closeAllPanels]);
 
   const [consolePlacement, setConsolePlacement] = useState<
     | {
@@ -151,11 +379,11 @@ export default function AdminDock({
   const [dossierError, setDossierError] = useState<string | null>(null);
   const [dossierData, setDossierData] = useState<DossierPayload | null>(null);
 
-  const closeAllPanels = useCallback(() => {
-    setIsAdminConsoleOpen(false);
-    setIsMemoriesOpen(false);
-    setIsDossierOpen(false);
-  }, []);
+  useEffect(() => {
+    if (!isDockExpanded) {
+      closeAllPanels();
+    }
+  }, [isDockExpanded, closeAllPanels]);
 
   const updateConsolePlacement = useCallback(() => {
     if (!consoleButtonRef.current) return;
@@ -605,138 +833,185 @@ export default function AdminDock({
     return null;
   }
 
+  const handleDockToggle = () => {
+    if (ignoreClickRef.current || wasDraggedRef.current) return;
+    setIsDockExpanded((prev) => !prev);
+  };
+
+  const dockStyle: React.CSSProperties = dockPosition
+    ? { top: dockPosition.y, left: dockPosition.x }
+    : { bottom: 24, right: 24 };
+
   return (
     <>
-      <div className="pointer-events-none fixed bottom-5 right-4 z-40 flex flex-col items-end gap-2 sm:right-6 md:right-8 lg:right-10">
-        <div className="pointer-events-auto flex flex-col items-center gap-2 rounded-2xl border border-rose-500/30 bg-[#12060a]/85 p-2 shadow-[0_12px_28px_rgba(255,63,94,0.18)] backdrop-blur md:p-2.5">
+      <div ref={dockRef} className="fixed z-40" style={dockStyle}>
+        <div className="relative flex flex-col items-center">
           <button
             type="button"
-            ref={memoriesButtonRef}
-            onClick={handleMemoriesToggle}
-            className={`${dockButtonClass} relative`}
-            title="View stored memories"
-            aria-haspopup="dialog"
-            aria-expanded={isMemoriesOpen}
-            aria-label="Open memories panel"
+            className={`group flex h-12 w-12 items-center justify-center rounded-full border border-[#F26B1A]/45 bg-gradient-to-br from-[#F26B1A] via-[#F23E01] to-[#F26B1A] shadow-[0_18px_40px_rgba(242,62,1,0.45)] transition focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#2C0A00] ${isDockExpanded ? 'ring-2 ring-[#FEFBF4]/45' : ''}`}
+            aria-expanded={isDockExpanded}
+            aria-controls="admin-dock-panel"
+            onClick={handleDockToggle}
+            onPointerDown={handleDragPointerDown}
+            onPointerMove={handleDragPointerMove}
+            onPointerUp={handleDragPointerUp}
+            onPointerCancel={handleDragPointerUp}
           >
-            <ReaderIcon className="h-3.5 w-3.5" />
-            {!isLoadingMemories && badgeCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full border border-rose-500/50 bg-rose-500/40 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-rose-50">
-                {badgeLabel}
-              </span>
+            {isDockExpanded ? (
+              <Cross2Icon className="h-4 w-4 text-[#FDFEF9]" />
+            ) : (
+              <MixerHorizontalIcon className="h-5 w-5 text-[#FDFEF9]" />
             )}
+            <span className="sr-only">{isDockExpanded ? 'Hide admin tools' : 'Show admin tools'}</span>
           </button>
 
-          <button
-            type="button"
-            ref={dossierButtonRef}
-            onClick={handleDossierToggle}
-            className={dockButtonClass}
-            title="Inspect dossier"
-            aria-haspopup="dialog"
-            aria-expanded={isDossierOpen}
-            aria-label="Open dossier panel"
-            disabled={!dossierSupabaseUserId}
-          >
-            <FileTextIcon className="h-3.5 w-3.5" />
-          </button>
+          <AnimatePresence>
+            {isDockExpanded && (
+              <motion.div
+                key="admin-dock-panel"
+                initial={{ opacity: 0, y: -8, scale: 0.94 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.94 }}
+                transition={{ duration: 0.18, ease: 'easeOut' }}
+                className="pointer-events-none absolute left-1/2 top-full mt-3 -translate-x-1/2"
+              >
+                <div
+                  ref={panelRef}
+                  id="admin-dock-panel"
+                  className={`${panelContainerBase} pointer-events-auto flex max-w-[17rem] flex-wrap justify-center gap-2 px-4 py-3`}
+                >
+                  <button
+                    type="button"
+                    ref={memoriesButtonRef}
+                    onClick={handleMemoriesToggle}
+                    className={`${dockButtonClass} relative`}
+                    title="View stored memories"
+                    aria-haspopup="dialog"
+                    aria-expanded={isMemoriesOpen}
+                    aria-label="Open memories panel"
+                  >
+                    <ReaderIcon className="h-4 w-4" />
+                    {!isLoadingMemories && badgeCount > 0 && (
+                      <span className="absolute -top-1.5 -right-1.5 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full border border-[#F26B1A]/55 bg-[#F26B1A]/45 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
+                        {badgeLabel}
+                      </span>
+                    )}
+                  </button>
 
-          {onOpenPersonaModal && (
-            <button
-              type="button"
-              onClick={() => {
-                closeAllPanels();
-                onOpenPersonaModal();
-              }}
-              className={dockButtonClass}
-              title="Customize Dexter persona"
-              aria-label="Customize Dexter persona"
-            >
-              <MagicWandIcon className="h-3.5 w-3.5" />
-            </button>
-          )}
+                  <button
+                    type="button"
+                    ref={dossierButtonRef}
+                    onClick={handleDossierToggle}
+                    className={dockButtonClass}
+                    title="Inspect dossier"
+                    aria-haspopup="dialog"
+                    aria-expanded={isDossierOpen}
+                    aria-label="Open dossier panel"
+                    disabled={!dossierSupabaseUserId}
+                  >
+                    <FileTextIcon className="h-4 w-4" />
+                  </button>
 
-          <button
-            onClick={async () => {
-              await onCopyTranscript();
-            }}
-            className={dockButtonClass}
-            title="Copy transcript"
-          >
-            <ClipboardCopyIcon className="h-3.5 w-3.5" />
-          </button>
+                  {onOpenPersonaModal && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        closeAllPanels();
+                        onOpenPersonaModal();
+                      }}
+                      className={dockButtonClass}
+                      title="Customize Dexter persona"
+                      aria-label="Customize Dexter persona"
+                    >
+                      <MagicWandIcon className="h-4 w-4" />
+                    </button>
+                  )}
 
-          <button
-            onClick={onDownloadAudio}
-            className={dockButtonClass}
-            title="Download audio"
-          >
-            <svg
-              className="h-3.5 w-3.5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M9 18V5l12-2v13" />
-              <circle cx="6" cy="18" r="3" />
-              <circle cx="18" cy="16" r="3" />
-            </svg>
-          </button>
+                  <button
+                    onClick={async () => {
+                      await onCopyTranscript();
+                    }}
+                    className={dockButtonClass}
+                    title="Copy transcript"
+                  >
+                    <ClipboardCopyIcon className="h-4 w-4" />
+                  </button>
 
-          <button
-            onClick={onSaveLog}
-            className={dockButtonClass}
-            title="Save conversation log"
-          >
-            <DownloadIcon className="h-3.5 w-3.5" />
-          </button>
+                  <button
+                    onClick={onDownloadAudio}
+                    className={dockButtonClass}
+                    title="Download audio"
+                  >
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M9 18V5l12-2v13" />
+                      <circle cx="6" cy="18" r="3" />
+                      <circle cx="18" cy="16" r="3" />
+                    </svg>
+                  </button>
 
-          {renderAdminConsole && (
-            <button
-              type="button"
-              ref={consoleButtonRef}
-              onClick={handleAdminConsoleToggle}
-            className={`${dockButtonClass} relative ${isAdminConsoleOpen ? 'ring-2 ring-rose-400/35' : ''}`}
-              title="Open admin console"
-              aria-haspopup="dialog"
-              aria-expanded={isAdminConsoleOpen}
-              aria-label="Open admin console"
-            >
-              <MixerHorizontalIcon className="h-3.5 w-3.5" />
-              {typeof adminConsoleMetadata?.toolCount === 'number' && (
-                <span className="absolute -top-1 -right-1 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full border border-rose-500/50 bg-rose-500/40 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-rose-50">
-                  {adminConsoleMetadata.toolCount}
-                </span>
-              )}
-            </button>
-          )}
+                  <button
+                    onClick={onSaveLog}
+                    className={dockButtonClass}
+                    title="Save conversation log"
+                  >
+                    <DownloadIcon className="h-4 w-4" />
+                  </button>
 
-          <button
-            onClick={() => {
-              closeAllPanels();
-              onOpenSignals();
-            }}
-            className={dockButtonClass}
-            title="Open signals"
-          >
-            <MixerHorizontalIcon className="h-3.5 w-3.5 rotate-90" />
-          </button>
+                  {renderAdminConsole && (
+                    <button
+                      type="button"
+                      ref={consoleButtonRef}
+                      onClick={handleAdminConsoleToggle}
+                      className={`${dockButtonClass} relative ${isAdminConsoleOpen ? 'ring-1 ring-[#F26B1A]/50' : ''}`}
+                      title="Open admin console"
+                      aria-haspopup="dialog"
+                      aria-expanded={isAdminConsoleOpen}
+                      aria-label="Open admin console"
+                    >
+                      <MixerHorizontalIcon className="h-4 w-4" />
+                      {typeof adminConsoleMetadata?.toolCount === 'number' && (
+                        <span className="absolute -top-1.5 -right-1.5 flex min-h-[16px] min-w-[16px] items-center justify-center rounded-full border border-[#F26B1A]/55 bg-[#F26B1A]/45 px-1 text-[10px] font-medium leading-none tracking-[0.08em] text-[#FDFEF9]">
+                          {adminConsoleMetadata.toolCount}
+                        </span>
+                      )}
+                    </button>
+                  )}
 
-          {showSuperAdminTools && onOpenSuperAdmin && (
-            <button
-              onClick={() => {
-                closeAllPanels();
-                onOpenSuperAdmin();
-              }}
-            className={dockButtonClass}
-              title="Open superadmin panel"
-            >
-              <span className="text-[11px] font-semibold tracking-wider">SA</span>
-            </button>
-          )}
+                  <button
+                    onClick={() => {
+                      closeAllPanels();
+                      onOpenSignals();
+                    }}
+                    className={dockButtonClass}
+                    title="Open signals"
+                  >
+                    <MixerHorizontalIcon className="h-4 w-4 rotate-90" />
+                  </button>
+
+                  {showSuperAdminTools && onOpenSuperAdmin && (
+                    <button
+                      onClick={() => {
+                        closeAllPanels();
+                        onOpenSuperAdmin();
+                      }}
+                      className={dockButtonClass}
+                      title="Open superadmin panel"
+                    >
+                      <span className="text-[11px] font-semibold tracking-wider">SA</span>
+                    </button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 

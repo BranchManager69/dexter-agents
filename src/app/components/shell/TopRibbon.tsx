@@ -3,6 +3,7 @@ import { SessionStatus } from "@/app/types";
 import type { DexterUserBadge } from "@/app/types";
 import { AuthMenu } from "@/app/components/AuthMenu";
 import { DexterAnimatedCrest } from "@/app/components/DexterAnimatedCrest";
+import { resolveUserBadgeTextClass, UserBadgeVariant } from "@/app/components/UserBadge";
 
 interface SessionIdentitySummary {
   type: "guest" | "user";
@@ -95,18 +96,34 @@ function formatWalletAddress(address?: string | null) {
   return `${address.slice(0, 4)}…${address.slice(-4)}`;
 }
 
-function resolveSessionLabel(identity: SessionIdentitySummary, userBadge?: DexterUserBadge | null) {
-  if (identity.type !== 'user') {
-    return 'Demo';
+function resolveSessionRoleVariant(identity: SessionIdentitySummary, userBadge?: DexterUserBadge | null): UserBadgeVariant {
+  if (userBadge === 'dev' || userBadge === 'pro') {
+    return userBadge;
   }
 
-  if (userBadge === 'dev') return 'Dev';
-  if (userBadge === 'pro') return 'Pro';
+  if (identity.type !== 'user') {
+    return 'demo';
+  }
 
   const normalizedRoles = (identity.user?.roles ?? []).map((role) => role.toLowerCase());
-  if (identity.user?.isSuperAdmin || normalizedRoles.includes('superadmin')) return 'Super Admin';
-  if (normalizedRoles.includes('admin')) return 'Admin';
-  return 'User';
+  if (identity.user?.isSuperAdmin || normalizedRoles.includes('superadmin')) return 'dev';
+  if (normalizedRoles.includes('admin')) return 'admin';
+  return 'user';
+}
+
+function resolveSessionLabel(variant: UserBadgeVariant) {
+  switch (variant) {
+    case 'dev':
+      return 'Dev';
+    case 'pro':
+      return 'Pro';
+    case 'admin':
+      return 'Admin';
+    case 'user':
+      return 'User';
+    default:
+      return 'Demo';
+  }
 }
 
 export function TopRibbon({
@@ -124,7 +141,9 @@ export function TopRibbon({
   userBadge,
 }: TopRibbonProps) {
   const statusVisual = getStatusVisual(sessionStatus);
-  const sessionLabel = resolveSessionLabel(sessionIdentity, userBadge);
+  const sessionVariant = resolveSessionRoleVariant(sessionIdentity, userBadge);
+  const sessionLabel = resolveSessionLabel(sessionVariant);
+  const sessionToneClass = resolveUserBadgeTextClass(sessionVariant);
   const mcpText = getMcpLabel(mcpStatus.state, mcpStatus.label);
   const walletLabel = formatWalletAddress(sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined);
 
@@ -170,16 +189,28 @@ export function TopRibbon({
         </div>
 
         <div className="ml-auto flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[8.5px] font-semibold uppercase tracking-[0.2em] text-[#FFF3E3]/85 scrollbar-hide">
-          <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]">
-            {sessionLabel}
+          <span className="relative flex flex-shrink-0 items-center leading-none">
+            <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] uppercase tracking-[0.38em] text-[#FEFBF4]/50 leading-none">
+              Role
+            </span>
+            <span className={`leading-none ${sessionToneClass}`}>{sessionLabel}</span>
           </span>
 
-          <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]/75" title={mcpStatus.detail || `MCP: ${mcpStatus.label}`}>
-            {mcpText}
+          <span
+            className="relative flex flex-shrink-0 items-center text-[#FEFBF4]/75 leading-none"
+            title={mcpStatus.detail || `MCP: ${mcpStatus.label}`}
+          >
+            <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] uppercase tracking-[0.38em] text-[#FEFBF4]/40 leading-none">
+              MCP
+            </span>
+            <span className="leading-none">{mcpText}</span>
           </span>
 
-          <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]">
-            <span className="tracking-[0.18em] text-[#FEFBF4]">{walletLabel}</span>
+          <span className="relative flex flex-shrink-0 items-center text-[#FEFBF4] leading-none">
+            <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] uppercase tracking-[0.38em] text-[#FEFBF4]/50 leading-none">
+              Wallet
+            </span>
+            <span className="tracking-[0.18em] text-[#FEFBF4] leading-none">{walletLabel}</span>
           </span>
 
           {walletSecondaryText && (
