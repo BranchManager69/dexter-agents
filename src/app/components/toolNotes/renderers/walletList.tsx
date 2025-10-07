@@ -1,86 +1,176 @@
 import type { ToolNoteRenderer } from "./types";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
 import {
-  BASE_CARD_CLASS,
-  HashBadge,
-  SECTION_TITLE_CLASS,
-  normalizeOutput,
-  unwrapStructured,
-} from "./helpers";
+  ChatKitWidgetRenderer,
+  type Badge,
+  type Card,
+  type ListView,
+  type ListViewItem,
+  type ChatKitWidgetComponent,
+} from "../ChatKitWidgetRenderer";
+
+type Alignment = "start" | "center" | "end" | "stretch";
+
+type WalletRecord = {
+  address?: string;
+  public_key?: string;
+  label?: string;
+  status?: string;
+  is_default?: boolean;
+};
+
+type UserRecord = {
+  id?: string;
+};
 
 const walletListRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
+  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
   const payload = unwrapStructured(rawOutput);
 
-  const user = payload && typeof payload === "object" ? (payload as any).user : null;
-  const wallets = Array.isArray((payload as any)?.wallets) ? (payload as any).wallets : [];
+  const user: UserRecord | null = payload && typeof payload === "object" ? (payload as any).user ?? null : null;
+  const wallets: WalletRecord[] = Array.isArray((payload as any)?.wallets) ? (payload as any).wallets : [];
+
+  const headerCard: Card = {
+    type: "Card",
+    id: "wallet-list-header",
+    children: [
+      {
+        type: "Row",
+        justify: "between",
+        align: "center",
+        children: [
+          {
+            type: "Col",
+            gap: 4,
+            children: [
+              { type: "Title", value: "Linked Wallets", size: "md" },
+              item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
+            ].filter(Boolean) as ChatKitWidgetComponent[],
+          },
+          {
+            type: "Badge",
+            label: `${wallets.length} wallet${wallets.length === 1 ? "" : "s"}`,
+            color: "secondary",
+            variant: "outline",
+          } as Badge,
+        ],
+      },
+    ],
+  };
+
+  const listItems: ListViewItem[] = wallets.map((wallet, index) => {
+    const address = typeof wallet.address === "string"
+      ? wallet.address
+      : typeof wallet.public_key === "string"
+        ? wallet.public_key
+        : null;
+    const label = typeof wallet.label === "string" && wallet.label.trim().length > 0
+      ? wallet.label.trim()
+      : null;
+    const status = typeof wallet.status === "string" ? wallet.status : null;
+    const isDefault = Boolean(wallet.is_default);
+    const display = label || (address ? `${address.slice(0, 4)}…${address.slice(-4)}` : `Wallet ${index + 1}`);
+
+    const badges: Badge[] = [];
+    if (isDefault) badges.push({ type: "Badge", label: "Default", color: "success", variant: "outline", size: "sm", pill: true });
+    if (status) badges.push({ type: "Badge", label: status, color: "secondary", variant: "outline", size: "sm", pill: true });
+
+    const actions: ChatKitWidgetComponent[] = [];
+    if (address) {
+      actions.push({
+        type: "Button",
+        label: "Copy",
+        onClickAction: { type: "copy", payload: { value: address } },
+        variant: "outline",
+        size: "sm",
+      });
+      actions.push({
+        type: "Button",
+        label: "Solscan",
+        onClickAction: { type: "open_url", payload: { url: `https://solscan.io/account/${address}` } },
+        variant: "outline",
+        size: "sm",
+      });
+    }
+
+    return {
+      type: "ListViewItem",
+      id: address ?? `wallet-${index}`,
+      children: [
+        {
+          type: "Row",
+          justify: "between",
+          align: "center" as Alignment,
+          children: [
+            { type: "Text", value: display, weight: "semibold", size: "sm" },
+            badges.length ? { type: "Row", gap: 6, children: badges } : undefined,
+          ].filter(Boolean) as ChatKitWidgetComponent[],
+        },
+        actions.length ? { type: "Row", gap: 6, wrap: "wrap", children: actions } : undefined,
+      ].filter(Boolean) as ChatKitWidgetComponent[],
+    };
+  });
+
+  const widgets: Array<Card | ListView> = [headerCard];
+
+  if (user?.id) {
+    widgets.push({
+      type: "Card",
+      id: "wallet-list-user",
+      children: [
+        {
+          type: "Row",
+          justify: "between",
+          align: "center" as Alignment,
+          children: [
+            { type: "Caption", value: "Supabase user", size: "xs" },
+            {
+              type: "Button",
+              label: String(user.id),
+              onClickAction: { type: "copy", payload: { value: String(user.id) } },
+              variant: "outline",
+              size: "sm",
+            },
+          ],
+        },
+      ],
+    } as Card);
+  }
+
+  if (wallets.length) {
+    widgets.push({
+      type: "ListView",
+      id: "wallet-list",
+      children: listItems,
+    } as ListView);
+  } else {
+    widgets.push({
+      type: "Card",
+      id: "wallet-list-empty",
+      children: [{ type: "Text", value: "No wallets linked to this account.", size: "sm" }],
+    } as Card);
+  }
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className={SECTION_TITLE_CLASS}>Linked Wallets</div>
-          <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
-        </div>
-        <div className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#FFE4CF]">
-          {wallets.length} wallet{wallets.length === 1 ? "" : "s"}
-        </div>
-      </div>
-
-      {user?.id && (
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="text-xs uppercase tracking-[0.24em] text-[#F0BFA1]">Supabase user</span>
-          <HashBadge value={String(user.id)} />
-        </div>
-      )}
-
-      {wallets.length > 0 ? (
-        <div className="mt-4 space-y-3">
-          {wallets.map((wallet: any, index: number) => {
-            const address = typeof wallet?.address === "string" ? wallet.address : typeof wallet?.public_key === "string" ? wallet.public_key : null;
-            const label = typeof wallet?.label === "string" && wallet.label.trim().length > 0 ? wallet.label : null;
-            const status = typeof wallet?.status === "string" ? wallet.status : null;
-            const isDefault = Boolean(wallet?.is_default);
-            return (
-              <div key={address ?? index} className="rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="text-sm font-semibold text-[#FFF6EC]">
-                    {label || (address ? `${address.slice(0, 4)}…${address.slice(-4)}` : `Wallet ${index + 1}`)}
-                  </div>
-                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.2em] text-[#F9D9C3]">
-                    {isDefault && <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-[2px] text-emerald-200">Default</span>}
-                    {status && <span className="rounded-full border border-[#F7BE8A]/30 px-2 py-[2px] text-[#FFE4CF]">{status}</span>}
-                  </div>
-                </div>
-                {address && (
-                  <div className="mt-2">
-                    <HashBadge value={address} href={`https://solscan.io/account/${address}`} ariaLabel="Wallet address" />
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-[#F7BE8A]/24 px-4 py-6 text-center text-sm text-[#F9D9C3]">
-          No wallets linked to this account.
-        </div>
-      )}
-
+      <ChatKitWidgetRenderer widgets={widgets} />
       {debug && (
-        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+        <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
+          <summary
+            className="cursor-pointer text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+            onClick={(event) => {
+              event.preventDefault();
+              onToggle();
+            }}
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </button>
+          </summary>
           {isExpanded && (
             <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
               {JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}
-        </div>
+        </details>
       )}
     </div>
   );

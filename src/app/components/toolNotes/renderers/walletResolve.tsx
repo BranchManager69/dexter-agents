@@ -1,11 +1,13 @@
 import type { ToolNoteRenderer } from "./types";
+import { BASE_CARD_CLASS, normalizeOutput, resolveSourceBadge } from "./helpers";
 import {
-  BASE_CARD_CLASS,
-  HashBadge,
-  SECTION_TITLE_CLASS,
-  normalizeOutput,
-  resolveSourceBadge,
-} from "./helpers";
+  ChatKitWidgetRenderer,
+  type Badge,
+  type Card,
+  type ChatKitWidgetComponent,
+} from "../ChatKitWidgetRenderer";
+
+type Alignment = "start" | "center" | "end" | "stretch";
 
 const resolveWalletRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
   const normalized = normalizeOutput(item.data as Record<string, any> | undefined);
@@ -56,70 +58,155 @@ const resolveWalletRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, d
     return null;
   };
 
-  const walletAddress = extractAddress(payload) ?? extractAddress(rawOutput) ?? extractAddress((item.data as any)?.output) ?? null;
+  const walletAddress = extractAddress(payload)
+    ?? extractAddress(rawOutput)
+    ?? extractAddress((item.data as any)?.output)
+    ?? null;
   const rawSource = typeof (payload as any)?.source === "string" ? (payload as any).source : null;
   const userId = typeof (payload as any)?.user_id === "string" ? (payload as any).user_id : null;
   const requestedWallet = typeof args?.wallet_address === "string" ? args.wallet_address : null;
   const derivedSource = rawSource
     ? rawSource
     : userId
-      ? 'primary'
+      ? "primary"
       : walletAddress
-        ? 'demo'
+        ? "demo"
         : null;
   const sourceBadge = resolveSourceBadge(derivedSource);
 
-  const hasRawDetails = debug && Object.keys(rawOutput || {}).length > 0;
+  const rows: ChatKitWidgetComponent[] = [];
+  const resolvedChildren: ChatKitWidgetComponent[] = walletAddress
+    ? [
+        {
+          type: "Button",
+          label: `Copy ${walletAddress.slice(0, 4)}…${walletAddress.slice(-4)}`,
+          onClickAction: { type: "copy", payload: { value: walletAddress } },
+          variant: "outline",
+          size: "sm",
+        },
+        {
+          type: "Button",
+          label: "View on Solscan",
+          onClickAction: { type: "open_url", payload: { url: `https://solscan.io/account/${walletAddress}` } },
+          variant: "outline",
+          size: "sm",
+        },
+      ]
+    : [{ type: "Text", value: "No wallet resolved", size: "sm" }];
+
+  rows.push({
+    type: "Row",
+    justify: "between",
+    align: "center" as Alignment,
+    children: [
+      { type: "Caption", value: "Resolved", size: "xs" },
+      {
+        type: "Row",
+        gap: 6,
+        wrap: "wrap",
+        align: "center" as Alignment,
+        children: resolvedChildren,
+      },
+    ],
+  });
+
+  if (userId) {
+    rows.push({
+      type: "Row",
+      justify: "between",
+      align: "center" as Alignment,
+      children: [
+        { type: "Caption", value: "Supabase user", size: "xs" },
+        {
+          type: "Button",
+          label: userId,
+          onClickAction: { type: "copy", payload: { value: userId } },
+          variant: "outline",
+          size: "sm",
+        },
+      ],
+    });
+  }
+
+  if (requestedWallet) {
+    rows.push({
+      type: "Row",
+      justify: "between",
+      align: "center" as Alignment,
+      children: [
+        { type: "Caption", value: "Requested", size: "xs" },
+        {
+          type: "Button",
+          label: requestedWallet,
+          onClickAction: { type: "copy", payload: { value: requestedWallet } },
+          variant: "outline",
+          size: "sm",
+        },
+      ],
+    });
+  }
+
+  const widgets: Card[] = [
+    {
+      type: "Card",
+      id: "wallet-resolve-header",
+      children: [
+        {
+          type: "Row",
+          justify: "between",
+          align: "center",
+          children: [
+            {
+              type: "Col",
+              gap: 4,
+              children: [
+                { type: "Title", value: "Active Wallet", size: "md" },
+                item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
+              ].filter(Boolean) as ChatKitWidgetComponent[],
+            },
+            {
+              type: "Badge",
+              label: sourceBadge.label,
+              color: "secondary",
+              variant: "outline",
+            } as Badge,
+          ],
+        },
+      ],
+    },
+    {
+      type: "Card",
+      id: "wallet-resolve-details",
+      children: [
+        {
+          type: "Col",
+          gap: 8,
+          children: rows,
+        },
+      ],
+    },
+  ];
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className={SECTION_TITLE_CLASS}>Active Wallet</div>
-          <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
-        </div>
-        <span className={sourceBadge.className}>{sourceBadge.label}</span>
-      </div>
-
-      <div className="mt-4 space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs uppercase tracking-[0.24em] text-[#F0BFA1]">Resolved</span>
-          {walletAddress ? (
-            <HashBadge value={walletAddress} />
-          ) : (
-            <span className="text-sm text-[#F0BFA1]">No wallet resolved</span>
-          )}
-        </div>
-        {userId && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs uppercase tracking-[0.24em] text-[#F0BFA1]">Supabase user</span>
-            <HashBadge value={userId} />
-          </div>
-        )}
-      </div>
-
-      {requestedWallet && (
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-[#F9D9C3]">
-          <span className="uppercase tracking-[0.24em]">Requested</span>
-          <HashBadge value={requestedWallet} />
-        </div>
-      )}
-
-      {hasRawDetails && (
-        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+      <ChatKitWidgetRenderer widgets={widgets} />
+      {debug && (
+        <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
+          <summary
+            className="cursor-pointer text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+            onClick={(event) => {
+              event.preventDefault();
+              onToggle();
+            }}
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </button>
+          </summary>
           {isExpanded && (
             <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
               {JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}
-        </div>
+        </details>
       )}
     </div>
   );
