@@ -34,6 +34,13 @@ yarn-error.log*
 # Ignore all env files except .env.sample
 .env
 
+# dev docs
+docs/dev-docs
+
+# dev server logs
+dev-server.log
+
+###
 
 # vercel
 .vercel
