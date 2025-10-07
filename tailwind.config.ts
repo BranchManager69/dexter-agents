@@ -52,7 +52,7 @@ export default {
         },
       },
       fontFamily: {
-        display: ["Space Grotesk", "Inter", "sans-serif"],
+        display: ["Satoshi", "Space Grotesk", "Inter", "sans-serif"],
         body: ["IBM Plex Sans", "Inter", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },

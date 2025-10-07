@@ -34,7 +34,10 @@ export function Hero({ className, title, subtitle, loading = false }: HeroProps)
             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             data-hero-anchor
           >
-            <div data-hero-heading className="font-display text-3xl tracking-tight text-[#6B320F]">
+            <div
+              data-hero-heading
+              className="font-display text-[32px] leading-[1.1] tracking-tight text-[#6B320F] sm:text-[40px] font-semibold"
+            >
               {title}
             </div>
             <p className="mt-2 max-w-2xl text-sm text-[#A75A26]">

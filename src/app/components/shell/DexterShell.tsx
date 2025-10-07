@@ -26,7 +26,7 @@ export function DexterShell({
   statusBar,
   mobileOverlay,
 }: DexterShellProps) {
-  const heroPadding = heroCollapsed ? "pt-1" : "pt-4";
+  const heroPadding = heroCollapsed ? "pt-2" : "pt-6 sm:pt-8";
 
   const [chromeReady, setChromeReady] = React.useState(false);
   const [heroReady, setHeroReady] = React.useState(false);
