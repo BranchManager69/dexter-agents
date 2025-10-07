@@ -1205,10 +1205,12 @@ export function useDexterAppController(): DexterAppController {
     width: number;
     height: number;
   } | null>(null);
+  const [mcpJwtRoles, setMcpJwtRoles] = useState<string[]>([]);
 
   useEffect(() => {
     if (!hasActivatedSession) {
       setCrestOrigin(null);
+      setMcpJwtRoles([]);
     }
   }, [hasActivatedSession]);
 
@@ -1393,6 +1395,10 @@ export function useDexterAppController(): DexterAppController {
     hasFlushedSessionRef.current = false;
 
     const dexterSession = data?.dexter_session;
+    const normalizedMcpRoles = Array.isArray(dexterSession?.user?.roles)
+      ? (dexterSession.user.roles as unknown[]).map((value) => String(value).toLowerCase())
+      : [];
+    setMcpJwtRoles(normalizedMcpRoles);
     const walletFromSession =
       dexterSession && typeof dexterSession.wallet !== 'undefined'
         ? (dexterSession.wallet ?? null)
@@ -2246,6 +2252,11 @@ export function useDexterAppController(): DexterAppController {
     [sessionRoleVariant],
   );
 
+  const supabaseRolesDisplay = useMemo(
+    () => (sessionIdentity.user?.roles ?? []).map((value) => String(value)),
+    [sessionIdentity.user?.roles],
+  );
+
   const walletSecondaryLabel = useMemo(() => {
     if (!walletPortfolioSummary) return null;
     if (walletPortfolioPending) return 'Syncing…';
@@ -2398,6 +2409,8 @@ export function useDexterAppController(): DexterAppController {
     authEmail,
     walletStatus: walletLabel ?? (signalData.wallet.summary.activeWallet || "Auto"),
     walletInfo: walletDebugInfo,
+    supabaseRoles: supabaseRolesDisplay,
+    mcpRoles: mcpJwtRoles,
     isAudioPlaybackEnabled,
     setIsAudioPlaybackEnabled,
     isEventsPaneExpanded,
