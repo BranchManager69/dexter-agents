@@ -42,6 +42,8 @@ interface DebugInfoModalProps {
     error: string | null;
     summary: WalletSummary | null;
   };
+  supabaseRoles: string[];
+  mcpRoles: string[];
   isAudioPlaybackEnabled: boolean;
   setIsAudioPlaybackEnabled: (value: boolean) => void;
   isEventsPaneExpanded: boolean;
@@ -72,6 +74,8 @@ export function DebugInfoModal({
   authEmail,
   walletStatus,
   walletInfo,
+  supabaseRoles,
+  mcpRoles,
   isAudioPlaybackEnabled,
   setIsAudioPlaybackEnabled,
   isEventsPaneExpanded,
@@ -105,6 +109,28 @@ export function DebugInfoModal({
     if (walletInfo.status === "error") return "Balance error";
     return walletInfo.secondaryText || walletStatus;
   }, [walletInfo.error, walletInfo.pending, walletInfo.secondaryText, walletInfo.status, walletStatus]);
+
+  const supabaseRolesNormalized = useMemo(
+    () => supabaseRoles.map((value) => String(value).toLowerCase()),
+    [supabaseRoles],
+  );
+
+  const mcpRolesNormalized = useMemo(
+    () => mcpRoles.map((value) => String(value).toLowerCase()),
+    [mcpRoles],
+  );
+
+  const roleDiff = useMemo(() => {
+    const supSet = new Set(supabaseRolesNormalized);
+    const mcpSet = new Set(mcpRolesNormalized);
+    const missingInMcp = [...supSet].filter((role) => !mcpSet.has(role));
+    const missingInSupabase = [...mcpSet].filter((role) => !supSet.has(role));
+    return { missingInMcp, missingInSupabase };
+  }, [supabaseRolesNormalized, mcpRolesNormalized]);
+
+  const rolesInSync = roleDiff.missingInMcp.length === 0 && roleDiff.missingInSupabase.length === 0;
+
+  const formatRoles = (roles: string[]) => (roles.length ? roles.join(", ") : "—");
 
   const handleCopyAddress = async () => {
     if (!walletInfo.address) return;
@@ -179,6 +205,25 @@ export function DebugInfoModal({
                     <dd className="truncate text-neutral-200" title={authEmail}>
                       {authEmail}
                     </dd>
+                  </div>
+                ) : null}
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-neutral-400">Supabase roles</dt>
+                  <dd className="text-right text-neutral-100">{formatRoles(supabaseRoles)}</dd>
+                </div>
+                <div className="flex items-start justify-between gap-3">
+                  <dt className="text-neutral-400">MCP JWT roles</dt>
+                  <dd className="text-right text-neutral-100">{formatRoles(mcpRoles)}</dd>
+                </div>
+                {!rolesInSync ? (
+                  <div className="rounded-md border border-amber-400/60 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                    <p className="font-medium text-amber-100">Role mismatch detected</p>
+                    {roleDiff.missingInMcp.length ? (
+                      <p className="mt-1">Missing in MCP token: {formatRoles(roleDiff.missingInMcp)}</p>
+                    ) : null}
+                    {roleDiff.missingInSupabase.length ? (
+                      <p className="mt-1">Missing in Supabase profile: {formatRoles(roleDiff.missingInSupabase)}</p>
+                    ) : null}
                   </div>
                 ) : null}
               </dl>
