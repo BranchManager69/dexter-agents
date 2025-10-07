@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import "./lib/envSetup";
 import { Providers } from "./providers";
@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   icons: {
     icon: "/assets/logos/logo.svg",
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#FF6500",
 };
 
 export default function RootLayout({
