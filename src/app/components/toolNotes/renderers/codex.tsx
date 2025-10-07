@@ -1,92 +1,164 @@
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, SECTION_TITLE_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
+import {
+  ChatKitWidgetRenderer,
+  type Badge,
+  type Card,
+  type ChatKitWidgetComponent,
+} from "../ChatKitWidgetRenderer";
 
-function createCodexRenderer(kind: "start" | "reply" | "exec"): ToolNoteRenderer {
+type Alignment = "start" | "center" | "end" | "stretch";
+
+type CodexPayload = {
+  conversationId?: string;
+  response?: {
+    text?: string;
+    reasoning?: string;
+  };
+  session?: {
+    model?: string;
+    reasoningEffort?: string;
+  };
+  durationMs?: number;
+  tokenUsage?: Record<string, unknown>;
+};
+
+type CodexArgs = Record<string, unknown>;
+
+type CodexKind = "start" | "reply" | "exec";
+
+function createCodexRenderer(kind: CodexKind): ToolNoteRenderer {
   const badgeLabel = kind === "start" ? "Session started" : kind === "reply" ? "Reply sent" : "Exec run";
+  const title = kind === "exec" ? "Codex Exec" : "Codex Session";
 
   const CodexRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-    const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
-    const structured = unwrapStructured(rawOutput);
+    const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+    const structured = unwrapStructured(rawOutput) as CodexPayload;
+    const args = (item.data as any)?.arguments as CodexArgs | undefined;
 
-    const conversationId = typeof (structured as any)?.conversationId === "string" ? (structured as any).conversationId : null;
-    const message = (structured as any)?.response?.text;
-    const reasoning = (structured as any)?.response?.reasoning;
-    const model = (structured as any)?.session?.model;
-    const reasoningEffort = (structured as any)?.session?.reasoningEffort;
-    const durationMs = typeof (structured as any)?.durationMs === "number" ? (structured as any).durationMs : null;
-    const tokenUsage = (structured as any)?.tokenUsage;
+    const conversationId = structured.conversationId ?? (typeof args?.conversation_id === "string" ? args.conversation_id : undefined);
+    const message = structured.response?.text;
+    const reasoning = structured.response?.reasoning;
+    const model = structured.session?.model;
+    const reasoningEffort = structured.session?.reasoningEffort;
+    const durationMs = typeof structured.durationMs === "number" ? structured.durationMs : undefined;
+    const tokenUsage = structured.tokenUsage;
+
+    const infoRows: ChatKitWidgetComponent[] = [];
+    if (conversationId) {
+      infoRows.push(buildRow("Conversation", conversationId));
+    }
+    if (model) {
+      infoRows.push(buildRow("Model", model));
+    }
+    if (reasoningEffort) {
+      infoRows.push(buildRow("Effort", reasoningEffort));
+    }
+    if (durationMs !== undefined) {
+      infoRows.push(buildRow("Duration", `${(durationMs / 1000).toFixed(2)}s`));
+    }
+
+    const widgets: Card[] = [
+      {
+        type: "Card",
+        id: `codex-${kind}-header`,
+        children: [
+          {
+            type: "Row",
+            justify: "between",
+            align: "center",
+            children: [
+              {
+                type: "Col",
+                gap: 4,
+                children: [
+                  { type: "Title", value: title, size: "md" },
+                  item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
+                ].filter(Boolean) as ChatKitWidgetComponent[],
+              },
+              { type: "Badge", label: badgeLabel, color: "secondary", variant: "outline" } as Badge,
+            ],
+          },
+        ],
+      },
+      {
+        type: "Card",
+        id: `codex-${kind}-summary`,
+        children: [{ type: "Col", gap: 8, children: infoRows.length ? infoRows : [{ type: "Text", value: "No session metadata.", size: "sm" }] }],
+      },
+    ];
+
+    if (message) {
+      widgets.push({
+        type: "Card",
+        id: `codex-${kind}-message`,
+        children: [
+          { type: "Title", value: "Message", size: "sm" },
+          { type: "Text", value: message, size: "sm" },
+        ],
+      });
+    }
+
+    if (reasoning) {
+      widgets.push({
+        type: "Card",
+        id: `codex-${kind}-reasoning`,
+        children: [
+          { type: "Title", value: "Reasoning trail", size: "sm" },
+          { type: "Text", value: reasoning, size: "sm" },
+        ],
+      });
+    }
+
+    if (tokenUsage) {
+      widgets.push({
+        type: "Card",
+        id: `codex-${kind}-tokens`,
+        children: [
+          { type: "Title", value: "Token usage", size: "sm" },
+          { type: "Text", value: JSON.stringify(tokenUsage, null, 2), size: "sm" },
+        ],
+      });
+    }
 
     return (
       <div className={BASE_CARD_CLASS}>
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <div className={SECTION_TITLE_CLASS}>Codex {kind === "exec" ? "Exec" : "Session"}</div>
-            <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
-          </div>
-          <span className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#FFE4CF]">
-            {badgeLabel}
-          </span>
-        </div>
-
-        <div className="mt-4 space-y-3 text-sm text-[#FFF2E2]">
-          {conversationId && (
-            <div className="flex flex-wrap items-center gap-2 text-xs text-[#F9D9C3]">
-              <span className="uppercase tracking-[0.24em]">Conversation</span>
-              <span className="font-mono text-[#FFF6EC]">{conversationId}</span>
-            </div>
-          )}
-
-          {model && (
-            <div className="text-xs text-[#F9D9C3]">Model: <span className="text-[#FFF2E2]">{model}</span></div>
-          )}
-          {reasoningEffort && (
-            <div className="text-xs text-[#F9D9C3]">Effort: <span className="text-[#FFF2E2]">{reasoningEffort}</span></div>
-          )}
-          {typeof durationMs === "number" && (
-            <div className="text-xs text-[#F9D9C3]">Duration: <span className="text-[#FFF2E2]">{(durationMs / 1000).toFixed(2)}s</span></div>
-          )}
-
-          {message && (
-            <div className="rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3 text-xs text-[#FFF6EC] whitespace-pre-wrap">
-              {message}
-            </div>
-          )}
-          {reasoning && (
-            <details className="rounded-xl border border-[#F7BE8A]/18 bg-surface-glass/30 p-3 text-xs text-[#FFF2E2]">
-              <summary className="cursor-pointer text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Reasoning trail</summary>
-              <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words text-[#FFF2E2]">{reasoning}</pre>
-            </details>
-          )}
-
-          {tokenUsage && (
-            <div className="rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3 text-xs text-[#FFE4CF]">
-              <div className="text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Token usage</div>
-              <pre className="mt-1 whitespace-pre-wrap break-words text-[#FFF2E2]">{JSON.stringify(tokenUsage, null, 2)}</pre>
-            </div>
-          )}
-        </div>
-
+        <ChatKitWidgetRenderer widgets={widgets} />
         {debug && (
-          <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
-            <button
-              type="button"
-              onClick={onToggle}
-              className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+          <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
+            <summary
+              className="cursor-pointer text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+              onClick={(event) => {
+                event.preventDefault();
+                onToggle();
+              }}
             >
               {isExpanded ? "Hide raw payload" : "Show raw payload"}
-            </button>
+            </summary>
             {isExpanded && (
               <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
                 {JSON.stringify(rawOutput, null, 2)}
               </pre>
             )}
-          </div>
+          </details>
         )}
       </div>
     );
   };
 
   return CodexRenderer;
+}
+
+function buildRow(label: string, value: string): ChatKitWidgetComponent {
+  return {
+    type: "Row",
+    justify: "between",
+    align: "center" as Alignment,
+    children: [
+      { type: "Caption", value: label, size: "xs" },
+      { type: "Text", value, size: "sm" },
+    ],
+  };
 }
 
 export const codexStartRenderer = createCodexRenderer("start");

@@ -1,75 +1,142 @@
 import type { ToolNoteRenderer } from "./types";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
 import {
-  BASE_CARD_CLASS,
-  SECTION_TITLE_CLASS,
-  normalizeOutput,
-  unwrapStructured,
-} from "./helpers";
+  ChatKitWidgetRenderer,
+  type Badge,
+  type Card,
+  type ListView,
+  type ListViewItem,
+  type ChatKitWidgetComponent,
+} from "../ChatKitWidgetRenderer";
+
+type Alignment = "start" | "center" | "end" | "stretch";
+
+type SearchResult = {
+  id?: string;
+  title?: string;
+  url?: string;
+  snippet?: string;
+};
+
+type SearchPayload = {
+  results?: SearchResult[];
+};
+
+type SearchArgs = Record<string, unknown>;
 
 const searchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
-  const payload = unwrapStructured(rawOutput);
-  const results = Array.isArray((payload as any)?.results)
-    ? (payload as any).results
-    : Array.isArray(payload)
-      ? payload
+  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+  const payload = unwrapStructured(rawOutput) as SearchPayload | SearchResult[];
+  const args = (item.data as any)?.arguments as SearchArgs | undefined;
+
+  const results: SearchResult[] = Array.isArray(payload)
+    ? payload as SearchResult[]
+    : Array.isArray(payload?.results)
+      ? payload.results!
       : [];
+
+  const query = typeof args?.query === "string" ? args.query : undefined;
+
+  const headerCard: Card = {
+    type: "Card",
+    id: "search-header",
+    children: [
+      {
+        type: "Row",
+        justify: "between",
+        align: "center",
+        children: [
+          {
+            type: "Col",
+            gap: 4,
+            children: [
+              { type: "Title", value: "Dexter Search", size: "md" },
+              item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
+            ].filter(Boolean) as ChatKitWidgetComponent[],
+          },
+          { type: "Badge", label: `${results.length} hit${results.length === 1 ? "" : "s"}`, color: "secondary", variant: "outline" } as Badge,
+        ],
+      },
+    ],
+  };
+
+  const listItems: ListViewItem[] = results.map((result, index) => {
+    const title = result.title?.trim() || `Result ${index + 1}`;
+    const snippet = result.snippet?.trim();
+    const url = result.url?.trim();
+
+    const children: ChatKitWidgetComponent[] = [
+      url
+        ? {
+            type: "Button",
+            label: title,
+            onClickAction: { type: "open_url", payload: { url } },
+            variant: "outline",
+            size: "sm",
+          }
+        : { type: "Text", value: title, size: "sm", weight: "semibold" },
+    ];
+    if (snippet) {
+      children.push({ type: "Text", value: snippet, size: "sm" });
+    }
+
+    return {
+      type: "ListViewItem",
+      id: result.id ?? url ?? `result-${index}`,
+      children,
+    };
+  });
+
+  const widgets: Array<Card | ListView> = [headerCard];
+
+  if (query) {
+    widgets.push({
+      type: "Card",
+      id: "search-query",
+      children: [
+        {
+          type: "Row",
+          justify: "between",
+          align: "center" as Alignment,
+          children: [
+            { type: "Caption", value: "Query", size: "xs" },
+            { type: "Text", value: query, size: "sm" },
+          ],
+        },
+      ],
+    });
+  }
+
+  if (results.length) {
+    widgets.push({ type: "ListView", id: "search-results", children: listItems });
+  } else {
+    widgets.push({
+      type: "Card",
+      id: "search-empty",
+      children: [{ type: "Text", value: "No documents matched this query.", size: "sm" }],
+    });
+  }
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className={SECTION_TITLE_CLASS}>Dexter Search</div>
-          <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
-        </div>
-        <div className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#FFE4CF]">
-          {results.length} hit{results.length === 1 ? "" : "s"}
-        </div>
-      </div>
-
-      {results.length > 0 ? (
-        <ol className="mt-4 space-y-3 text-sm text-[#FFF2E2]">
-          {results.map((result: any, index: number) => {
-            const title = typeof result?.title === "string" ? result.title : `Result ${index + 1}`;
-            const url = typeof result?.url === "string" ? result.url : undefined;
-            const snippet = typeof result?.snippet === "string" ? result.snippet : undefined;
-            return (
-              <li key={result?.id ?? index} className="rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3">
-                <div className="flex flex-col gap-1">
-                  {url ? (
-                    <a href={url} target="_blank" rel="noreferrer" className="text-sm font-semibold text-flux transition hover:text-flux/80">
-                      {title}
-                    </a>
-                  ) : (
-                    <span className="text-sm font-semibold text-[#FFF6EC]">{title}</span>
-                  )}
-                  {snippet && <p className="text-xs text-[#F9D9C3]">{snippet}</p>}
-                </div>
-              </li>
-            );
-          })}
-        </ol>
-      ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-[#F7BE8A]/24 px-4 py-6 text-center text-sm text-[#F9D9C3]">
-          No documents matched this query.
-        </div>
-      )}
-
+      <ChatKitWidgetRenderer widgets={widgets} />
       {debug && (
-        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+        <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
+          <summary
+            className="cursor-pointer text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+            onClick={(event) => {
+              event.preventDefault();
+              onToggle();
+            }}
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </button>
+          </summary>
           {isExpanded && (
             <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
               {JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}
-        </div>
+        </details>
       )}
     </div>
   );
