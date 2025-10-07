@@ -380,7 +380,7 @@ function renderText(component: TextComponent | Caption | Title) {
 function renderButton(component: Button) {
   const actionHref = linkFromAction(component.onClickAction);
   const baseClass = cx(
-    "inline-flex items-center justify-center gap-2 rounded-full border px-3 py-1 text-xs uppercase tracking-[0.18em] transition",
+    "inline-flex items-center justify-center gap-2 rounded-full border px-3 py-1 font-display text-xs font-semibold tracking-[0.08em] transition",
     component.style === "primary"
       ? "border-flux/60 bg-flux/10 text-flux hover:bg-flux/20"
       : "border-[#F7BE8A]/30 bg-transparent text-[#FFE4CF] hover:border-flux/40 hover:text-flux",

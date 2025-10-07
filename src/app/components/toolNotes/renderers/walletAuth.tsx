@@ -137,7 +137,7 @@ const walletAuthRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
       {debug && (
         <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
           <summary
-            className="cursor-pointer text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+            className="cursor-pointer font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
             onClick={(event) => {
               event.preventDefault();
               onToggle();

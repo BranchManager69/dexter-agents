@@ -199,7 +199,7 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
           <button
             type="button"
             onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-flux transition hover:text-flux/80"
+            className="font-display text-xs font-semibold tracking-[0.08em] text-flux transition hover:text-flux/80"
           >
             {isExpanded ? "Hide extra streams" : `Show ${streams.length - 6} more`}
           </button>
@@ -208,7 +208,7 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
 
       {debug && isExpanded && (
         <details className="mt-4 w-full" open>
-          <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-[#F9D9C3]">
+          <summary className="cursor-pointer font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3]">
             Raw payload
           </summary>
           <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">

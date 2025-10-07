@@ -289,7 +289,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug }) => {
 
       {debug && (
         <details className="mt-4 w-full" open>
-          <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-[#F9D9C3]">
+          <summary className="cursor-pointer font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3]">
             Raw payload
           </summary>
           <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">

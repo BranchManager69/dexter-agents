@@ -263,7 +263,7 @@ export function AgentPersonaModal({
 
         <div className="grid flex-1 grid-cols-1 gap-6 overflow-hidden px-6 py-6 lg:grid-cols-[0.28fr_0.42fr_0.3fr]">
           <aside className="flex flex-col gap-4 overflow-y-auto pr-2">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Your personas</h3>
+            <h3 className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Your personas</h3>
             <div className="space-y-2">
               {availableProfiles.length === 0 && (
                 <p className="text-sm text-neutral-500">No saved personas yet. Select a preset to get started.</p>
@@ -283,7 +283,7 @@ export function AgentPersonaModal({
                   >
                     <div className="flex items-center justify-between text-sm">
                       <span className="font-medium">{profile.name}</span>
-                      {profile.isDefault && <span className="text-xs uppercase tracking-[0.28em] text-primary-300">Active</span>}
+                      {profile.isDefault && <span className="font-display text-xs font-semibold tracking-[0.08em] text-primary-300">Active</span>}
                     </div>
                     {profile.description && (
                       <p className="mt-1 text-xs text-neutral-500">{profile.description}</p>
@@ -293,7 +293,7 @@ export function AgentPersonaModal({
               })}
             </div>
             <div className="mt-6 space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Presets</h4>
+              <h4 className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Presets</h4>
               {presets.map((preset) => (
                 <button
                   key={preset.id}
@@ -310,7 +310,7 @@ export function AgentPersonaModal({
 
           <section className="flex flex-col gap-5 overflow-y-auto px-1">
             <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Persona name</label>
+              <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Persona name</label>
               <input
                 className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none transition focus:border-primary-500/60"
                 value={draftState?.draft.name ?? ""}
@@ -321,7 +321,7 @@ export function AgentPersonaModal({
 
             <div className="grid gap-4 lg:grid-cols-2">
               <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Instruction slug</label>
+                <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Instruction slug</label>
                 <input
                   className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                   value={draftState?.draft.instructionSlug ?? ""}
@@ -329,7 +329,7 @@ export function AgentPersonaModal({
                 />
               </div>
               <div>
-                <label className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Handoff slug</label>
+                <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Handoff slug</label>
                 <input
                   className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                   value={draftState?.draft.handoffSlug ?? ""}
@@ -339,7 +339,7 @@ export function AgentPersonaModal({
             </div>
 
             <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Guest slug</label>
+              <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Guest slug</label>
               <input
                 className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                 value={draftState?.draft.guestSlug ?? ""}
@@ -348,7 +348,7 @@ export function AgentPersonaModal({
             </div>
 
             <div>
-              <label className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Voice preset</label>
+              <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Voice preset</label>
               <select
                 className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                 value={draftState?.draft.voiceKey ?? ""}
@@ -363,11 +363,11 @@ export function AgentPersonaModal({
             </div>
 
               <div className="rounded-3xl border border-neutral-800/60 bg-neutral-950/60 p-4">
-              <h4 className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Tool descriptions</h4>
+              <h4 className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Tool descriptions</h4>
               <div className="mt-3 space-y-3">
                 {Object.entries(draftState?.draft.toolSlugs ?? DEFAULT_TOOL_SLUGS).map(([key, slug]) => (
                   <div key={key} className="grid gap-2 lg:grid-cols-[160px_1fr]">
-                    <span className="text-xs uppercase tracking-[0.32em] text-neutral-500">{key.replace(/_/g, ' ')}</span>
+                    <span className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-500">{key.replace(/_/g, ' ')}</span>
                     <input
                       className="rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                       value={slug}
@@ -387,7 +387,7 @@ export function AgentPersonaModal({
             {draftState?.profileId && (
               <button
                 type="button"
-                className="self-start rounded-full border border-red-500/60 px-4 py-2 text-xs uppercase tracking-[0.28em] text-red-200 transition hover:bg-red-500/10"
+                className="self-start rounded-full border border-red-500/60 px-4 py-2 font-display text-xs font-semibold tracking-[0.08em] text-red-200 transition hover:bg-red-500/10"
                 onClick={handleDelete}
               >
                 Delete persona
@@ -396,7 +396,7 @@ export function AgentPersonaModal({
           </section>
 
           <section className="flex flex-col gap-4 overflow-y-auto rounded-3xl border border-neutral-800/60 bg-neutral-950/50 p-5">
-            <h3 className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Live preview</h3>
+            <h3 className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Live preview</h3>
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-500/70 to-cyan-400/60" />
               <div>
@@ -410,12 +410,12 @@ export function AgentPersonaModal({
             </div>
 
             <div className="space-y-3">
-              <h4 className="text-xs font-semibold uppercase tracking-[0.32em] text-neutral-400">Tool language</h4>
+              <h4 className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Tool language</h4>
               <div className="space-y-2 text-xs text-neutral-400">
                 {preview?.toolDescriptions
                   ? Object.entries(preview.toolDescriptions).map(([key, value]) => (
                       <div key={key} className="rounded-2xl border border-neutral-800/60 bg-neutral-900/70 p-3">
-                        <div className="text-[0.6rem] uppercase tracking-[0.32em] text-neutral-500">{key}</div>
+                        <div className="font-display text-[0.6rem] font-semibold tracking-[0.08em] text-neutral-500">{key}</div>
                         <p className="mt-1 text-sm text-neutral-200">{value}</p>
                       </div>
                     ))

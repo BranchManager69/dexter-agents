@@ -249,7 +249,7 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
           <button
             type="button"
             onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-flux transition hover:text-flux/80"
+            className="font-display text-xs font-semibold tracking-[0.08em] text-flux transition hover:text-flux/80"
           >
             {isExpanded ? "Hide extra balances" : `Show ${balances.length - 6} more`}
           </button>
@@ -261,7 +261,7 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
           <button
             type="button"
             onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+            className="font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
           </button>

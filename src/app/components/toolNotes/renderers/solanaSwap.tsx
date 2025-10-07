@@ -318,7 +318,7 @@ export const solanaSwapPreviewRenderer: ToolNoteRenderer = ({ item, debug = fals
       <ChatKitWidgetRenderer widgets={widgets} />
       {debug && (
         <details className="mt-4 rounded-md border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3 text-sm text-[#FFEBD7]">
-          <summary className="cursor-pointer text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">
+          <summary className="cursor-pointer font-display text-[10px] font-semibold tracking-[0.08em] text-[#F0BFA1]">
             Raw preview data
           </summary>
           <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words text-xs text-[#FFF6EC]">
@@ -385,7 +385,7 @@ export const solanaSwapExecuteRenderer: ToolNoteRenderer = ({ item, debug = fals
       <ChatKitWidgetRenderer widgets={widgets} />
       {debug && (
         <details className="mt-4 rounded-md border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3 text-sm text-[#FFEBD7]">
-          <summary className="cursor-pointer text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">
+          <summary className="cursor-pointer font-display text-[10px] font-semibold tracking-[0.08em] text-[#F0BFA1]">
             Raw execution data
           </summary>
           <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words text-xs text-[#FFF6EC]">

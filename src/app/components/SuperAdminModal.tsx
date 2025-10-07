@@ -459,7 +459,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
           <div className="flex flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-[11px] uppercase tracking-[0.28em] text-amber-200/80">
+                <p className="text-[11px] font-display font-semibold tracking-[0.08em] text-amber-200/80">
                   Superadmin Tools
                 </p>
                 <h2 className="mt-2 font-display text-lg text-amber-100">
@@ -485,7 +485,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
             <div className="mt-6 grid gap-6 lg:grid-cols-[260px_minmax(0,1fr)]">
               <aside className="flex flex-col gap-4">
                 <div>
-                  <label className="text-[11px] uppercase tracking-[0.22em] text-amber-200/70">
+                  <label className="text-[11px] font-display font-semibold tracking-[0.08em] text-amber-200/70">
                   Modules
                 </label>
                 <input
@@ -534,7 +534,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                               }`}
                             >
                               <span className="text-sm font-medium">{getDisplayName(module)}</span>
-                              <span className="text-[11px] uppercase tracking-[0.18em] text-amber-200/60">
+                              <span className="font-display text-[11px] font-semibold tracking-[0.08em] text-amber-200/60">
                                 {module.slug}
                               </span>
                               <span className="text-[10px] text-amber-200/40">
@@ -564,7 +564,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                   <h3 className="text-base font-semibold text-amber-100">
                     {editorTitle}
                   </h3>
-                  <span className="text-xs uppercase tracking-[0.2em] text-amber-200/50">
+                  <span className="text-xs font-semibold tracking-[0.2em] text-amber-200/50">
                     {editorSubtitle}
                   </span>
                 </div>
@@ -589,7 +589,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                   <>
                     <div className="grid gap-3 md:grid-cols-2">
                       <div>
-                        <label className="text-[11px] uppercase tracking-[0.22em] text-amber-200/70">
+                        <label className="text-[11px] font-display font-semibold tracking-[0.08em] text-amber-200/70">
                           Slug
                         </label>
                         <input
@@ -611,7 +611,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                         />
                       </div>
                       <div>
-                        <label className="text-[11px] uppercase tracking-[0.22em] text-amber-200/70">
+                        <label className="text-[11px] font-display font-semibold tracking-[0.08em] text-amber-200/70">
                           Title (optional)
                         </label>
                         <input
@@ -630,7 +630,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                     </div>
 
                     <div>
-                      <label className="text-[11px] uppercase tracking-[0.22em] text-amber-200/70">
+                      <label className="text-[11px] font-display font-semibold tracking-[0.08em] text-amber-200/70">
                         Prompt segment
                       </label>
                       <textarea
@@ -665,7 +665,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                       )}
 
                       <div>
-                        <label className="text-[11px] uppercase tracking-[0.22em] text-amber-200/70">
+                        <label className="text-[11px] font-display font-semibold tracking-[0.08em] text-amber-200/70">
                           Revision notes
                         </label>
                         <textarea
@@ -687,7 +687,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                         type="button"
                         onClick={handleSave}
                         disabled={!canSave}
-                        className={`rounded-lg border px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] transition ${
+                        className={`rounded-lg border px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] transition ${
                           canSave
                             ? "border-amber-300/70 bg-amber-400/20 text-amber-50 hover:border-amber-200 hover:text-amber-100"
                             : "border-neutral-700 bg-neutral-800/60 text-neutral-500"
@@ -703,7 +703,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                         type="button"
                         onClick={resetDraft}
                         disabled={saving || (!isCreatingNew && !isDirty && !draft.notes)}
-                        className="rounded-lg border border-amber-300/30 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-amber-100/70 transition hover:border-amber-200/60 hover:text-amber-50 disabled:opacity-40"
+                        className="rounded-lg border border-amber-300/30 px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] text-amber-100/70 transition hover:border-amber-200/60 hover:text-amber-50 disabled:opacity-40"
                       >
                         Reset
                       </button>
@@ -711,7 +711,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                         <button
                           type="button"
                           onClick={toggleHistory}
-                          className={`rounded-lg border px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] transition ${
+                          className={`rounded-lg border px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] transition ${
                             historyVisibility
                               ? "border-amber-300/70 text-amber-100"
                               : "border-amber-300/40 text-amber-100/70 hover:border-amber-200/60 hover:text-amber-50"
@@ -724,7 +724,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                         <button
                           type="button"
                           onClick={refreshHistory}
-                          className="rounded-lg border border-amber-300/30 px-3 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-amber-100/70 transition hover:border-amber-200/60 hover:text-amber-50"
+                          className="rounded-lg border border-amber-300/30 px-3 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] text-amber-100/70 transition hover:border-amber-200/60 hover:text-amber-50"
                         >
                           Refresh
                         </button>
@@ -774,7 +774,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded border border-amber-300/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-amber-100 transition hover:border-amber-200 hover:text-amber-50"
+                  className="rounded border border-amber-300/60 px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] text-amber-100 transition hover:border-amber-200 hover:text-amber-50"
                 >
                   Close
                 </button>

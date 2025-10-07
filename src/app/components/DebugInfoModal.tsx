@@ -81,7 +81,7 @@ export function DebugInfoModal({
         >
           {/* Header */}
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="font-display text-sm uppercase tracking-[0.28em] text-neutral-300">
+            <h2 className="font-display text-sm font-semibold tracking-[0.08em] text-neutral-300">
               Debug Info
             </h2>
             <button

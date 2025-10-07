@@ -31,15 +31,18 @@ export function DexterShell({
   const [chromeReady, setChromeReady] = React.useState(false);
   const [heroReady, setHeroReady] = React.useState(false);
   const [composerReady, setComposerReady] = React.useState(false);
+  const [backdropReady, setBackdropReady] = React.useState(false);
 
   React.useEffect(() => {
     const headerTimer = window.setTimeout(() => setChromeReady(true), 1000);
     const heroTimer = window.setTimeout(() => setHeroReady(true), 1500);
     const composerTimer = window.setTimeout(() => setComposerReady(true), 2600);
+    const backdropTimer = window.setTimeout(() => setBackdropReady(true), 650);
     return () => {
       window.clearTimeout(headerTimer);
       window.clearTimeout(heroTimer);
       window.clearTimeout(composerTimer);
+      window.clearTimeout(backdropTimer);
     };
   }, []);
 
@@ -86,45 +89,60 @@ export function DexterShell({
               <motion.div
                 className="pointer-events-none absolute -inset-20 sm:-inset-24 lg:-inset-28"
                 initial={{ opacity: 0, scale: 0.92, x: '-16%', y: '-18%' }}
-                animate={{
-                  opacity: heroCollapsed ? 0 : [0.5, 0.8],
-                  scale: heroCollapsed ? 0.92 : [0.98, 1.18],
-                  x: heroCollapsed ? '-16%' : ['-12%', '-24%'],
-                  y: heroCollapsed ? '-18%' : ['-12%', '-22%'],
-                }}
+                animate={backdropReady && !heroCollapsed
+                  ? {
+                      opacity: [0.55, 0.82],
+                      scale: [0.99, 1.18],
+                      x: ['-10%', '-22%'],
+                      y: ['-10%', '-21%'],
+                    }
+                  : {
+                      opacity: 0,
+                      scale: 0.94,
+                      x: '-12%',
+                      y: '-16%',
+                    }}
                 transition={{
                   duration: 13.5,
-                  repeat: heroCollapsed ? 0 : Infinity,
+                  delay: backdropReady ? 0.15 : 0,
+                  repeat: backdropReady && !heroCollapsed ? Infinity : 0,
                   repeatType: 'mirror',
                   ease: 'easeInOut',
                 }}
                 style={{
                   background:
                     'radial-gradient(140% 120% at 32% 30%, rgba(242, 118, 45, 0.75), transparent 72%)',
-                  filter: 'blur(42px)',
+                  filter: backdropReady ? 'blur(42px)' : 'blur(26px)',
                   mixBlendMode: 'screen',
                 }}
               />
               <motion.div
                 className="pointer-events-none absolute -inset-10 sm:-inset-14 lg:-inset-16"
                 initial={{ opacity: 0, scale: 0.96, x: '14%', y: '16%' }}
-                animate={{
-                  opacity: heroCollapsed ? 0 : [0.45, 0.7],
-                  scale: heroCollapsed ? 0.96 : [1.04, 1.16],
-                  x: heroCollapsed ? '14%' : ['10%', '22%'],
-                  y: heroCollapsed ? '16%' : ['12%', '24%'],
-                }}
+                animate={backdropReady && !heroCollapsed
+                  ? {
+                      opacity: [0.5, 0.72],
+                      scale: [1.02, 1.16],
+                      x: ['8%', '22%'],
+                      y: ['10%', '24%'],
+                    }
+                  : {
+                      opacity: 0,
+                      scale: 0.98,
+                      x: '12%',
+                      y: '18%',
+                    }}
                 transition={{
                   duration: 17,
-                  delay: heroCollapsed ? 0 : 1.6,
-                  repeat: heroCollapsed ? 0 : Infinity,
+                  delay: backdropReady && !heroCollapsed ? 1.4 : 0,
+                  repeat: backdropReady && !heroCollapsed ? Infinity : 0,
                   repeatType: 'mirror',
                   ease: 'easeInOut',
                 }}
                 style={{
                   background:
                     'radial-gradient(120% 110% at 68% 58%, rgba(255, 232, 196, 0.62), transparent 70%)',
-                  filter: 'blur(48px)',
+                  filter: backdropReady ? 'blur(48px)' : 'blur(24px)',
                   mixBlendMode: 'screen',
                 }}
               />

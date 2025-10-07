@@ -67,7 +67,7 @@ export function SolanaArtifactBadge({ value, type }: SolanaArtifactBadgeProps) {
           href={explorerUrl}
           target="_blank"
           rel="noreferrer"
-          className="text-[10px] uppercase tracking-[0.22em] text-neutral-500 transition hover:text-flux"
+          className="font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-500 transition hover:text-flux"
           title="Open in Solscan"
           aria-label="Open in Solscan"
         >
@@ -76,7 +76,7 @@ export function SolanaArtifactBadge({ value, type }: SolanaArtifactBadgeProps) {
       )}
       <span
         aria-live="polite"
-        className={`text-[10px] uppercase tracking-[0.22em] transition ${copied ? "text-flux" : "text-neutral-500"}`}
+        className={`font-display text-[10px] font-semibold tracking-[0.08em] transition ${copied ? "text-flux" : "text-neutral-500"}`}
       >
         {copied ? "Copied" : kindLabel}
       </span>

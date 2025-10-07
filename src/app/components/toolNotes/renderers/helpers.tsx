@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 export const BASE_CARD_CLASS = "w-full max-w-xl space-y-4 text-[#FFF6EC]";
-export const SECTION_TITLE_CLASS = "font-display text-sm uppercase tracking-[0.28em] text-[#F9D9C3]";
+export const SECTION_TITLE_CLASS = "font-display text-sm font-semibold tracking-[0.08em] text-[#F9D9C3]";
 
 const usdCompactFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -47,7 +47,7 @@ export function resolveSourceBadge(source: string | null) {
   if (!source) {
     return {
       label: "Unknown source",
-      className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[#FFE4CF]",
+      className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#FFE4CF]",
     };
   }
   const normalized = source.toLowerCase();
@@ -55,39 +55,39 @@ export function resolveSourceBadge(source: string | null) {
     case "resolver":
       return {
         label: "Resolver default",
-        className: "border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-300",
+        className: "border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-emerald-300",
       };
     case "session":
     case "override":
       return {
         label: "Session override",
-        className: "border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-amber-200",
+        className: "border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-amber-200",
       };
     case "primary":
       return {
         label: "Primary wallet",
-        className: "border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-emerald-300",
+        className: "border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-emerald-300",
       };
     case "demo":
       return {
         label: "Demo wallet",
-        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[#FFE4CF]",
+        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#FFE4CF]",
       };
     case "env":
     case "environment":
       return {
         label: "Env fallback",
-        className: "border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-sky-200",
+        className: "border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-sky-200",
       };
     case "none":
       return {
         label: "No wallet bound",
-        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[#F9D9C3]",
+        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#F9D9C3]",
       };
     default:
       return {
         label: source,
-        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-[#FFE4CF]",
+        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#FFE4CF]",
       };
   }
 }
@@ -163,7 +163,7 @@ export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
         {display}
       </button>
       {copied && (
-        <span className="text-[10px] uppercase tracking-[0.22em] text-flux">Copied</span>
+        <span className="font-display text-[10px] font-semibold tracking-[0.08em] text-flux">Copied</span>
       )}
       {href && (
         <a
@@ -171,7 +171,7 @@ export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
           target="_blank"
           rel="noreferrer"
           aria-label={ariaLabel ? `Open ${ariaLabel}` : "Open in new tab"}
-          className="rounded-full border border-[#F7BE8A]/30 px-2 py-[2px] text-[10px] uppercase tracking-[0.2em] text-[#F9D9C3] transition hover:border-flux/50 hover:text-flux"
+          className="rounded-full border border-[#F7BE8A]/30 px-2 py-[2px] font-display text-[10px] font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:border-flux/50 hover:text-flux"
         >
           ↗
         </a>
