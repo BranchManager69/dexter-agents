@@ -588,6 +588,7 @@ export function useDexterAppController(): DexterAppController {
   const realtimeSessionIdRef = useRef<string | null>(null);
   const sessionStartedAtRef = useRef<number | null>(null);
   const sessionMetadataRef = useRef<Record<string, any>>({});
+  const sessionUsageRef = useRef<Record<string, any> | null>(null);
   const sessionStatusPrevRef = useRef<SessionStatus>('DISCONNECTED');
   const sessionFlushInFlightRef = useRef(false);
   const hasFlushedSessionRef = useRef(false);
@@ -1063,6 +1064,13 @@ export function useDexterAppController(): DexterAppController {
     onAgentHandoff: (agentName: string) => {
       handoffTriggeredRef.current = true;
       setSelectedAgentName(agentName);
+      },
+    onUsage: (usage) => {
+      if (usage && typeof usage === 'object') {
+        sessionUsageRef.current = { ...(usage as Record<string, any>) };
+      } else {
+        sessionUsageRef.current = null;
+      }
     },
   });
 
@@ -1325,6 +1333,7 @@ export function useDexterAppController(): DexterAppController {
       issuedAt: new Date().toISOString(),
       dexterSessionType: data?.dexter_session?.type ?? null,
     };
+    sessionUsageRef.current = null;
     hasFlushedSessionRef.current = false;
 
     const dexterSession = data?.dexter_session;
@@ -1371,6 +1380,31 @@ export function useDexterAppController(): DexterAppController {
 
     return data.client_secret.value;
   };
+
+  const deleteRealtimeSession = useCallback(async () => {
+    const sessionId = realtimeSessionIdRef.current;
+    const accessToken = authSession?.access_token;
+    if (!sessionId || !accessToken) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/realtime/sessions/${encodeURIComponent(sessionId)}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const text = await response.text().catch(() => '');
+        console.warn('Failed to delete realtime session', response.status, text.slice(0, 120));
+        return;
+      }
+    } catch (error) {
+      console.warn('Error deleting realtime session', error);
+    }
+  }, [authSession?.access_token]);
 
   const connectToRealtime = async () => {
     const agentSetKey = defaultAgentSetKey;
@@ -1419,6 +1453,7 @@ export function useDexterAppController(): DexterAppController {
 
   const disconnectFromRealtime = () => {
     disconnect();
+    void deleteRealtimeSession();
     setSessionStatus("DISCONNECTED");
     setIsPTTUserSpeaking(false);
     void fetchActiveWallet().then((wallet) => {
@@ -1900,6 +1935,7 @@ export function useDexterAppController(): DexterAppController {
         metadata,
         status: 'pending_summary',
         error: null,
+        usage: sessionUsageRef.current ?? undefined,
       };
     }, []);
 
@@ -1920,10 +1956,12 @@ export function useDexterAppController(): DexterAppController {
           const blob = new Blob([serialized], { type: 'application/json' });
           const ok = navigator.sendBeacon('/api/realtime/logs', blob);
           if (ok) {
+            void deleteRealtimeSession();
             hasFlushedSessionRef.current = true;
             realtimeSessionIdRef.current = null;
             sessionStartedAtRef.current = null;
             sessionMetadataRef.current = {};
+            sessionUsageRef.current = null;
             return;
           }
         } catch (error) {
@@ -1946,17 +1984,19 @@ export function useDexterAppController(): DexterAppController {
           return;
         }
 
+        await deleteRealtimeSession();
         hasFlushedSessionRef.current = true;
         realtimeSessionIdRef.current = null;
         sessionStartedAtRef.current = null;
         sessionMetadataRef.current = {};
+        sessionUsageRef.current = null;
       } catch (error) {
         console.warn('Session log upload error', error);
       } finally {
         sessionFlushInFlightRef.current = false;
       }
     },
-    [buildSessionLogPayload],
+    [buildSessionLogPayload, deleteRealtimeSession],
   );
 
   useEffect(() => {
