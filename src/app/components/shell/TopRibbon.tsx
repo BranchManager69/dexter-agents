@@ -5,7 +5,7 @@ import { SessionStatus } from "@/app/types";
 import type { DexterUserBadge } from "@/app/types";
 import { AuthMenu } from "@/app/components/AuthMenu";
 import { DexterAnimatedCrest } from "@/app/components/DexterAnimatedCrest";
-import { resolveUserBadgeTextClass, UserBadgeVariant } from "@/app/components/UserBadge";
+import type { UserBadgeVariant } from "@/app/components/UserBadge";
 
 interface SessionIdentitySummary {
   type: "guest" | "user";
@@ -38,19 +38,12 @@ interface WalletPortfolioSummary {
   pending?: boolean;
 }
 
-interface McpStatusProps {
-  state: 'loading' | 'user' | 'fallback' | 'guest' | 'none' | 'error';
-  label: string;
-  detail?: string;
-}
-
 interface TopRibbonProps {
   sessionStatus: SessionStatus;
   onToggleConnection?: () => void;
   onReloadBrand?: () => void;
   authState: AuthStateSummary;
   sessionIdentity: SessionIdentitySummary;
-  mcpStatus: McpStatusProps;
   activeWalletKey?: string | null;
   walletPortfolio?: WalletPortfolioSummary | null;
   onSignIn?: (email: string, captchaToken: string | null) => Promise<{ success: boolean; message: string }>;
@@ -59,23 +52,6 @@ interface TopRibbonProps {
   userBadge?: DexterUserBadge | null;
   showHeaderCrest?: boolean;
   crestOrigin?: { left: number; top: number; width: number; height: number } | null;
-}
-
-function getMcpLabel(state: McpStatusProps['state'], fallback: string) {
-  switch (state) {
-    case 'user':
-      return 'Ready';
-    case 'fallback':
-      return 'Fallback';
-    case 'guest':
-    case 'none':
-      return 'Guest';
-    case 'error':
-      return 'Error';
-    case 'loading':
-    default:
-      return fallback || 'Loading';
-  }
 }
 
 function formatWalletAddress(address?: string | null) {
@@ -124,7 +100,6 @@ export function TopRibbon({
   onReloadBrand,
   authState,
   sessionIdentity,
-  mcpStatus,
   activeWalletKey,
   walletPortfolio,
   onSignIn,
@@ -136,26 +111,10 @@ export function TopRibbon({
 }: TopRibbonProps) {
   const sessionVariant = resolveSessionRoleVariant(sessionIdentity, userBadge);
   const sessionLabel = resolveSessionLabel(sessionVariant);
-  const sessionToneClass = resolveUserBadgeTextClass(sessionVariant);
-  const mcpText = getMcpLabel(mcpStatus.state, mcpStatus.label);
   const walletAddressValue = sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined;
   const walletLabel = formatWalletAddress(walletAddressValue);
   const hasConnectionToggle = Boolean(onToggleConnection);
-
-  const walletSecondaryText = (() => {
-    if (!walletPortfolio) return null;
-    if (walletPortfolio.pending && mcpStatus.state !== 'user') {
-      return <span className="inline-block animate-pulse">…</span>;
-    }
-    if (walletPortfolio.status === 'loading' && !walletPortfolio.solBalanceFormatted && !walletPortfolio.totalUsdFormatted) {
-      return <span className="inline-block animate-pulse">…</span>;
-    }
-    if (walletPortfolio.status === 'error') {
-      return 'Balance error';
-    }
-    const parts = [walletPortfolio.solBalanceFormatted, walletPortfolio.totalUsdFormatted].filter(Boolean);
-    return parts.length ? parts.join(' • ') : null;
-  })();
+  const hasWalletAddress = walletAddressValue && walletLabel !== 'Auto';
 
   const [walletCopied, setWalletCopied] = React.useState(false);
   const walletCopyTimeoutRef = React.useRef<number | null>(null);
@@ -238,52 +197,24 @@ export function TopRibbon({
         data-can-toggle-connection={hasConnectionToggle}
       >
         <div className="relative mx-auto flex w-full max-w-6xl items-center gap-3">
-          <div className="ml-auto flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap font-display text-[10px] font-semibold tracking-[0.08em] text-[#FFF3E3]/85 scrollbar-hide">
-            <span className="relative flex flex-shrink-0 items-center leading-none">
-              <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 font-display text-[7px] tracking-[0.08em] text-[#FEFBF4]/60 leading-none">
-                Role
-              </span>
-              <span className={`leading-none ${sessionToneClass}`}>{sessionLabel}</span>
-            </span>
-
-            <span
-              className="relative flex flex-shrink-0 items-center text-[#FEFBF4]/75 leading-none"
-              title={mcpStatus.detail || `MCP: ${mcpStatus.label}`}
-            >
-              <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 font-display text-[7px] tracking-[0.08em] text-[#FEFBF4]/50 leading-none">
-                MCP
-              </span>
-              <span className="leading-none">{mcpText}</span>
-            </span>
-
-            <button
-              type="button"
-              onClick={handleWalletCopy}
-              disabled={!walletAddressValue}
-              className="relative flex flex-shrink-0 items-center text-[#FEFBF4] leading-none transition hover:text-[#FFF3E3] disabled:cursor-not-allowed disabled:text-[#FEFBF4]/40"
-              title={walletAddressValue ? `Copy ${walletAddressValue}` : undefined}
-            >
-              <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 font-display text-[7px] tracking-[0.08em] text-[#FEFBF4]/60 leading-none">
-                Wallet
-              </span>
-              <span className="font-display tracking-[0.08em] text-[#FEFBF4] leading-none">
-                {walletPortfolio?.pending && mcpStatus.state !== 'user'
-                  ? <span className="inline-block animate-pulse align-middle">…</span>
-                  : walletLabel}
-              </span>
-              {walletCopied && (
-                <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 font-display text-[8px] tracking-[0.08em] text-[#FEFBF4]/70">
-                  Copied
-                </span>
-              )}
-            </button>
-
-            {walletSecondaryText && (
-              <span className="flex flex-shrink-0 items-center gap-2 font-display text-[#FEFBF4]/60 tracking-[0.08em]">
-                {walletSecondaryText}
-              </span>
-            )}
-          </div>
+          {hasWalletAddress ? (
+            <div className="ml-auto flex flex-shrink-0 items-center gap-3 whitespace-nowrap font-display text-[10px] font-semibold tracking-[0.08em] text-[#FFF3E3]/85">
+              <button
+                type="button"
+                onClick={handleWalletCopy}
+                className="relative flex items-center gap-2 rounded-full border border-[#FEFBF4]/30 px-3 py-1 text-[#FEFBF4] transition hover:border-[#FEFBF4]/50 hover:text-[#FFF3E3]"
+                title={walletAddressValue ? `Copy ${walletAddressValue}` : undefined}
+              >
+                <span className="text-[9px] uppercase tracking-[0.28em] text-[#FEFBF4]/60">Wallet</span>
+                <span className="text-[10px] tracking-[0.08em]">{walletLabel}</span>
+                {walletCopied && (
+                  <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] tracking-[0.08em] text-[#FEFBF4]/70">
+                    Copied
+                  </span>
+                )}
+              </button>
+            </div>
+          ) : null}
 
           <div className="flex flex-shrink-0 items-center pl-2">
             <AuthMenu

@@ -2382,7 +2382,6 @@ export function useDexterAppController(): DexterAppController {
       email: authEmail,
     },
     sessionIdentity,
-    mcpStatus,
     activeWalletKey: activeWalletAddress,
     walletPortfolio: walletPortfolioSummary,
     onSignIn: handleSignIn,
