@@ -47,7 +47,7 @@ export function BottomStatusRail({
           <button
             type="button"
             onClick={voiceControl.onToggleMuted}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.24em] transition ${
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[10px] sm:text-[11px] uppercase tracking-[0.24em] transition whitespace-nowrap ${
               voiceControl.isMuted
                 ? 'border-rose-400/40 bg-rose-500/10 text-rose-100'
                 : 'border-flux/40 bg-flux/10 text-flux'
