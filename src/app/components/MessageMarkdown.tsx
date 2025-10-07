@@ -9,10 +9,16 @@ import type {
 import { useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import type { Options as RemarkRehypeOptions } from "remark-rehype";
 import { solanaArtifactsRemarkPlugin } from "@/app/lib/markdown/solanaArtifacts";
 import SolanaArtifactBadge from "./solana/SolanaArtifactBadge";
 
 const MAX_LINK_LABEL_LENGTH = 48;
+
+const CUSTOM_REMARK_PASSTHROUGH: NonNullable<RemarkRehypeOptions["passThrough"]> = [
+  // Extend this list when adding new custom remark nodes (e.g. token tickers, program IDs).
+  "solanaArtifact" as any,
+];
 
 type AnchorProps = DetailedHTMLProps<AnchorHTMLAttributes<HTMLAnchorElement>, HTMLAnchorElement>;
 
@@ -66,6 +72,10 @@ export function MessageMarkdown({ children, className }: MessageMarkdownProps) {
     () =>
       ({
         a: (props: AnchorProps) => <SmartLink {...props} />,
+        /**
+         * Custom artifact nodes are passed through from remark (see passThrough above).
+         * When introducing new artifact node types, register them here so they render.
+         */
         solanaArtifact: ({ node }: { node: any }) => (
           <SolanaArtifactBadge value={node?.value} type={node?.data?.artifactType} />
         ),
@@ -77,6 +87,14 @@ export function MessageMarkdown({ children, className }: MessageMarkdownProps) {
     <ReactMarkdown
       className={className}
       remarkPlugins={[remarkGfm, solanaArtifactsRemarkPlugin]}
+      remarkRehypeOptions={{
+        /**
+         * Keep custom artifact nodes produced by our remark plugins so the React renderer
+         * can swap them for richer components. When adding new artifact types (e.g. token
+         * tickers), add the node name here and provide a matching entry in the components map.
+         */
+        passThrough: CUSTOM_REMARK_PASSTHROUGH,
+      }}
       components={componentsMap}
     >
       {content}
