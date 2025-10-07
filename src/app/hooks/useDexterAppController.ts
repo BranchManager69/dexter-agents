@@ -1510,7 +1510,7 @@ export function useDexterAppController(): DexterAppController {
   };
 
   const updateSession = (shouldTriggerResponse: boolean = false) => {
-    // Reflect Push-to-Talk UI state by (de)activating server VAD on the
+    // Reflect the mute toggle by enabling or disabling server VAD on the
     // backend. The Realtime SDK supports live session updates via the
     // `session.update` event.
     const turnDetection = isVoiceMuted
@@ -2219,13 +2219,11 @@ export function useDexterAppController(): DexterAppController {
     onOpenDebugModal: () => setIsDebugModalOpen(true),
     onOpenSignals: () => setIsMobileSignalsOpen(true),
     canUseAdminTools,
-    voiceControl: sessionStatus === 'CONNECTED'
-      ? {
-          isLive: sessionStatus === 'CONNECTED',
-          isMuted: isVoiceMuted,
-          onToggleMuted: () => setIsVoiceMuted((prev) => !prev),
-        }
-      : null,
+    voiceControl: {
+      isLive: sessionStatus === 'CONNECTED',
+      isMuted: isVoiceMuted,
+      onToggleMuted: () => setIsVoiceMuted((prev) => !prev),
+    },
   };
 
   const signalsDrawerProps: SignalsDrawerShellProps = {
