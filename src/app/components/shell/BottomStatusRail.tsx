@@ -51,9 +51,14 @@ export function BottomStatusRail({
               voiceControl.isMuted
                 ? 'border-rose-400/40 bg-rose-500/10 text-rose-100'
                 : 'border-flux/40 bg-flux/10 text-flux'
-            } ${!voiceControl.isLive ? 'opacity-50 cursor-not-allowed' : ''}`}
+            } ${!voiceControl.isLive ? 'cursor-not-allowed opacity-50' : ''}`}
             disabled={!voiceControl.isLive}
-            title={voiceControl.isMuted ? 'Unmute Dexter' : 'Mute Dexter'}
+            title={voiceControl.isLive
+              ? voiceControl.isMuted
+                ? 'Unmute Dexter'
+                : 'Mute Dexter'
+              : 'Voice control available once connected'}
+            aria-pressed={voiceControl.isMuted}
           >
             <span>{voiceControl.isMuted ? 'Muted' : 'Auto Voice'}</span>
           </button>

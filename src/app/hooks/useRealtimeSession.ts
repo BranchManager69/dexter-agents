@@ -390,17 +390,6 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
     sessionRef.current?.mute(m);
   }, []);
 
-  const pushToTalkStart = useCallback(() => {
-    if (!sessionRef.current) return;
-    sessionRef.current.transport.sendEvent({ type: 'input_audio_buffer.clear' } as any);
-  }, []);
-
-  const pushToTalkStop = useCallback(() => {
-    if (!sessionRef.current) return;
-    sessionRef.current.transport.sendEvent({ type: 'input_audio_buffer.commit' } as any);
-    sessionRef.current.transport.sendEvent({ type: 'response.create' } as any);
-  }, []);
-
   return {
     status,
     connect,
@@ -408,8 +397,6 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
     sendUserText,
     sendEvent,
     mute,
-    pushToTalkStart,
-    pushToTalkStop,
     interrupt,
   } as const;
 }
