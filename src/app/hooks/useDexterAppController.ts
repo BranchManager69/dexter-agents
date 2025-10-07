@@ -2253,6 +2253,7 @@ export function useDexterAppController(): DexterAppController {
     onSignOut: handleSignOut,
     turnstileSiteKey,
     userBadge,
+    showHeaderCrest: hasActivatedSession,
   };
 
   const identityLabel = sessionIdentity.type === "user"

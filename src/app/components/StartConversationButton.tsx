@@ -33,6 +33,7 @@ export function StartConversationButton({ onClick, isLoading = false, disabled }
     >
       <motion.div
         className="relative flex items-center justify-center"
+        layoutId="dexter-crest"
         animate={{ rotate: isHovering ? [0, -2, 2, 0] : 0, scale: isExcited ? [0.99, 1.03, 1] : 1 }}
         transition={{ duration: isExcited ? 1.05 : BREATH_DURATION, repeat: Infinity, ease: [0.65, 0, 0.35, 1] }}
         onMouseEnter={() => setIsInteracting(true)}

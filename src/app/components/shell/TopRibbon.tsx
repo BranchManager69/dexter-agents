@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
 import { SessionStatus } from "@/app/types";
 import type { DexterUserBadge } from "@/app/types";
@@ -57,6 +57,7 @@ interface TopRibbonProps {
   onSignOut?: () => void;
   turnstileSiteKey?: string;
   userBadge?: DexterUserBadge | null;
+  showHeaderCrest?: boolean;
 }
 
 function getMcpLabel(state: McpStatusProps['state'], fallback: string) {
@@ -129,6 +130,7 @@ export function TopRibbon({
   onSignOut,
   turnstileSiteKey,
   userBadge,
+  showHeaderCrest = false,
 }: TopRibbonProps) {
   const sessionVariant = resolveSessionRoleVariant(sessionIdentity, userBadge);
   const sessionLabel = resolveSessionLabel(sessionVariant);
@@ -272,20 +274,27 @@ export function TopRibbon({
           </div>
 
           <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 justify-center">
-            <motion.button
-              type="button"
-              onClick={onReloadBrand}
-              className="pointer-events-auto group relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#FF6500]"
-              aria-label="Reload Dexter brand"
-              initial={{ opacity: 0, scale: 0.78, rotate: -12, y: -28 }}
-              animate={{ opacity: 1, scale: 1, rotate: 0, y: 0 }}
-              transition={{ duration: 1.6, ease: [0.19, 1, 0.22, 1], delay: 0.35 }}
-              whileHover={{ scale: 1.04, rotate: 4 }}
-              whileFocus={{ scale: 1.04, rotate: -3 }}
-              whileTap={{ scale: 0.96, rotate: -2 }}
-            >
-              <DexterAnimatedCrest size={82} className="relative" />
-            </motion.button>
+            <AnimatePresence>
+              {showHeaderCrest ? (
+                <motion.button
+                  key="dexter-crest-header"
+                  type="button"
+                  onClick={onReloadBrand}
+                  className="pointer-events-auto group relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#FF6500]"
+                  aria-label="Reload Dexter brand"
+                  layoutId="dexter-crest"
+                  initial={{ opacity: 0, scale: 0.82, rotate: -6, y: -14 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.88, rotate: 6, y: -18 }}
+                  transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
+                  whileHover={{ scale: 1.04, rotate: 4 }}
+                  whileFocus={{ scale: 1.04, rotate: -3 }}
+                  whileTap={{ scale: 0.96, rotate: -2 }}
+                >
+                  <DexterAnimatedCrest size={82} className="relative" />
+                </motion.button>
+              ) : null}
+            </AnimatePresence>
           </div>
         </div>
       </div>
