@@ -1150,6 +1150,18 @@ export function useDexterAppController(): DexterAppController {
   const [hasActivatedSession, setHasActivatedSession] = useState<boolean>(false);
   const [pendingAutoConnect, setPendingAutoConnect] = useState<boolean>(false);
   const [isDebugModalOpen, setIsDebugModalOpen] = useState<boolean>(false);
+  const [crestOrigin, setCrestOrigin] = useState<{
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!hasActivatedSession) {
+      setCrestOrigin(null);
+    }
+  }, [hasActivatedSession]);
 
   // Initialize the recording hook.
   const { startRecording, stopRecording, downloadRecording } =
@@ -2199,6 +2211,18 @@ export function useDexterAppController(): DexterAppController {
     },
     canViewDebugPayloads,
     onStartConversation: () => handleStartConversation(),
+    onCaptureCrestOrigin: (rect) => {
+      if (rect) {
+        setCrestOrigin({
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          height: rect.height,
+        });
+      } else {
+        setCrestOrigin(null);
+      }
+    },
   };
 
   const inputBarProps: InputBarProps = {
@@ -2254,6 +2278,7 @@ export function useDexterAppController(): DexterAppController {
     turnstileSiteKey,
     userBadge,
     showHeaderCrest: hasActivatedSession,
+    crestOrigin,
   };
 
   const identityLabel = sessionIdentity.type === "user"

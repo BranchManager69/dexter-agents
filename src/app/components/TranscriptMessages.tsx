@@ -14,6 +14,7 @@ interface TranscriptMessagesProps {
   onSendMessage?: (message: string) => void;
   canViewDebugPayloads?: boolean;
   onStartConversation?: () => Promise<void> | void;
+  onCaptureCrestOrigin?: (rect: DOMRect | null) => void;
 }
 
 export function TranscriptMessages({
@@ -21,6 +22,7 @@ export function TranscriptMessages({
   onSendMessage,
   canViewDebugPayloads = false,
   onStartConversation,
+  onCaptureCrestOrigin,
 }: TranscriptMessagesProps = {}) {
   const { transcriptItems, toggleTranscriptItemExpand } = useTranscript();
   const transcriptRef = useRef<HTMLDivElement | null>(null);
@@ -192,6 +194,7 @@ export function TranscriptMessages({
                 <StartConversationButton
                   onClick={handleStartClick}
                   isLoading={isStartingConversation}
+                  onCaptureOrigin={onCaptureCrestOrigin}
                 />
               </motion.div>
               <AnimatePresence mode="wait">

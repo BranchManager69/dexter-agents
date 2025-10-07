@@ -58,6 +58,7 @@ interface TopRibbonProps {
   turnstileSiteKey?: string;
   userBadge?: DexterUserBadge | null;
   showHeaderCrest?: boolean;
+  crestOrigin?: { left: number; top: number; width: number; height: number } | null;
 }
 
 function getMcpLabel(state: McpStatusProps['state'], fallback: string) {
@@ -131,6 +132,7 @@ export function TopRibbon({
   turnstileSiteKey,
   userBadge,
   showHeaderCrest = false,
+  crestOrigin,
 }: TopRibbonProps) {
   const sessionVariant = resolveSessionRoleVariant(sessionIdentity, userBadge);
   const sessionLabel = resolveSessionLabel(sessionVariant);
@@ -192,6 +194,33 @@ export function TopRibbon({
   const handleAuthSignOut = () => {
     if (onSignOut) onSignOut();
   };
+
+  const crestTargetRef = React.useRef<HTMLDivElement | null>(null);
+  const [initialTransform, setInitialTransform] = React.useState<{ x: number; y: number; scale: number } | null>(null);
+
+  React.useLayoutEffect(() => {
+    if (!showHeaderCrest || !crestOrigin) {
+      setInitialTransform(null);
+      return;
+    }
+
+    const targetRect = crestTargetRef.current?.getBoundingClientRect();
+    if (!targetRect || targetRect.width === 0 || targetRect.height === 0) {
+      setInitialTransform(null);
+      return;
+    }
+
+    const originCenterX = crestOrigin.left + crestOrigin.width / 2;
+    const originCenterY = crestOrigin.top + crestOrigin.height / 2;
+    const targetCenterX = targetRect.left + targetRect.width / 2;
+    const targetCenterY = targetRect.top + targetRect.height / 2;
+
+    setInitialTransform({
+      x: originCenterX - targetCenterX,
+      y: originCenterY - targetCenterY,
+      scale: crestOrigin.width / targetRect.width,
+    });
+  }, [showHeaderCrest, crestOrigin]);
 
   return (
     <>
@@ -278,10 +307,16 @@ export function TopRibbon({
               <motion.div
                 key="dexter-crest-header"
                 layoutId="dexter-crest"
-                className="pointer-events-none fixed left-4 z-[60]"
-                style={{ top: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
-                initial={{ opacity: 0, scale: 0.9, rotate: -10, y: -24, x: -24 }}
-                animate={{ opacity: 1, scale: 1, rotate: 0, y: 0, x: 0 }}
+                ref={crestTargetRef}
+                className="pointer-events-none fixed z-[60]"
+                style={{
+                  left: 'max(env(safe-area-inset-left, 0px) + 16px, 16px)',
+                  top: 'max(env(safe-area-inset-top, 0px) + 16px, 16px)',
+                }}
+                initial={initialTransform
+                  ? { opacity: 0, scale: initialTransform.scale, rotate: -10, x: initialTransform.x, y: initialTransform.y }
+                  : { opacity: 0, scale: 0.9, rotate: -10, x: -24, y: -24 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0, x: 0, y: 0 }}
                 exit={{ opacity: 0, scale: 0.92, rotate: 6, y: -12, x: -8 }}
                 transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
               >
