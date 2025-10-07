@@ -4,7 +4,6 @@ import {
   ChatKitWidgetRenderer,
   type Card,
   type ChatKitWidgetComponent,
-  type Button,
 } from "../ChatKitWidgetRenderer";
 
 type Diagnostics = {
@@ -41,20 +40,20 @@ const walletAuthRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
           type: "Row",
           gap: 6,
           children: [
-            {
-              type: "Button",
-              label: `${payload.wallet_address.slice(0, 4)}…${payload.wallet_address.slice(-4)}`,
-              onClickAction: { type: "copy", payload: { value: payload.wallet_address } },
-              variant: "outline",
-              size: "sm",
-            } as Button,
-            {
-              type: "Button",
-              label: "Solscan",
-              onClickAction: { type: "open_url", payload: { url: `https://solscan.io/account/${payload.wallet_address}` } },
-              variant: "outline",
-              size: "sm",
-            } as Button,
+        {
+          type: "Button",
+          label: `${payload.wallet_address.slice(0, 4)}…${payload.wallet_address.slice(-4)}`,
+          onClickAction: { type: "copy", payload: { value: payload.wallet_address } },
+          variant: "outline",
+          size: "sm",
+        },
+        {
+          type: "Button",
+          label: "Solscan",
+          onClickAction: { type: "open_url", payload: { url: `https://solscan.io/account/${payload.wallet_address}` } },
+          variant: "outline",
+          size: "sm",
+        },
           ],
         },
       ],

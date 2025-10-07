@@ -1,70 +1,118 @@
 import type { ToolNoteRenderer } from "./types";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
 import {
-  BASE_CARD_CLASS,
-  SECTION_TITLE_CLASS,
-  normalizeOutput,
-  unwrapStructured,
-} from "./helpers";
-import { SolanaAmount, formatSolValue } from "@/app/components/solana/SolanaAmount";
+  ChatKitWidgetRenderer,
+  type Card,
+  type ChatKitWidgetComponent,
+} from "../ChatKitWidgetRenderer";
+import { formatSolDisplay } from "./helpers";
+
+type Alignment = "start" | "center" | "end" | "stretch";
+
+type PreviewPayload = {
+  expectedSol?: number | string;
+  expected_sol?: number | string;
+  warnings?: unknown[];
+};
+
+type PreviewArgs = Record<string, unknown>;
 
 const solanaPreviewSellRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
-  const payload = unwrapStructured(rawOutput);
+  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+  const payload = unwrapStructured(rawOutput) as PreviewPayload;
+  const args = (item.data as any)?.arguments as PreviewArgs | undefined;
 
-  const expectedSolRaw = (payload as any)?.expectedSol ?? (payload as any)?.expected_sol;
-  const expectedSol =
-    formatSolValue(expectedSolRaw, { fromLamports: true }) ?? formatSolValue(expectedSolRaw);
-  const warnings = Array.isArray((payload as any)?.warnings)
-    ? (payload as any).warnings.filter((w: unknown): w is string => typeof w === "string" && w.length > 0)
+  const expectedRaw = payload.expectedSol ?? payload.expected_sol ?? args?.expected_sol;
+  const expectedDisplay = expectedRaw !== undefined
+    ? formatSolDisplay(expectedRaw, { fromLamports: true }) ?? formatSolDisplay(expectedRaw)
+    : undefined;
+
+  const warnings = Array.isArray(payload?.warnings)
+    ? payload.warnings.filter((w: unknown): w is string => typeof w === "string" && w.length > 0)
     : [];
+
+  const rows: ChatKitWidgetComponent[] = [];
+  if (expectedDisplay) {
+    rows.push({
+      type: "Row",
+      justify: "between",
+      align: "center" as Alignment,
+      children: [
+        { type: "Caption", value: "Expected SOL", size: "xs" },
+        { type: "Text", value: expectedDisplay, weight: "semibold", size: "sm" },
+      ],
+    });
+  } else {
+    rows.push({ type: "Text", value: "Preview did not return a quote.", size: "sm" });
+  }
+
+  const widgets: Card[] = [
+    {
+      type: "Card",
+      id: "sell-preview-header",
+      children: [
+        {
+          type: "Row",
+          justify: "between",
+          align: "center",
+          children: [
+            {
+              type: "Col",
+              gap: 4,
+              children: [
+                { type: "Title", value: "Sell Preview", size: "md" },
+                item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
+              ].filter(Boolean) as ChatKitWidgetComponent[],
+            },
+            expectedDisplay
+              ? { type: "Badge", label: expectedDisplay, color: "secondary", variant: "outline" } as any
+              : undefined,
+          ].filter(Boolean) as ChatKitWidgetComponent[],
+        },
+      ],
+    },
+    {
+      type: "Card",
+      id: "sell-preview-details",
+      children: [{ type: "Col", gap: 8, children: rows }],
+    },
+  ];
+
+  if (warnings.length) {
+    widgets.push({
+      type: "Card",
+      id: "sell-preview-warnings",
+      children: [
+        { type: "Title", value: "Warnings", size: "sm" },
+        {
+          type: "Col",
+          gap: 6,
+          children: warnings.map((warn) => ({ type: "Text", value: warn, size: "sm" })) as ChatKitWidgetComponent[],
+        },
+      ],
+    });
+  }
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className={SECTION_TITLE_CLASS}>Sell Preview</div>
-          <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
-        </div>
-        {expectedSol && (
-          <div className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#FFF2E2]">
-            Expected:{" "}
-            <SolanaAmount value={expectedSolRaw} fromLamports className="text-xs" />
-          </div>
-        )}
-      </div>
-
-      {!expectedSol && (
-        <div className="mt-4 rounded-lg border border-[#F7BE8A]/22 bg-[#1A090D]/70 px-3 py-2 text-sm text-[#FFE4CF]">
-          Preview did not return a quote.
-        </div>
-      )}
-
-      {warnings.length > 0 && (
-        <div className="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-amber-300">Warnings</div>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-amber-100">
-            {warnings.map((warning: string) => (
-              <li key={warning}>{warning}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
+      <ChatKitWidgetRenderer widgets={widgets} />
       {debug && (
-        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+        <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
+          <summary
+            className="cursor-pointer text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+            onClick={(event) => {
+              event.preventDefault();
+              onToggle();
+            }}
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </button>
+          </summary>
           {isExpanded && (
             <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
               {JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}
-        </div>
+        </details>
       )}
     </div>
   );

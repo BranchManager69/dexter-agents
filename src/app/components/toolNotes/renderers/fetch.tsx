@@ -1,64 +1,95 @@
 import type { ToolNoteRenderer } from "./types";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
 import {
-  BASE_CARD_CLASS,
-  SECTION_TITLE_CLASS,
-  normalizeOutput,
-  unwrapStructured,
-} from "./helpers";
+  ChatKitWidgetRenderer,
+  type Card,
+  type ChatKitWidgetComponent,
+} from "../ChatKitWidgetRenderer";
+
+type DocumentPayload = {
+  title?: string;
+  url?: string;
+  text?: string;
+};
 
 const fetchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
-  const doc = unwrapStructured(rawOutput);
+  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+  const doc = unwrapStructured(rawOutput) as DocumentPayload;
 
-  const title = typeof (doc as any)?.title === "string" ? (doc as any).title : "Document";
-  const url = typeof (doc as any)?.url === "string" ? (doc as any).url : undefined;
-  const text = typeof (doc as any)?.text === "string" ? (doc as any).text : undefined;
+  const title = doc.title?.trim() || "Document";
+  const url = doc.url?.trim();
+  const text = doc.text ?? "";
+  const excerpt = text
+    ? text
+        .split(/\n+/)
+        .filter(Boolean)
+        .slice(0, 3)
+        .join("\n")
+    : null;
 
-  const excerpt = text ? text.split(/\n+/).filter(Boolean).slice(0, 2).join("\n") : null;
+  const rows: ChatKitWidgetComponent[] = [
+    { type: "Text", value: title, size: "sm", weight: "semibold" },
+    excerpt ? { type: "Text", value: excerpt, size: "sm" } : { type: "Text", value: "No preview text available.", size: "sm" },
+  ];
+
+  const widgets: Card[] = [
+    {
+      type: "Card",
+      id: "fetch-header",
+      children: [
+        {
+          type: "Row",
+          justify: "between",
+          align: "center",
+          children: [
+            {
+              type: "Col",
+              gap: 4,
+              children: [
+                { type: "Title", value: "Dexter Document", size: "md" },
+                item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
+              ].filter(Boolean) as ChatKitWidgetComponent[],
+            },
+            url
+              ? {
+                  type: "Button",
+                  label: "Open",
+                  onClickAction: { type: "open_url", payload: { url } },
+                  variant: "outline",
+                  size: "sm",
+                }
+              : undefined,
+          ].filter(Boolean) as ChatKitWidgetComponent[],
+        },
+      ],
+    },
+    {
+      type: "Card",
+      id: "fetch-body",
+      children: [{ type: "Col", gap: 8, children: rows }],
+    },
+  ];
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className={SECTION_TITLE_CLASS}>Dexter Document</div>
-          <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
-        </div>
-        {url && (
-          <a href={url} target="_blank" rel="noreferrer" className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-flux transition hover:text-flux/80">
-            Open
-          </a>
-        )}
-      </div>
-
-      <div className="mt-4 space-y-3 text-sm text-[#FFF6EC]">
-        <div className="font-semibold">{title}</div>
-        {excerpt ? (
-          <pre className="max-h-40 overflow-y-auto whitespace-pre-wrap break-words text-xs text-[#FFE4CF]">{excerpt}</pre>
-        ) : (
-          <div className="text-xs text-[#F9D9C3]">No preview text available.</div>
-        )}
-      </div>
-
+      <ChatKitWidgetRenderer widgets={widgets} />
       {debug && (
-        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+        <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
+          <summary
+            className="cursor-pointer text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+            onClick={(event) => {
+              event.preventDefault();
+              onToggle();
+            }}
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </button>
-          {isExpanded && text && (
+          </summary>
+          {isExpanded && (
             <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
-              {text}
+              {text || JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}
-          {isExpanded && !text && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
-              {JSON.stringify(rawOutput, null, 2)}
-            </pre>
-          )}
-        </div>
+        </details>
       )}
     </div>
   );
