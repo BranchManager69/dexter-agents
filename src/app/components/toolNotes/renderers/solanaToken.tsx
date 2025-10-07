@@ -1,14 +1,67 @@
-import Image from "next/image";
-
 import type { ToolNoteRenderer } from "./types";
 import {
   BASE_CARD_CLASS,
-  HashBadge,
-  SECTION_TITLE_CLASS,
-  formatUsd,
   normalizeOutput,
   unwrapStructured,
 } from "./helpers";
+import {
+  ChatKitWidgetRenderer,
+  type Badge,
+  type Button,
+  type Card,
+  type ListView,
+  type ListViewItem,
+} from "../ChatKitWidgetRenderer";
+
+type Alignment = "start" | "center" | "end" | "stretch";
+
+type TokenResult = {
+  address?: string;
+  mint?: string;
+  symbol?: string;
+  name?: string;
+  icon?: string;
+  logo?: string;
+  image?: string;
+  info?: Record<string, unknown>;
+  priceUsd?: number;
+  price_usd?: number;
+  liquidityUsd?: number;
+  liquidity_usd?: number;
+  liquidity?: Record<string, unknown>;
+  volume24hUsd?: number;
+  volume24h_usd?: number;
+  volume24h?: number;
+  totalVolume?: { h24?: number };
+  marketCap?: number;
+  market_cap?: number;
+  marketCapUsd?: number;
+  market_cap_usd?: number;
+  fdv?: number;
+  fdvUsd?: number;
+  fdv_usd?: number;
+  priceChange?: { h24?: number };
+  price_change_24h?: number;
+  priceChange24h?: number;
+  pairs?: PairResult[];
+};
+
+type PairResult = {
+  pairAddress?: string;
+  dexId?: string;
+  url?: string;
+  liquidity?: { usd?: number };
+  liquidityUsd?: number;
+  liquidity_usd?: number;
+  priceUsd?: number;
+  price_usd?: number;
+  volume?: { h24?: number };
+  volume24hUsd?: number;
+  volume_24h_usd?: number;
+  priceChange?: { h24?: number };
+  priceChange24h?: number;
+  price_change_24h?: number;
+};
 
 const percentFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
@@ -26,273 +79,223 @@ function pickNumber(...values: unknown[]): number | undefined {
   return undefined;
 }
 
+function pickString(...values: unknown[]): string | undefined {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value.trim();
+    }
+  }
+  return undefined;
+}
+
+function truncateAddress(address: string, visible = 4) {
+  if (address.length <= visible * 2 + 1) return address;
+  return `${address.slice(0, visible)}…${address.slice(-visible)}`;
+}
+
+function formatUsd(value: unknown, precise = false) {
+  const numeric = pickNumber(value);
+  if (numeric === undefined) return undefined;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: precise ? 4 : 0,
+  }).format(numeric);
+}
+
 function formatPercent(value: unknown) {
   const numeric = pickNumber(value);
   if (numeric === undefined) return undefined;
   return `${percentFormatter.format(numeric)}%`;
 }
 
-function pickString(...values: unknown[]): string | undefined {
-  for (const value of values) {
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value;
-    }
-  }
-  return undefined;
+function buildLinkButton(label: string, url: string): Button {
+  return {
+    type: "Button",
+    label,
+    onClickAction: { type: "open_url", payload: { url } },
+    variant: "outline",
+    size: "sm",
+  };
 }
 
-const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
+function buildBadge(label: string, color: Badge["color"]): Badge {
+  return {
+    type: "Badge",
+    label,
+    color,
+    variant: "outline",
+    size: "sm",
+    pill: true,
+  };
+}
+
+const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug }) => {
+  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
   const payload = unwrapStructured(rawOutput);
   const args = (item.data as any)?.arguments ?? {};
   const query = typeof args?.query === "string" && args.query.trim().length > 0 ? args.query.trim() : undefined;
 
-  const results = Array.isArray(payload?.results)
+  const results: TokenResult[] = Array.isArray(payload?.results)
     ? payload.results
     : Array.isArray(payload)
       ? payload
       : [];
 
-  const primary = results.slice(0, 3);
-  const remaining = results.slice(3);
+  const widgets: Array<Card | ListView> = [];
 
-  const renderPairBadge = (pair: any, index: number) => {
-    if (!pair) return null;
-    const key = pair?.pairAddress ?? pair?.url ?? `pair-${index}`;
-    const dex = typeof pair?.dexId === "string" && pair.dexId ? pair.dexId : "Pair";
-    const liquidityValue = pickNumber(pair?.liquidity?.usd, pair?.liquidityUsd, pair?.liquidity_usd);
-    const liquidity = formatUsd(liquidityValue);
-    const priceValue = pickNumber(pair?.priceUsd, pair?.price_usd);
-    const price = formatUsd(priceValue, { precise: true });
-    const volumeValue = pickNumber(pair?.volume?.h24, pair?.volume24hUsd, pair?.volume_24h_usd);
-    const volume = formatUsd(volumeValue);
-    const priceChangeValue = pickNumber(pair?.priceChange?.h24, pair?.price_change_24h, pair?.priceChange24h);
-    const priceChange = formatPercent(priceChangeValue);
-    const priceChangeClass = priceChangeValue !== undefined && priceChangeValue < 0 ? "text-rose-300" : "text-emerald-300";
-    const link = typeof pair?.url === "string" && pair.url ? pair.url : undefined;
-
-    const body = (
-      <>
-        <div className="flex items-center justify-between gap-2">
-          <div className="text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Pair {index + 1}</div>
-          <div className="rounded-full border border-[#F7BE8A]/30 px-2 py-[2px] text-[10px] uppercase tracking-[0.2em] text-[#FFE4CF]">
-            {dex}
-          </div>
-        </div>
-        <div className="mt-2 flex flex-col gap-1 text-xs text-[#FFE4CF]">
-          {liquidity && (
-            <div>
-              Liquidity: <span className="text-[#FFF6EC]">{liquidity}</span>
-            </div>
-          )}
-          {price && (
-            <div>
-              Price: <span className="text-[#FFF6EC]">{price}</span>
-            </div>
-          )}
-          {volume && (
-            <div>
-              24h volume: <span className="text-[#FFF6EC]">{volume}</span>
-            </div>
-          )}
-          {priceChange && (
-            <div>
-              24h Δ: <span className={priceChangeClass}>{priceChange}</span>
-            </div>
-          )}
-        </div>
-      </>
-    );
-
-    if (link) {
-      return (
-        <a
-          key={key}
-          href={link}
-          target="_blank"
-          rel="noreferrer"
-          className="block rounded-lg border border-[#F7BE8A]/24 bg-[#201012]/70 px-3 py-2 transition hover:border-flux/60"
-        >
-          {body}
-        </a>
-      );
-    }
-
-    return (
-      <div key={key} className="rounded-lg border border-[#F7BE8A]/24 bg-[#201012]/70 px-3 py-2">
-        {body}
-      </div>
-    );
+  const introCard: Card = {
+    type: "Card",
+    id: "token-search-header",
+    children: [
+      {
+        type: "Col",
+        gap: 6,
+        children: [
+          { type: "Title", value: "Token lookup", size: "md" },
+          query ? { type: "Caption", value: `Query: ${query}`, size: "sm" } : undefined,
+          results.length ? { type: "Caption", value: `${results.length} candidate${results.length === 1 ? "" : "s"}`, size: "xs" } : undefined,
+        ].filter(Boolean) as any,
+      },
+    ],
   };
+  widgets.push(introCard);
 
-  const renderTokenCard = (token: any) => {
-    if (!token) return null;
-    const address = typeof token?.address === "string" ? token.address : typeof token?.mint === "string" ? token.mint : null;
-    const symbol = typeof token?.symbol === "string" && token.symbol ? token.symbol : "—";
-    const name = typeof token?.name === "string" && token.name ? token.name : null;
-    const price = formatUsd(pickNumber(token?.priceUsd, token?.price_usd), { precise: true });
-    const liquidity = formatUsd(pickNumber(token?.liquidityUsd, token?.liquidity_usd));
-    const volume = formatUsd(pickNumber(token?.volume24hUsd, token?.volume24h_usd, token?.volume24h, token?.totalVolume?.h24));
-    const marketCapValue = pickNumber(
-      token?.marketCap,
-      token?.market_cap,
-      token?.marketCapUsd,
-      token?.market_cap_usd,
-      token?.fdv,
-      token?.fdvUsd,
-      token?.fdv_usd,
-    );
-    const marketCap = formatUsd(marketCapValue);
-    const priceChangeValue = pickNumber(token?.priceChange?.h24, token?.price_change_24h, token?.priceChange24h);
-    const priceChange = formatPercent(priceChangeValue);
-    const priceChangeClass = priceChangeValue !== undefined && priceChangeValue < 0 ? "text-rose-300" : "text-emerald-300";
-    const info = token?.info && typeof token.info === "object" ? token.info : undefined;
-    const pairs = Array.isArray(token?.pairs) ? token.pairs.slice(0, 3) : [];
-    const pairIcon = pairs
-      .map((pair: any) => pickString(pair?.info?.imageUrl, pair?.info?.openGraph))
-      .find((value: string | undefined) => typeof value === "string" && value.length > 0);
-    const iconUrl = pickString(
+  results.slice(0, 5).forEach((token, index) => {
+    const address = pickString(token.address, token.mint);
+    const symbol = pickString(token.symbol) ?? (address ? truncateAddress(address, 3) : `Result ${index + 1}`);
+    const name = pickString(token.name);
+    const info = token.info && typeof token.info === "object" ? token.info : undefined;
+    const image = pickString(
       info?.imageUrl,
       info?.openGraphImageUrl,
       info?.headerImageUrl,
-      token?.icon,
-      token?.logo,
-      token?.image,
-      token?.pairs?.[0]?.baseToken?.icon,
-      pairIcon ?? undefined,
+      token.icon,
+      token.logo,
+      token.image,
     );
 
-    return (
-      <div key={address ?? symbol} className="rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-4">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-[#F7BE8A]/24 bg-neutral-900/80">
-              {iconUrl ? (
-                <Image src={iconUrl} alt={symbol} fill sizes="40px" className="object-cover" />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center text-xs text-[#F9D9C3]">
-                  {symbol.slice(0, 2)}
-                </span>
-              )}
-            </div>
-            <div>
-              <div className="text-sm font-semibold text-[#FFF6EC]" title={name || symbol}>
-                {symbol}
-              </div>
-              {name && <div className="text-xs text-[#F9D9C3]" title={name}>{name}</div>}
-            </div>
-          </div>
-          {price && <div className="text-sm text-[#FFF6EC]">{price}</div>}
-        </div>
-        <div className="mt-3 space-y-2 text-xs text-[#FFE4CF]">
-          {address && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[#F0BFA1]">Mint:</span>
-              <HashBadge value={address} href={`https://solscan.io/token/${address}`} ariaLabel="Token mint" />
-            </div>
-          )}
-          {marketCap && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[#F0BFA1]">Market cap:</span>
-              <span className="text-[#FFF6EC]">{marketCap}</span>
-            </div>
-          )}
-          {liquidity && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[#F0BFA1]">Liquidity:</span>
-              <span className="text-[#FFF6EC]">{liquidity}</span>
-            </div>
-          )}
-          {volume && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[#F0BFA1]">24h volume:</span>
-              <span className="text-[#FFF6EC]">{volume}</span>
-            </div>
-          )}
-          {priceChange && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[#F0BFA1]">24h change:</span>
-              <span className={priceChangeClass}>{priceChange}</span>
-            </div>
-          )}
-        </div>
-        {pairs.length > 0 && (
-          <div className="mt-4 grid gap-2">
-            {pairs.map((pair: any, index: number) => renderPairBadge(pair, index))}
-          </div>
-        )}
-      </div>
+    const price = formatUsd(token.priceUsd ?? token.price_usd, true);
+    const liquidity = formatUsd(token.liquidityUsd ?? token.liquidity_usd ?? token.liquidity?.usd);
+    const volume = formatUsd(token.volume24hUsd ?? token.volume24h_usd ?? token.volume24h ?? token.totalVolume?.h24);
+    const marketCap = formatUsd(
+      token.marketCap ?? token.market_cap ?? token.marketCapUsd ?? token.market_cap_usd ?? token.fdv ?? token.fdvUsd ?? token.fdv_usd,
     );
-  };
+    const priceChange = formatPercent(token.priceChange?.h24 ?? token.price_change_24h ?? token.priceChange24h);
+    const priceChangeNegative = pickNumber(token.priceChange?.h24, token.price_change_24h, token.priceChange24h) ?? 0;
 
-  const hasDebug = debug && Object.keys(rawOutput || {}).length > 0;
+    const badges: Badge[] = [];
+    if (price) badges.push(buildBadge(`Price ${price}`, "info"));
+    if (marketCap) badges.push(buildBadge(`MCap ${marketCap}`, "secondary"));
+    if (liquidity) badges.push(buildBadge(`Liquidity ${liquidity}`, "success"));
+    if (volume) badges.push(buildBadge(`24h Vol ${volume}`, "info"));
+    if (priceChange) badges.push(buildBadge(`24h ${priceChange}`, priceChangeNegative < 0 ? "danger" : "success"));
+
+    const linkButtons: Button[] = [];
+    if (address) linkButtons.push(buildLinkButton(truncateAddress(address), `https://solscan.io/token/${address}`));
+
+    const pairItems: ListViewItem[] = Array.isArray(token.pairs)
+      ? token.pairs.slice(0, 3).map((pair, pairIndex) => {
+          const liquidityPair = formatUsd(pair.liquidity?.usd ?? pair.liquidityUsd ?? pair.liquidity_usd);
+          const pricePair = formatUsd(pair.priceUsd ?? pair.price_usd, true);
+          const volumePair = formatUsd(pair.volume?.h24 ?? pair.volume24hUsd ?? pair.volume_24h_usd);
+          const changePair = formatPercent(pair.priceChange?.h24 ?? pair.priceChange24h ?? pair.price_change_24h);
+          const dexLabel = pickString(pair.dexId) ?? `Pair ${pairIndex + 1}`;
+
+          const pairBadges: Badge[] = [];
+          if (liquidityPair) pairBadges.push(buildBadge(`Liq ${liquidityPair}`, "secondary"));
+          if (pricePair) pairBadges.push(buildBadge(`Price ${pricePair}`, "info"));
+          if (volumePair) pairBadges.push(buildBadge(`24h Vol ${volumePair}`, "info"));
+          if (changePair) pairBadges.push(buildBadge(`24h ${changePair}`, pickNumber(pair.priceChange?.h24, pair.priceChange24h, pair.price_change_24h) ?? 0 < 0 ? "danger" : "success"));
+
+          return {
+            type: "ListViewItem",
+            id: pair.pairAddress ?? `pair-${pairIndex}`,
+            onClickAction: pair.url ? { type: "open_url", payload: { url: pair.url } } : undefined,
+            gap: 6,
+            children: [
+              { type: "Text", value: dexLabel, weight: "semibold", size: "sm" },
+              pairBadges.length ? { type: "Row", gap: 6, wrap: "wrap", children: pairBadges } : undefined,
+            ].filter(Boolean) as any,
+          };
+        })
+      : [];
+
+    const card: Card = {
+      type: "Card",
+      id: address ?? `token-${index}`,
+      children: [
+        {
+          type: "Row",
+          justify: "between",
+          align: "center",
+          children: [
+            {
+              type: "Row",
+              gap: 12,
+              align: "center" as Alignment,
+              children: [
+                image
+                  ? {
+                      type: "Image",
+                      src: image,
+                      alt: symbol,
+                      width: 48,
+                      height: 48,
+                      radius: "50%",
+                    }
+                  : {
+                      type: "Box",
+                      align: "center" as Alignment,
+                      justify: "center",
+                      width: 48,
+                      height: 48,
+                      radius: "50%",
+                      background: "rgba(255,255,255,0.04)",
+                      children: [{ type: "Text", value: symbol.slice(0, 2), size: "sm", weight: "semibold" }],
+                    },
+                {
+                  type: "Col",
+                  gap: 4,
+                  children: [
+                    { type: "Text", value: symbol, weight: "semibold", size: "md" },
+                    name ? { type: "Caption", value: name, size: "xs" } : undefined,
+                  ].filter(Boolean) as any,
+                },
+              ].filter(Boolean) as any,
+            },
+            price ? { type: "Text", value: price, weight: "semibold", size: "sm" } : undefined,
+          ].filter(Boolean) as any,
+        },
+        badges.length ? { type: "Row", gap: 6, wrap: "wrap", children: badges } : undefined,
+        linkButtons.length ? { type: "Row", gap: 6, wrap: "wrap", children: linkButtons } : undefined,
+      ].filter(Boolean) as any,
+    };
+
+    widgets.push(card);
+
+    if (pairItems.length) {
+      widgets.push({
+        type: "ListView",
+        id: `${address ?? `token-${index}`}-pairs`,
+        children: pairItems,
+      });
+    }
+  });
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className={SECTION_TITLE_CLASS}>Solana Token Lookup</div>
-          <div className="mt-2 text-sm text-[#F9D9C3]">{item.timestamp}</div>
-        </div>
-        {query && (
-          <div className="rounded-full border border-[#F7BE8A]/24 bg-[#201012]/70 px-3 py-1 text-xs uppercase tracking-[0.2em] text-[#FFF2E2]">
-            Query: {query}
-          </div>
-        )}
-      </div>
+      <ChatKitWidgetRenderer widgets={widgets} />
 
-      {primary.length > 0 ? (
-        <div className="mt-4 grid gap-3">
-          {primary.map((token: any) => renderTokenCard(token))}
-        </div>
-      ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-[#F7BE8A]/24 px-4 py-6 text-center text-sm text-[#F9D9C3]">
-          No matching Solana tokens reported.
-        </div>
-      )}
-
-      {remaining.length > 0 && (
-        <div className="mt-4">
-          {!isExpanded ? (
-            <button
-              type="button"
-              onClick={onToggle}
-              className="text-xs uppercase tracking-[0.24em] text-flux transition hover:text-flux/80"
-            >
-              Show {remaining.length} more result{remaining.length === 1 ? "" : "s"}
-            </button>
-          ) : (
-            <>
-              <div className="grid gap-3">
-                {remaining.map((token: any) => renderTokenCard(token))}
-              </div>
-              <button
-                type="button"
-                onClick={onToggle}
-                className="mt-3 text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
-              >
-                Hide additional results
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {hasDebug && (
-        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
-          >
-            {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </button>
-          {isExpanded && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
-              {JSON.stringify(rawOutput, null, 2)}
-            </pre>
-          )}
-        </div>
+      {debug && (
+        <details className="mt-4 w-full" open>
+          <summary className="cursor-pointer text-xs uppercase tracking-[0.2em] text-[#F9D9C3]">
+            Raw payload
+          </summary>
+          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
+            {JSON.stringify(rawOutput, null, 2)}
+          </pre>
+        </details>
       )}
     </div>
   );
