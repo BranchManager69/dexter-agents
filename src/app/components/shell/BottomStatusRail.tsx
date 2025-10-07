@@ -2,13 +2,23 @@ import React from "react";
 
 interface BottomStatusRailProps {
   onOpenDebugModal: () => void;
+  onOpenSignals: () => void;
+  canUseAdminTools: boolean;
+  voiceControl: {
+    isLive: boolean;
+    isMuted: boolean;
+    onToggleMuted: () => void;
+  } | null;
 }
 
 export function BottomStatusRail({
   onOpenDebugModal,
+  onOpenSignals,
+  canUseAdminTools,
+  voiceControl,
 }: BottomStatusRailProps) {
   return (
-    <div className="flex items-center justify-between px-9 py-3 text-sm text-neutral-200">
+    <div className="flex items-center justify-between gap-6 px-9 py-3 text-sm text-neutral-200">
       {/* Left: Branch.bet link with icon */}
       <a
         href="https://branch.bet"
@@ -31,8 +41,40 @@ export function BottomStatusRail({
         <span>branch.bet</span>
       </a>
 
-      {/* Center: Empty for now */}
-      <div className="flex-1" />
+      {/* Center: Voice controls & signals */}
+      <div className="flex flex-1 items-center justify-center gap-4">
+        {voiceControl ? (
+          <button
+            type="button"
+            onClick={voiceControl.onToggleMuted}
+            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] uppercase tracking-[0.24em] transition ${
+              voiceControl.isMuted
+                ? 'border-rose-400/40 bg-rose-500/10 text-rose-100'
+                : 'border-flux/40 bg-flux/10 text-flux'
+            } ${!voiceControl.isLive ? 'opacity-50 cursor-not-allowed' : ''}`}
+            disabled={!voiceControl.isLive}
+            title={voiceControl.isMuted ? 'Unmute Dexter' : 'Mute Dexter'}
+          >
+            <span>{voiceControl.isMuted ? 'Muted' : 'Auto Voice'}</span>
+          </button>
+        ) : null}
+
+        {!canUseAdminTools && (
+          <button
+            type="button"
+            onClick={onOpenSignals}
+            className="inline-flex items-center gap-2 rounded-full border border-neutral-800/60 bg-neutral-900/40 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-neutral-300 transition hover:border-flux/40 hover:text-flux"
+            title="Open signals"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="6" x2="6" y1="4" y2="20" />
+              <line x1="12" x2="12" y1="9" y2="20" />
+              <line x1="18" x2="18" y1="14" y2="20" />
+            </svg>
+            Signals
+          </button>
+        )}
+      </div>
 
       {/* Right: Debug info icon */}
       <button

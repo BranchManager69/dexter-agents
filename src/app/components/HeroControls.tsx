@@ -12,8 +12,6 @@ export interface HeroControlsProps {
   onDownloadAudio: () => void;
   onSaveLog: () => void;
   onOpenPersonaModal?: () => void;
-  isVoiceDockExpanded: boolean;
-  onToggleVoiceDock: () => void;
   canUseAdminTools: boolean;
   showSuperAdminTools: boolean;
   onOpenSuperAdmin?: () => void;

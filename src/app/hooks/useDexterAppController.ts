@@ -6,7 +6,6 @@ import { v4 as uuidv4 } from "uuid";
 
 import type { HeroControlsProps } from "../components/HeroControls";
 import type TopRibbonComponent from "../components/shell/TopRibbon";
-import type VoiceDockComponent from "../components/shell/VoiceDock";
 import type BottomStatusRailComponent from "../components/shell/BottomStatusRail";
 import type SignalStackComponent from "../components/signals/SignalStack";
 import type SignalsDrawerComponent from "../components/signals/SignalsDrawer";
@@ -77,7 +76,6 @@ type McpStatusState = {
 };
 
 type TopRibbonProps = ComponentProps<typeof TopRibbonComponent>;
-type VoiceDockProps = ComponentProps<typeof VoiceDockComponent>;
 type BottomStatusRailProps = ComponentProps<typeof BottomStatusRailComponent>;
 type SignalStackComponentProps = ComponentProps<typeof SignalStackComponent>;
 type SignalsDrawerProps = ComponentProps<typeof SignalsDrawerComponent>;
@@ -102,7 +100,6 @@ export interface DexterAppController {
   signalStackProps: SignalStackLayoutProps;
   bottomStatusProps: BottomStatusRailProps;
   signalsDrawerProps: SignalsDrawerShellProps;
-  voiceDockProps: VoiceDockProps | null;
   debugModalProps: DebugInfoModalProps;
   superAdminModalProps: SuperAdminModalProps;
   personaModalProps: AgentPersonaModalProps;
@@ -1141,8 +1138,7 @@ export function useDexterAppController(): DexterAppController {
   const [isEventsPaneExpanded, setIsEventsPaneExpanded] =
     useState<boolean>(true);
   const [userText, setUserText] = useState<string>("");
-  const [isPTTActive, setIsPTTActive] = useState<boolean>(false);
-  const [isPTTUserSpeaking, setIsPTTUserSpeaking] = useState<boolean>(false);
+  const [isVoiceMuted, setIsVoiceMuted] = useState<boolean>(false);
   const [isMobileSignalsOpen, setIsMobileSignalsOpen] = useState<boolean>(false);
   const [isAudioPlaybackEnabled, setIsAudioPlaybackEnabled] = useState<boolean>(
     () => {
@@ -1153,7 +1149,6 @@ export function useDexterAppController(): DexterAppController {
   );
   const [hasActivatedSession, setHasActivatedSession] = useState<boolean>(false);
   const [pendingAutoConnect, setPendingAutoConnect] = useState<boolean>(false);
-  const [isVoiceDockExpanded, setIsVoiceDockExpanded] = useState<boolean>(true);
   const [isDebugModalOpen, setIsDebugModalOpen] = useState<boolean>(false);
 
   // Initialize the recording hook.
@@ -1286,7 +1281,7 @@ export function useDexterAppController(): DexterAppController {
     if (sessionStatus === "CONNECTED") {
       updateSession();
     }
-  }, [isPTTActive]);
+  }, [isVoiceMuted, sessionStatus]);
 
   const fetchEphemeralKey = async (): Promise<string | null> => {
     logClientEvent({ url: "/session" }, "fetch_session_token_request");
@@ -1455,7 +1450,6 @@ export function useDexterAppController(): DexterAppController {
     disconnect();
     void deleteRealtimeSession();
     setSessionStatus("DISCONNECTED");
-    setIsPTTUserSpeaking(false);
     void fetchActiveWallet().then((wallet) => {
       syncIdentityToAuthSession(wallet);
     });
@@ -1519,7 +1513,7 @@ export function useDexterAppController(): DexterAppController {
     // Reflect Push-to-Talk UI state by (de)activating server VAD on the
     // backend. The Realtime SDK supports live session updates via the
     // `session.update` event.
-    const turnDetection = isPTTActive
+    const turnDetection = isVoiceMuted
       ? null
       : {
           type: 'server_vad',
@@ -1683,26 +1677,6 @@ export function useDexterAppController(): DexterAppController {
     setHasActivatedSession(true);
   };
 
-  const handleTalkButtonDown = () => {
-    if (sessionStatus !== 'CONNECTED') return;
-    interrupt();
-    setHasActivatedSession(true);
-
-    setIsPTTUserSpeaking(true);
-    sendClientEvent({ type: 'input_audio_buffer.clear' }, 'clear PTT buffer');
-
-    // No placeholder; we'll rely on server transcript once ready.
-  };
-
-  const handleTalkButtonUp = () => {
-    if (sessionStatus !== 'CONNECTED' || !isPTTUserSpeaking)
-      return;
-
-    setIsPTTUserSpeaking(false);
-    sendClientEvent({ type: 'input_audio_buffer.commit' }, 'commit PTT');
-    sendClientEvent({ type: 'response.create' }, 'trigger response PTT');
-  };
-
   const onToggleConnection = () => {
     if (sessionStatus === "CONNECTED" || sessionStatus === "CONNECTING") {
       disconnectFromRealtime();
@@ -1730,9 +1704,9 @@ export function useDexterAppController(): DexterAppController {
   };
 
   useEffect(() => {
-    const storedPushToTalkUI = localStorage.getItem("pushToTalkUI");
-    if (storedPushToTalkUI) {
-      setIsPTTActive(storedPushToTalkUI === "true");
+    const storedVoiceMuted = localStorage.getItem("voiceMuted");
+    if (storedVoiceMuted !== null) {
+      setIsVoiceMuted(storedVoiceMuted === "true");
     }
     const storedLogsExpanded = localStorage.getItem("logsExpanded");
     if (storedLogsExpanded) {
@@ -1747,8 +1721,8 @@ export function useDexterAppController(): DexterAppController {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("pushToTalkUI", isPTTActive.toString());
-  }, [isPTTActive]);
+    localStorage.setItem("voiceMuted", isVoiceMuted.toString());
+  }, [isVoiceMuted]);
 
   useEffect(() => {
     localStorage.setItem("logsExpanded", isEventsPaneExpanded.toString());
@@ -2208,8 +2182,6 @@ export function useDexterAppController(): DexterAppController {
     onCopyTranscript: handleCopyTranscript,
     onDownloadAudio: downloadRecording,
     onSaveLog: handleSaveLog,
-    isVoiceDockExpanded,
-    onToggleVoiceDock: () => setIsVoiceDockExpanded(!isVoiceDockExpanded),
     canUseAdminTools,
     showSuperAdminTools: isSuperAdmin,
     userBadge,
@@ -2238,17 +2210,6 @@ export function useDexterAppController(): DexterAppController {
     canSend: sessionStatus !== 'CONNECTING',
   };
 
-  const voiceDockProps: VoiceDockProps | null = sessionStatus === "CONNECTED" && isVoiceDockExpanded
-    ? {
-        sessionStatus,
-        isPTTActive,
-        isPTTUserSpeaking,
-        onTogglePTT: setIsPTTActive,
-        onTalkStart: handleTalkButtonDown,
-        onTalkEnd: handleTalkButtonUp,
-      }
-    : null;
-
   const signalStackProps: SignalStackLayoutProps = {
     showLogs: isEventsPaneExpanded,
     toolCatalog: filteredToolCatalog,
@@ -2256,6 +2217,15 @@ export function useDexterAppController(): DexterAppController {
 
   const bottomStatusProps: BottomStatusRailProps = {
     onOpenDebugModal: () => setIsDebugModalOpen(true),
+    onOpenSignals: () => setIsMobileSignalsOpen(true),
+    canUseAdminTools,
+    voiceControl: sessionStatus === 'CONNECTED'
+      ? {
+          isLive: sessionStatus === 'CONNECTED',
+          isMuted: isVoiceMuted,
+          onToggleMuted: () => setIsVoiceMuted((prev) => !prev),
+        }
+      : null,
   };
 
   const signalsDrawerProps: SignalsDrawerShellProps = {
@@ -2343,7 +2313,6 @@ export function useDexterAppController(): DexterAppController {
     signalStackProps,
     bottomStatusProps,
     signalsDrawerProps,
-    voiceDockProps,
     debugModalProps,
     superAdminModalProps,
     personaModalProps,
