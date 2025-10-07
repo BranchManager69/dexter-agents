@@ -273,29 +273,32 @@ export function TopRibbon({
             />
           </div>
 
-          <div className="pointer-events-none absolute left-4 top-3 flex items-start justify-start">
-            <AnimatePresence>
-              {showHeaderCrest ? (
+          <AnimatePresence>
+            {showHeaderCrest ? (
+              <motion.div
+                key="dexter-crest-header"
+                layoutId="dexter-crest"
+                className="pointer-events-none fixed left-4 z-[60]"
+                style={{ top: "calc(env(safe-area-inset-top, 0px) + 16px)" }}
+                initial={{ opacity: 0, scale: 0.9, rotate: -10, y: -24, x: -24 }}
+                animate={{ opacity: 1, scale: 1, rotate: 0, y: 0, x: 0 }}
+                exit={{ opacity: 0, scale: 0.92, rotate: 6, y: -12, x: -8 }}
+                transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
+              >
                 <motion.button
-                  key="dexter-crest-header"
                   type="button"
                   onClick={onReloadBrand}
                   className="pointer-events-auto group relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#FF6500]"
                   aria-label="Reload Dexter brand"
-                  layoutId="dexter-crest"
-                  initial={{ opacity: 0, scale: 0.9, rotate: -8, y: -18, x: -18 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0, y: 0, x: 0 }}
-                  exit={{ opacity: 0, scale: 0.92, rotate: 8, y: -12, x: -10 }}
-                  transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
                   whileHover={{ scale: 1.04, rotate: 4 }}
                   whileFocus={{ scale: 1.04, rotate: -3 }}
                   whileTap={{ scale: 0.96, rotate: -2 }}
                 >
                   <DexterAnimatedCrest size={82} className="relative" />
                 </motion.button>
-              ) : null}
-            </AnimatePresence>
-          </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </div>
       </div>
     </>
