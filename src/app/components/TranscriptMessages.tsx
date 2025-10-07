@@ -172,36 +172,46 @@ export function TranscriptMessages({
       data-transcript-messages
       className="flex h-full flex-1 flex-col gap-y-4 overflow-auto p-6"
     >
-      {showEmptyState && showStartButton && (
-        <div className="flex h-full flex-1 items-center justify-center animate-in fade-in duration-500">
-          <div className="text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 22, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 1.8, ease: [0.19, 1, 0.22, 1] }}
-            >
-              <StartConversationButton
-                onClick={handleStartClick}
-                isLoading={isStartingConversation}
-              />
-            </motion.div>
-            <AnimatePresence mode="wait">
-              {showPrompt && (
-                <motion.p
-                  key={promptKey}
-                  className="mt-6 text-base font-semibold tracking-[0.08em] text-[#FFA869] drop-shadow-[0_14px_36px_rgba(0,0,0,0.55)]"
-                  initial={{ opacity: 0, y: 10, scale: 0.96 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                  transition={{ duration: 0.38, ease: [0.22, 0.61, 0.36, 1] }}
-                >
-                  {promptCopy}
-                </motion.p>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {showEmptyState && showStartButton && (
+          <motion.div
+            key="start-conversation"
+            className="flex h-full flex-1 items-center justify-center"
+            initial={{ opacity: 0, y: 28, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 36, scale: 0.96 }}
+            transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
+          >
+            <div className="text-center">
+              <motion.div
+                initial={{ opacity: 0, y: 22, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 18, scale: 0.94 }}
+                transition={{ duration: 0.8, ease: [0.19, 1, 0.22, 1] }}
+              >
+                <StartConversationButton
+                  onClick={handleStartClick}
+                  isLoading={isStartingConversation}
+                />
+              </motion.div>
+              <AnimatePresence mode="wait">
+                {showPrompt && (
+                  <motion.p
+                    key={promptKey}
+                    className="mt-6 text-base font-semibold tracking-[0.08em] text-[#FFA869] drop-shadow-[0_14px_36px_rgba(0,0,0,0.55)]"
+                    initial={{ opacity: 0, y: 10, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 12, scale: 0.92 }}
+                    transition={{ duration: 0.38, ease: [0.22, 0.61, 0.36, 1] }}
+                  >
+                    {promptCopy}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {postPromptsVisible && (
         <div className="animate-in fade-in slide-in-from-top-2 mb-4 flex flex-wrap items-center justify-center gap-2 self-center rounded-full border border-neutral-800/60 bg-surface-glass/40 px-4 py-2 text-sm text-neutral-300 shadow-sm">
