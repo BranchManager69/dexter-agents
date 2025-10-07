@@ -30,7 +30,7 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
     <div className="flex flex-col gap-4">
       <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
+          <h3 className="font-display text-sm font-semibold tracking-[0.08em] text-neutral-400">
             Market Pulse
           </h3>
           <span className="text-xs text-neutral-500">
@@ -44,7 +44,7 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
                 key={item.label}
                 className="flex items-center justify-between rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 text-neutral-200"
               >
-                <div className="font-mono text-xs uppercase tracking-[0.24em] text-neutral-400">
+                <div className="font-mono text-xs tracking-[0.1em] tracking-[0.24em] text-neutral-400">
                   {item.label}
                 </div>
                 <div className="flex items-center gap-3">
@@ -65,7 +65,7 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
 
       <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
+          <h3 className="font-display text-sm font-semibold tracking-[0.08em] text-neutral-400">
             Pump Streams
           </h3>
           <span className="text-xs text-neutral-500">
@@ -88,7 +88,7 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
                   </div>
                 </div>
                 {stream.status && (
-                  <span className="rounded-pill bg-iris/20 px-3 py-1 text-xs uppercase tracking-[0.2em] text-iris">
+                  <span className="rounded-pill bg-iris/20 px-3 py-1 font-display text-xs font-semibold tracking-[0.08em] text-iris">
                     {stream.status}
                   </span>
                 )}
@@ -106,7 +106,7 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
 
       <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
+          <h3 className="font-display text-sm font-semibold tracking-[0.08em] text-neutral-400">
             Wallet Radar
           </h3>
           <span className="text-xs text-neutral-500">
@@ -130,13 +130,13 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
               </div>
               <div className="flex items-center justify-between">
                 <span>Active Wallet</span>
-                <span className="rounded-pill bg-neutral-800 px-3 py-1 text-xs uppercase tracking-[0.2em] text-neutral-300">
+                <span className="rounded-pill bg-neutral-800 px-3 py-1 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300">
                   {wallet.summary.activeWallet ?? "Auto"}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <span>Total Wallets</span>
-                <span className="rounded-pill bg-neutral-800 px-3 py-1 text-xs uppercase tracking-[0.2em] text-neutral-300">
+                <span className="rounded-pill bg-neutral-800 px-3 py-1 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300">
                   {wallet.summary.walletCount ?? "—"}
                 </span>
               </div>

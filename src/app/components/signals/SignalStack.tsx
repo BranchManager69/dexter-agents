@@ -71,16 +71,16 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
             className="flex flex-wrap items-center gap-2 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-1"
             title={tool.description}
           >
-            <span className="text-xs uppercase tracking-[0.2em] text-neutral-200">
+            <span className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-200">
               {tool.name}
             </span>
-            <span className="rounded-pill border border-neutral-700/60 bg-neutral-900/70 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-400">
+            <span className="rounded-pill border border-neutral-700/60 bg-neutral-900/70 px-2 py-0.5 font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-400">
               {tool.access}
             </span>
             {tool.tags.map((tag) => (
               <span
                 key={`${tool.name}-${tag}`}
-                className="rounded-pill border border-neutral-700/40 bg-neutral-900/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-500"
+                className="rounded-pill border border-neutral-700/40 bg-neutral-900/60 px-2 py-0.5 font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-500"
               >
                 {tag}
               </span>
@@ -106,19 +106,19 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
       <section className="rounded-lg border border-neutral-800/60 bg-surface-base/85 p-4 shadow-inner-sm">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <h3 className="font-display text-sm uppercase tracking-[0.28em] text-neutral-400">
+            <h3 className="font-display text-sm font-semibold tracking-[0.28em] text-neutral-400">
               Available Tools
             </h3>
-            <span className="rounded-pill border border-neutral-800/60 bg-surface-glass/60 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-neutral-300">
+            <span className="rounded-pill border border-neutral-800/60 bg-surface-glass/60 px-2 py-0.5 font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-300">
               {toolCatalog.tools.length}
             </span>
             {toolCatalog.source === "cache" && (
-              <span className="rounded-pill border border-accent-warning/40 bg-accent-warning/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-accent-warning">
+              <span className="rounded-pill border border-accent-warning/40 bg-accent-warning/10 px-2 py-0.5 font-display text-[10px] font-semibold tracking-[0.08em] text-accent-warning">
                 Cached
               </span>
             )}
             {toolCatalog.source === "live" && (
-              <span className="rounded-pill border border-flux/40 bg-flux/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.16em] text-flux">
+              <span className="rounded-pill border border-flux/40 bg-flux/10 px-2 py-0.5 font-display text-[10px] font-semibold tracking-[0.08em] text-flux">
                 Live
               </span>
             )}
@@ -128,7 +128,7 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
             <button
               type="button"
               onClick={toolCatalog.refresh}
-              className="rounded-md border border-neutral-800/60 px-2 py-0.5 text-[11px] uppercase tracking-[0.16em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
+              className="rounded-md border border-neutral-800/60 px-2 py-0.5 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
             >
               Refresh
             </button>
@@ -150,7 +150,7 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
                 <button
                   type="button"
                   onClick={() => setIsToolsExpanded(true)}
-                  className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
+                  className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-2 font-display text-xs font-semibold tracking-[0.08em] text-foreground transition hover:-translate-y-0.5"
                 >
                   Show all tools
                 </button>
@@ -163,7 +163,7 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
               <button
                 type="button"
                 onClick={() => setIsToolsExpanded(false)}
-                className="rounded-full border-none bg-transparent px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-foreground transition hover:-translate-y-0.5"
+                className="rounded-full border-none bg-transparent px-4 py-2 font-display text-xs font-semibold tracking-[0.08em] text-foreground transition hover:-translate-y-0.5"
               >
                 Collapse tools
               </button>
@@ -175,13 +175,13 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
       {showLogs && (
         <section className="mt-4 rounded-lg border border-neutral-800/60 bg-surface-base/85 p-4 shadow-inner-sm">
           <div className="flex items-center justify-between gap-2">
-            <h3 className="font-display text-sm uppercase tracking-[0.28em] text-neutral-400">
+            <h3 className="font-display text-sm font-semibold tracking-[0.28em] text-neutral-400">
               Event Logs
             </h3>
             <button
               type="button"
               onClick={() => setIsLogsExpanded((prev) => !prev)}
-              className="rounded-md border border-neutral-800/60 px-2 py-0.5 text-[11px] uppercase tracking-[0.16em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
+              className="rounded-md border border-neutral-800/60 px-2 py-0.5 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
             >
               {isLogsExpanded ? "Hide" : "Show"}
             </button>
@@ -195,7 +195,7 @@ export function SignalStack({ toolCatalog, renderLogs, showLogs }: SignalStackPr
               {renderLogs({ isExpanded: isLogsExpanded })}
               {!isLogsExpanded && (
                 <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex h-20 items-end justify-center bg-gradient-fade-dark pb-3">
-                  <span className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-1 text-[11px] uppercase tracking-[0.18em] text-neutral-500">
+                  <span className="pointer-events-auto rounded-full border-none bg-transparent px-4 py-1 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-500">
                     Logs hidden
                   </span>
                 </div>

@@ -137,13 +137,13 @@ function Transcript({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 flex-col">
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 overflow-hidden border-b border-neutral-800/50 bg-surface-base/90 px-6 py-4 backdrop-blur">
-          <span className="flex-shrink-0 font-display text-sm uppercase tracking-[0.28em] text-neutral-400">
+          <span className="flex-shrink-0 font-display text-sm font-semibold tracking-[0.08em] text-neutral-300">
             Conversation
           </span>
           <div className="flex min-w-0 flex-shrink gap-2">
             <button
               onClick={handleCopyTranscript}
-              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-flux/50 hover:text-flux sm:px-3"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-200 transition hover:border-flux/50 hover:text-flux sm:px-3"
               title="Copy transcript"
             >
               <ClipboardCopyIcon />
@@ -151,7 +151,7 @@ function Transcript({
             </button>
             <button
               onClick={downloadRecording}
-              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-iris/50 hover:text-iris sm:px-3"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-200 transition hover:border-iris/50 hover:text-iris sm:px-3"
               title="Download audio recording"
             >
               <DownloadIcon />
@@ -160,7 +160,7 @@ function Transcript({
             </button>
             <button
               onClick={handleSaveLog}
-              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-amber-400/60 hover:text-amber-300 sm:px-3"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-200 transition hover:border-amber-400/60 hover:text-amber-300 sm:px-3"
               title="Save conversation log"
             >
               <span className="text-lg leading-none">⬇</span>
@@ -245,14 +245,14 @@ function Transcript({
                   className="flex flex-col items-start text-[11px] text-neutral-400"
                 >
                   <div
-                    className={`flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 font-mono uppercase tracking-[0.28em] text-[10px] text-neutral-300 ${
+                    className={`flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-200 ${
                       hasDetails ? "cursor-pointer hover:border-flux/60" : ""
                     }`}
                     onClick={() => hasDetails && toggleTranscriptItemExpand(itemId)}
                   >
                     <span className="text-[9px] text-flux">•</span>
                     <span>Tool</span>
-                    <span className="tracking-normal text-neutral-200">{title}</span>
+                    <span className="tracking-normal text-neutral-100">{title}</span>
                     {hasDetails && (
                       <span
                         className={`ml-1 select-none text-neutral-500 transition-transform duration-200 ${
@@ -276,7 +276,7 @@ function Transcript({
                   key={itemId}
                   className="flex flex-col items-start justify-start text-sm text-neutral-500"
                 >
-                  <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-neutral-600">
+                  <span className="font-mono text-[10px] tracking-[0.08em] text-neutral-500">
                     {timestamp}
                   </span>
                   <div

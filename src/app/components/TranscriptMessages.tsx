@@ -209,7 +209,7 @@ export function TranscriptMessages({
             <button
               key={index}
               onClick={() => handleFollowUpPrompt(prompt)}
-              className="rounded-full border border-transparent bg-neutral-900/50 px-3 py-1.5 text-xs uppercase tracking-[0.28em] transition hover:border-flux/60 hover:text-flux"
+              className="rounded-full border border-transparent bg-neutral-900/50 px-3 py-1.5 font-display text-xs font-semibold tracking-[0.08em] transition hover:border-flux/60 hover:text-flux"
             >
               {prompt}
             </button>
@@ -293,7 +293,7 @@ export function TranscriptMessages({
               return (
                 <div key={itemId} className="flex flex-col items-start text-[11px] text-[#FFE1CC]">
                   <div
-                    className={`flex items-center gap-2 rounded-full border border-[#F7BE8A]/25 bg-[#220907]/80 px-3 py-1 text-[10px] font-mono uppercase tracking-[0.28em] ${
+                    className={`flex items-center gap-2 rounded-full border border-[#F7BE8A]/25 bg-[#220907]/80 px-3 py-1 text-[10px] font-display font-semibold tracking-[0.08em] ${
                       isPending ? 'border-flux/60 text-flux' : 'text-[#FFD6B2]'
                     }`}
                   >
@@ -301,7 +301,7 @@ export function TranscriptMessages({
                     <span>Tool</span>
                     <span className="tracking-normal text-[#FFF0D7]">{title}</span>
                     {isPending && (
-                      <span className="text-[9px] uppercase tracking-[0.28em] text-flux/80">
+                      <span className="font-display text-[9px] font-semibold tracking-[0.08em] text-flux/80">
                         Working…
                       </span>
                     )}
@@ -321,7 +321,7 @@ export function TranscriptMessages({
             return (
               <div key={itemId} className="flex flex-col items-start text-[11px] text-[#FFE1CC]">
                 <div
-                  className={`flex items-center gap-2 rounded-full border border-[#F7BE8A]/25 bg-[#220907]/80 px-3 py-1 font-mono uppercase tracking-[0.28em] text-[10px] ${
+                  className={`flex items-center gap-2 rounded-full border border-[#F7BE8A]/25 bg-[#220907]/80 px-3 py-1 font-display font-semibold tracking-[0.08em] text-[10px] ${
                     isPending ? 'border-flux/60 text-flux' : 'text-[#FFD6B2]'
                   } ${
                     canToggle ? "cursor-pointer hover:border-flux/60" : ""
@@ -332,7 +332,7 @@ export function TranscriptMessages({
                   <span>Tool</span>
                   <span className="tracking-normal text-[#FFF0D7]">{title}</span>
                   {isPending && (
-                    <span className="text-[9px] uppercase tracking-[0.28em] text-flux/80">
+                    <span className="font-display text-[9px] font-semibold tracking-[0.08em] text-flux/80">
                       Working…
                     </span>
                   )}
@@ -359,7 +359,7 @@ export function TranscriptMessages({
                 key={itemId}
                 className="flex flex-col items-start justify-start text-sm text-[#F7D5C0]"
               >
-                <span className="font-mono text-[10px] uppercase tracking-[0.28em] text-[#F1BFA0]">
+                <span className="font-mono text-[10px] tracking-[0.08em] text-[#F1BFA0]">
                   {timestamp}
                 </span>
                 <div

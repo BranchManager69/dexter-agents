@@ -275,7 +275,7 @@ export function AuthMenu({
     >
           {isAuthenticated ? (
             <div className="p-4">
-              <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+              <div className="mb-2 font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-500">
                 Signed in
               </div>
               <div className="mb-4 text-sm text-neutral-200">
@@ -293,13 +293,13 @@ export function AuthMenu({
               )}
               {activeWalletKey && (
                 <div className="mb-4 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-3 text-xs text-neutral-300">
-                  <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">Active Wallet</div>
+                  <div className="font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-500">Active Wallet</div>
                   <div className="mt-2">
                     <HashBadge value={activeWalletKey} ariaLabel="wallet address" />
                   </div>
                   {walletPortfolio && (
                     <div className="mt-3 space-y-1 text-[11px] text-neutral-300">
-                      <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">Balances</div>
+                      <div className="font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-500">Balances</div>
                       {walletPortfolio.pending && walletPortfolio.status !== 'ready' ? (
                         <div className="text-neutral-500">
                           <span className="inline-block animate-pulse">…</span>
@@ -349,7 +349,7 @@ export function AuthMenu({
                         </div>
                       )}
                       {walletPortfolio.lastUpdatedLabel && walletPortfolio.status === 'ready' && (
-                        <div className="text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                        <div className="font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-500">
                           Updated {walletPortfolio.lastUpdatedLabel}
                         </div>
                       )}
@@ -381,7 +381,7 @@ export function AuthMenu({
           ) : (
             <>
               <div className="border-b border-neutral-800/60 p-4">
-                <label htmlFor="auth-email" className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                <label htmlFor="auth-email" className="mb-2 block font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-500">
                   Email
                 </label>
                 <input
@@ -399,7 +399,7 @@ export function AuthMenu({
                 />
                 <button
                   type="button"
-                  className="w-full rounded-md border border-flux/40 bg-flux/10 px-3 py-2 text-xs uppercase tracking-[0.18em] text-flux transition hover:bg-flux/20 disabled:opacity-50"
+                  className="w-full rounded-md border border-flux/40 bg-flux/10 px-3 py-2 font-display text-xs font-semibold tracking-[0.08em] text-flux transition hover:bg-flux/20 disabled:opacity-50"
                   onClick={handleSendMagicLink}
                   disabled={magicLinkBusy}
                 >
@@ -444,7 +444,7 @@ export function AuthMenu({
 
               {turnstileSiteKey && (
                 <div className="p-4">
-                  <div className="mb-2 text-[10px] uppercase tracking-[0.18em] text-neutral-500">
+                  <div className="mb-2 font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-500">
                     Security Check
                   </div>
                   {turnstileVisible ? (
@@ -491,7 +491,7 @@ export function AuthMenu({
         data-auth-trigger
       >
         {accountLabel ? (
-          <span className={`inline-flex items-center px-2.5 py-1 font-semibold uppercase tracking-[0.28em] ${accountPillClass}`}>
+          <span className={`inline-flex items-center px-2.5 py-1 font-display text-xs font-semibold tracking-[0.08em] ${accountPillClass}`}>
             {accountLabel}
           </span>
         ) : null}

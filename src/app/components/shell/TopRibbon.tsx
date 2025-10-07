@@ -195,7 +195,7 @@ export function TopRibbon({
     <>
       {walletCopied && typeof window !== 'undefined'
         ? createPortal(
-            <div className="pointer-events-none fixed top-6 left-1/2 z-[9999] -translate-x-1/2 rounded-full border border-[#FEFBF4]/35 bg-[#200700]/90 px-4 py-1 text-[11px] uppercase tracking-[0.3em] text-[#FEFBF4] shadow-[0_12px_28px_rgba(242,62,1,0.28)]">
+            <div className="pointer-events-none fixed top-6 left-1/2 z-[9999] -translate-x-1/2 rounded-full border border-[#FEFBF4]/35 bg-[#200700]/90 px-4 py-1 font-display text-[11px] font-semibold tracking-[0.08em] text-[#FEFBF4] shadow-[0_12px_28px_rgba(242,62,1,0.28)]">
               Wallet copied
             </div>,
             document.body,
@@ -207,9 +207,9 @@ export function TopRibbon({
         data-can-toggle-connection={hasConnectionToggle}
       >
         <div className="relative mx-auto flex w-full max-w-6xl items-center gap-3">
-          <div className="ml-auto flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[8.5px] font-semibold uppercase tracking-[0.2em] text-[#FFF3E3]/85 scrollbar-hide">
+          <div className="ml-auto flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap font-display text-[10px] font-semibold tracking-[0.08em] text-[#FFF3E3]/85 scrollbar-hide">
             <span className="relative flex flex-shrink-0 items-center leading-none">
-              <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] uppercase tracking-[0.38em] text-[#FEFBF4]/50 leading-none">
+              <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 font-display text-[7px] tracking-[0.08em] text-[#FEFBF4]/60 leading-none">
                 Role
               </span>
               <span className={`leading-none ${sessionToneClass}`}>{sessionLabel}</span>
@@ -219,7 +219,7 @@ export function TopRibbon({
               className="relative flex flex-shrink-0 items-center text-[#FEFBF4]/75 leading-none"
               title={mcpStatus.detail || `MCP: ${mcpStatus.label}`}
             >
-              <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] uppercase tracking-[0.38em] text-[#FEFBF4]/40 leading-none">
+              <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 font-display text-[7px] tracking-[0.08em] text-[#FEFBF4]/50 leading-none">
                 MCP
               </span>
               <span className="leading-none">{mcpText}</span>
@@ -232,23 +232,23 @@ export function TopRibbon({
               className="relative flex flex-shrink-0 items-center text-[#FEFBF4] leading-none transition hover:text-[#FFF3E3] disabled:cursor-not-allowed disabled:text-[#FEFBF4]/40"
               title={walletAddressValue ? `Copy ${walletAddressValue}` : undefined}
             >
-              <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 text-[6px] uppercase tracking-[0.38em] text-[#FEFBF4]/50 leading-none">
+              <span className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 font-display text-[7px] tracking-[0.08em] text-[#FEFBF4]/60 leading-none">
                 Wallet
               </span>
-              <span className="tracking-[0.18em] text-[#FEFBF4] leading-none">
+              <span className="font-display tracking-[0.08em] text-[#FEFBF4] leading-none">
                 {walletPortfolio?.pending && mcpStatus.state !== 'user'
                   ? <span className="inline-block animate-pulse align-middle">…</span>
                   : walletLabel}
               </span>
               {walletCopied && (
-                <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 text-[7px] uppercase tracking-[0.32em] text-[#FEFBF4]/70">
+                <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 font-display text-[8px] tracking-[0.08em] text-[#FEFBF4]/70">
                   Copied
                 </span>
               )}
             </button>
 
             {walletSecondaryText && (
-              <span className="flex flex-shrink-0 items-center gap-2 text-[#FEFBF4]/60 tracking-[0.18em]">
+              <span className="flex flex-shrink-0 items-center gap-2 font-display text-[#FEFBF4]/60 tracking-[0.08em]">
                 {walletSecondaryText}
               </span>
             )}

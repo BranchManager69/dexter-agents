@@ -95,7 +95,7 @@ function formatTimestamp(iso: string | null) {
 }
 
 const dockButtonClass =
-  'pointer-events-auto inline-flex h-7 items-center gap-1 rounded-sm px-2 py-0 text-[10px] font-semibold uppercase tracking-[0.12em] leading-none transition disabled:pointer-events-none disabled:opacity-40 whitespace-nowrap focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FEE2E2]/70';
+  'pointer-events-auto inline-flex h-7 items-center gap-1 rounded-sm px-2 py-0 text-[10px] font-semibold font-display font-semibold tracking-[0.08em] leading-none transition disabled:pointer-events-none disabled:opacity-40 whitespace-nowrap focus:outline-none focus-visible:ring-1 focus-visible:ring-[#FEE2E2]/70';
 
 const adminButtonTone =
   'bg-[#C81E1E] text-[#FEFBF4] hover:bg-[#EF4444] focus-visible:ring-offset-1 focus-visible:ring-offset-[#280404]';
@@ -826,7 +826,7 @@ export default function AdminDock({
       <dl className="space-y-1.5 text-[13px] leading-relaxed">
         {entries.map(([key, val]) => (
           <div key={key} className="flex items-start gap-2">
-            <dt className="mt-0.5 w-28 shrink-0 text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+            <dt className="mt-0.5 w-28 shrink-0 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-500">
               {key}
             </dt>
             <dd className="flex-1 break-words text-neutral-100">
@@ -1071,11 +1071,11 @@ export default function AdminDock({
                 >
                   <div className="flex items-center justify-between gap-3 border-b border-neutral-800/60 px-5 py-4">
                     <div>
-                      <div className="font-display text-sm uppercase tracking-[0.28em] text-neutral-300">
+                      <div className="font-display text-sm font-display tracking-[0.08em] text-neutral-300">
                         Admin Console
                       </div>
                       {adminConsoleStatus && (
-                        <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-neutral-500">
+                        <div className="mt-1 text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">
                           {adminConsoleStatus}
                         </div>
                       )}
@@ -1083,7 +1083,7 @@ export default function AdminDock({
                     <button
                       type="button"
                       onClick={() => setIsAdminConsoleOpen(false)}
-                      className="rounded-md border border-neutral-800/60 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
+                      className="rounded-md border border-neutral-800/60 px-2 py-1 text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
                     >
                       Close
                     </button>
@@ -1123,17 +1123,17 @@ export default function AdminDock({
                 >
                   <div className="flex items-center justify-between gap-3 border-b border-neutral-800/60 px-5 py-4">
                     <div>
-                      <div className="font-display text-sm uppercase tracking-[0.28em] text-neutral-300">
+                      <div className="font-display text-sm font-display tracking-[0.08em] text-neutral-300">
                         Memories
                       </div>
-                      <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-neutral-500">
+                      <div className="mt-1 text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">
                         {headerText}
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => setIsMemoriesOpen(false)}
-                      className="rounded-md border border-neutral-800/60 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
+                      className="rounded-md border border-neutral-800/60 px-2 py-1 text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
                     >
                       Close
                     </button>
@@ -1173,7 +1173,7 @@ export default function AdminDock({
                                   <div className="text-sm font-medium text-neutral-100 line-clamp-2">
                                     {entry.summary || 'No summary recorded.'}
                                   </div>
-                                  <div className="mt-2 text-[11px] uppercase tracking-[0.16em] text-neutral-500">
+                                  <div className="mt-2 text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">
                                     {formatTimestamp(entry.createdAt)}
                                   </div>
                                 </div>
@@ -1192,13 +1192,13 @@ export default function AdminDock({
                                   )}
                                   {(entry.sessionId || entry.startedAt || entry.endedAt) && (
                                     <div>
-                                      <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">
+                                      <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">
                                         Session details
                                       </div>
                                       <dl className="mt-2 space-y-1.5 text-[13px] leading-relaxed">
                                         {entry.sessionId && (
                                           <div className="flex items-start gap-2">
-                                            <dt className="mt-0.5 w-24 text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+                                            <dt className="mt-0.5 w-24 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-500">
                                               Session ID
                                             </dt>
                                             <dd className="flex-1 break-all text-neutral-200">{entry.sessionId}</dd>
@@ -1206,7 +1206,7 @@ export default function AdminDock({
                                         )}
                                         {entry.startedAt && (
                                           <div className="flex items-start gap-2">
-                                            <dt className="mt-0.5 w-24 text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+                                            <dt className="mt-0.5 w-24 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-500">
                                               Started
                                             </dt>
                                             <dd className="flex-1 text-neutral-200">{formatTimestamp(entry.startedAt)}</dd>
@@ -1214,7 +1214,7 @@ export default function AdminDock({
                                         )}
                                         {entry.endedAt && (
                                           <div className="flex items-start gap-2">
-                                            <dt className="mt-0.5 w-24 text-[11px] uppercase tracking-[0.12em] text-neutral-500">
+                                            <dt className="mt-0.5 w-24 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-500">
                                               Ended
                                             </dt>
                                             <dd className="flex-1 text-neutral-200">{formatTimestamp(entry.endedAt)}</dd>
@@ -1225,7 +1225,7 @@ export default function AdminDock({
                                   )}
                                   {entry.facts.length > 0 && (
                                     <div>
-                                      <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">
+                                      <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">
                                         Facts
                                       </div>
                                       <ul className="mt-2 space-y-1.5 text-[13px] leading-relaxed">
@@ -1240,7 +1240,7 @@ export default function AdminDock({
                                   )}
                                   {entry.followUps.length > 0 && (
                                     <div>
-                                      <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">
+                                      <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">
                                         Follow-ups
                                       </div>
                                       <ul className="mt-2 space-y-1.5 text-[13px] leading-relaxed">
@@ -1290,8 +1290,8 @@ export default function AdminDock({
                 >
                   <div className="flex items-center justify-between gap-3 border-b border-rose-500/40 px-5 py-4 text-rose-100">
                     <div>
-                      <div className="font-display text-sm uppercase tracking-[0.28em]">Dossier Inspector</div>
-                      <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-rose-200/80">
+                      <div className="font-display text-sm font-display tracking-[0.08em]">Dossier Inspector</div>
+                      <div className="mt-1 text-[11px] font-display font-semibold tracking-[0.08em] text-rose-200/80">
                         {isDossierLoading
                           ? 'Loading…'
                           : dossierError
@@ -1306,7 +1306,7 @@ export default function AdminDock({
                     <button
                       type="button"
                       onClick={() => setIsDossierOpen(false)}
-                      className="rounded-md border border-rose-500/40 px-2 py-1 text-[11px] uppercase tracking-[0.16em] text-rose-100 transition hover:border-rose-300/70 hover:text-rose-50"
+                      className="rounded-md border border-rose-500/40 px-2 py-1 text-[11px] font-display font-semibold tracking-[0.08em] text-rose-100 transition hover:border-rose-300/70 hover:text-rose-50"
                     >
                       Close
                     </button>
@@ -1321,7 +1321,7 @@ export default function AdminDock({
                     ) : dossierData ? (
                       <div className="space-y-5">
                         <section>
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Summary</div>
+                          <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">Summary</div>
                           <div className="mt-2 space-y-1.5 text-[13px] leading-relaxed">
                             <div><span className="text-neutral-400">Email:</span> {dossierData.target.displayName || dossierData.user.email || '—'}</div>
                             <div><span className="text-neutral-400">Supabase ID:</span> {dossierData.target.supabaseUserId}</div>
@@ -1333,7 +1333,7 @@ export default function AdminDock({
 
                         {dossierIdentity && (
                           <section>
-                            <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Identity</div>
+                            <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">Identity</div>
                             <div className="mt-2">
                               {renderKeyValueList(dossierIdentity)}
                             </div>
@@ -1342,7 +1342,7 @@ export default function AdminDock({
 
                         {dossierHoldings.length > 0 && (
                           <section>
-                            <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Holdings</div>
+                            <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">Holdings</div>
                             <ul className="mt-2 space-y-3">
                               {dossierHoldings.map((holding, index) => (
                                 <li key={index} className="rounded-md border border-neutral-800/60 bg-surface-glass/20 p-3">
@@ -1364,7 +1364,7 @@ export default function AdminDock({
 
                         {dossierPreferences && (
                           <section>
-                            <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Preferences</div>
+                            <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">Preferences</div>
                             <div className="mt-2">
                               {renderKeyValueList(dossierPreferences)}
                             </div>
@@ -1372,7 +1372,7 @@ export default function AdminDock({
                         )}
 
                         <section>
-                          <div className="text-[11px] uppercase tracking-[0.16em] text-neutral-500">Raw JSON</div>
+                          <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">Raw JSON</div>
                           <pre className="mt-2 max-h-48 overflow-auto rounded-md border border-neutral-800/60 bg-black/40 p-3 text-[12px] leading-snug text-neutral-200">
                             {JSON.stringify(dossierData.dossier ?? {}, null, 2)}
                           </pre>

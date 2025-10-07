@@ -3,31 +3,31 @@ type UserBadgeSize = "xs" | "sm" | "md";
 
 const VARIANT_STYLES: Record<UserBadgeVariant, { label: string; title: string; text: string; dot: string }> = {
   pro: {
-    label: "PRO",
+    label: "Pro",
     title: "Pro member access",
     text: "text-iris",
     dot: "bg-iris/80",
   },
   dev: {
-    label: "DEV",
+    label: "Dev",
     title: "Super admin access",
     text: "text-amber-200",
     dot: "bg-amber-300",
   },
   admin: {
-    label: "ADMIN",
+    label: "Admin",
     title: "Admin access",
     text: "text-rose-300",
     dot: "bg-rose-400",
   },
   user: {
-    label: "USER",
+    label: "User",
     title: "Signed-in user",
     text: "text-neutral-200",
     dot: "bg-neutral-300",
   },
   demo: {
-    label: "DEMO",
+    label: "Demo",
     title: "Shared demo persona",
     text: "text-[#FEFBF4]",
     dot: "bg-[#FEFBF4]/40",
@@ -36,17 +36,17 @@ const VARIANT_STYLES: Record<UserBadgeVariant, { label: string; title: string; t
 
 const SIZE_STYLES: Record<UserBadgeSize, { text: string; gap: string; dot: string }> = {
   xs: {
-    text: "text-[9px] tracking-[0.28em]",
+    text: "text-[9px] tracking-[0.14em]",
     gap: "gap-1.5",
     dot: "h-1.5 w-1.5",
   },
   sm: {
-    text: "text-[10px] tracking-[0.26em]",
+    text: "text-[10px] tracking-[0.12em]",
     gap: "gap-1.5",
     dot: "h-1.5 w-1.5",
   },
   md: {
-    text: "text-[11px] tracking-[0.24em]",
+    text: "text-[11px] tracking-[0.1em]",
     gap: "gap-2",
     dot: "h-2 w-2",
   },
@@ -63,7 +63,7 @@ export function UserBadge({ variant, size = "sm", className }: UserBadgeProps) {
   const sizeStyles = SIZE_STYLES[size];
 
   const classes = [
-    "inline-flex items-center font-semibold uppercase",
+    "inline-flex items-center font-display font-semibold",
     sizeStyles.text,
     sizeStyles.gap,
     variantStyles.text,

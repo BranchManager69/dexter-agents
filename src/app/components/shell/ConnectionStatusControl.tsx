@@ -42,7 +42,7 @@ export function ConnectionStatusControl({
       : "Connection control";
 
   const containerClassName = [
-    "flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[8.5px] font-semibold uppercase tracking-[0.2em] text-[#FFF3E3]/85 scrollbar-hide",
+    "flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap font-display text-[10px] font-semibold tracking-[0.08em] text-[#FFF3E3]/85 scrollbar-hide",
     className,
   ]
     .filter(Boolean)

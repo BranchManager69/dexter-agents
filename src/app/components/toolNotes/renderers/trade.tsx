@@ -233,7 +233,7 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
         {(hasRequestArgs || hasRawDetails) && (
           <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
             <summary
-              className="cursor-pointer text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+              className="cursor-pointer font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
               onClick={(event) => {
                 event.preventDefault();
                 onToggle();
@@ -245,7 +245,7 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
               <div className="mt-3 space-y-3 text-[11px] text-[#FFE4CF]">
                 {hasRequestArgs && (
                   <div>
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Request</div>
+                    <div className="font-display text-[10px] font-semibold tracking-[0.08em] text-[#F0BFA1]">Request</div>
                     <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[#FFF2E2]">
                       {JSON.stringify(args, null, 2)}
                     </pre>
@@ -253,7 +253,7 @@ function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
                 )}
                 {hasRawDetails && (
                   <div>
-                    <div className="text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Raw response</div>
+                    <div className="font-display text-[10px] font-semibold tracking-[0.08em] text-[#F0BFA1]">Raw response</div>
                     <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[#FFF2E2]">
                       {JSON.stringify(rawOutput, null, 2)}
                     </pre>

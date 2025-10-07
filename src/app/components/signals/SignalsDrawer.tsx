@@ -28,13 +28,13 @@ export function SignalsDrawer({ open, onClose, children, title = "Signals" }: Si
       >
         <div className="max-h-[80vh] overflow-hidden rounded-t-3xl border border-neutral-800/70 bg-surface-raised/95 shadow-elevated backdrop-blur-xl">
           <div className="flex items-center justify-between px-6 py-4">
-            <div className="font-display text-sm uppercase tracking-[0.3em] text-neutral-400">
+            <div className="font-display text-sm font-semibold tracking-[0.08em] text-neutral-400">
               {title}
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="rounded-pill border border-neutral-800/60 px-3 py-1 text-xs uppercase tracking-[0.2em] text-neutral-400 transition hover:border-flux/50 hover:text-flux"
+              className="rounded-pill border border-neutral-800/60 px-3 py-1 font-display text-xs font-semibold tracking-[0.08em] text-neutral-400 transition hover:border-flux/50 hover:text-flux"
             >
               Close
             </button>

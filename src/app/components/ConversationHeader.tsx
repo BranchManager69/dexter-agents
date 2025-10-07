@@ -31,13 +31,13 @@ export function ConversationHeader({
 
   return (
     <div className="sticky top-0 z-10 flex items-center justify-between gap-3 overflow-hidden border-b border-neutral-800/50 bg-surface-base/90 px-6 py-4 backdrop-blur">
-      <span className="flex-shrink-0 font-display text-sm uppercase tracking-[0.28em] text-neutral-400">
+      <span className="flex-shrink-0 font-display text-sm font-semibold tracking-[0.08em] text-neutral-400">
         Conversation
       </span>
       <div className="flex min-w-0 flex-shrink gap-2">
         <button
           onClick={handleCopy}
-          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-flux/50 hover:text-flux sm:px-3"
+          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux sm:px-3"
           title="Copy transcript"
         >
           <ClipboardCopyIcon />
@@ -45,7 +45,7 @@ export function ConversationHeader({
         </button>
         <button
           onClick={onDownloadAudio}
-          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-iris/50 hover:text-iris sm:px-3"
+          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-iris/50 hover:text-iris sm:px-3"
           title="Download audio recording"
         >
           <DownloadIcon />
@@ -54,7 +54,7 @@ export function ConversationHeader({
         </button>
         <button
           onClick={handleSave}
-          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 text-xs uppercase tracking-[0.2em] text-neutral-300 transition hover:border-amber-400/60 hover:text-amber-300 sm:px-3"
+          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-amber-400/60 hover:text-amber-300 sm:px-3"
           title="Save conversation log"
         >
           <span className="text-lg leading-none">⬇</span>
