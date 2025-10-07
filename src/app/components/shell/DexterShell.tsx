@@ -11,7 +11,6 @@ interface DexterShellProps {
   inputBar: React.ReactNode;
   signals?: React.ReactNode | null;
   statusBar: React.ReactNode;
-  voiceDock?: React.ReactNode;
   mobileOverlay?: React.ReactNode;
 }
 
@@ -25,7 +24,6 @@ export function DexterShell({
   inputBar,
   signals,
   statusBar,
-  voiceDock,
   mobileOverlay,
 }: DexterShellProps) {
   const heroPadding = heroCollapsed ? "pt-1" : "pt-4";
@@ -147,11 +145,6 @@ export function DexterShell({
             </div>
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
               {messages}
-              {voiceDock ? (
-                <div className="flex-shrink-0 border-t border-neutral-800/60 bg-surface-base/70 px-2 py-1">
-                  {voiceDock}
-                </div>
-              ) : null}
             </div>
           </div>
           {signals ? (

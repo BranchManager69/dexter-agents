@@ -8,7 +8,6 @@ import Hero from "./Hero";
 import AdminDock from "./AdminDock";
 import TranscriptMessages from "./TranscriptMessages";
 import InputBar from "./InputBar";
-import VoiceDock from "./shell/VoiceDock";
 import Events from "./Events";
 import DexterShell from "./shell/DexterShell";
 import TopRibbon from "./shell/TopRibbon";
@@ -18,7 +17,6 @@ import SignalsDrawer from "./signals/SignalsDrawer";
 import { DebugInfoModal } from "./DebugInfoModal";
 import SuperAdminModal from "./SuperAdminModal";
 import AgentPersonaModal from "./AgentPersonaModal";
-import FloatingSessionControls from "./FloatingSessionControls";
 import { ConnectionStatusControl } from "./shell/ConnectionStatusControl";
 
 import type { SessionStatus } from "@/app/types";
@@ -40,7 +38,6 @@ export function DexterAppLayout({
   signalStackProps,
   bottomStatusProps,
   signalsDrawerProps,
-  voiceDockProps,
   debugModalProps,
   superAdminModalProps,
   personaModalProps,
@@ -56,8 +53,6 @@ export function DexterAppLayout({
   );
 
   const heroSection = <Hero title={heroTitle} subtitle={heroSubtitle} loading={heroLoading} />;
-
-  const voiceDockSection = voiceDockProps ? <VoiceDock {...voiceDockProps} /> : null;
 
   const mobileSignalsOverlay = heroControlsProps.canUseAdminTools ? (
     <SignalsDrawer {...signalsDrawerProps}>
@@ -76,7 +71,6 @@ export function DexterAppLayout({
         heroControls={null}
         heroWrapperClassName={heroContainerClassName}
         messages={<TranscriptMessages {...transcriptProps} />}
-        voiceDock={voiceDockSection}
         inputBar={<InputBar {...inputBarProps} />}
         signals={desktopSignalsPanel}
         statusBar={<BottomStatusRail {...bottomStatusProps} />}
@@ -86,13 +80,6 @@ export function DexterAppLayout({
       <DebugInfoModal {...debugModalProps} />
       <SuperAdminModal {...superAdminModalProps} />
       <AgentPersonaModal {...personaModalProps} />
-      <FloatingSessionControls
-        sessionStatus={heroControlsProps.sessionStatus}
-        isVoiceDockExpanded={heroControlsProps.isVoiceDockExpanded}
-        onToggleVoiceDock={heroControlsProps.onToggleVoiceDock}
-        onOpenSignals={heroControlsProps.onOpenSignals}
-        canUseAdminTools={heroControlsProps.canUseAdminTools}
-      />
       <FloatingConnectionStatus
         sessionStatus={topRibbonProps.sessionStatus}
         onToggleConnection={topRibbonProps.onToggleConnection}
