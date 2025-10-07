@@ -152,7 +152,6 @@ export function DexterShell({
                   {voiceDock}
                 </div>
               ) : null}
-              {composerReady ? inputBar : null}
             </div>
           </div>
           {signals ? (
@@ -162,6 +161,8 @@ export function DexterShell({
           ) : null}
         </div>
       </main>
+
+      {composerReady ? inputBar : null}
 
       <motion.footer
         className="relative z-10 flex-shrink-0 border-t border-footer-border/50 bg-footer/90 backdrop-blur-xl"
