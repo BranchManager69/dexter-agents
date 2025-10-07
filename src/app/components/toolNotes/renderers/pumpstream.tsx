@@ -1,147 +1,208 @@
-import Image from "next/image";
-
 import type { ToolNoteRenderer } from "./types";
+import { BASE_CARD_CLASS, normalizeOutput } from "./helpers";
 import {
-  BASE_CARD_CLASS,
-  SECTION_TITLE_CLASS,
-  countCompactFormatter,
-  formatUsd,
-  normalizeOutput,
-} from "./helpers";
+  ChatKitWidgetRenderer,
+  type Badge,
+  type Card,
+  type ListView,
+  type ListViewItem,
+} from "../ChatKitWidgetRenderer";
+
+type Alignment = "start" | "center" | "end" | "stretch";
+
+type StreamEntry = {
+  name?: string;
+  symbol?: string;
+  mintId?: string;
+  channel?: string;
+  url?: string;
+  streamUrl?: string;
+  thumbnail?: string;
+  currentViewers?: number;
+  viewer_count?: number;
+  viewers?: number;
+  marketCapUsd?: number;
+  market_cap_usd?: number;
+  marketCap?: number;
+  momentum?: number | string;
+  signal?: number | string;
+};
+
+const countFormatter = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
+
+function truncateLabel(label: string, max = 42) {
+  if (label.length <= max) return label;
+  return `${label.slice(0, max - 1)}…`;
+}
+
+function formatCurrency(value: unknown) {
+  const numeric = typeof value === "number" ? value : typeof value === "string" ? Number(value) : undefined;
+  if (numeric === undefined || !Number.isFinite(numeric)) return undefined;
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(
+    numeric,
+  );
+}
+
+function formatMomentum(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+  }
+  if (typeof value === "string" && value.trim().length > 0) {
+    return value.trim();
+  }
+  return undefined;
+}
+
+function createBadge(label: string, color: Badge["color"], extra?: Partial<Badge>): Badge {
+  return {
+    type: "Badge",
+    label,
+    color,
+    variant: "outline",
+    size: "sm",
+    pill: true,
+    ...extra,
+  };
+}
 
 const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const payload = normalizeOutput(item.data as Record<string, any> | undefined) || {};
-  const streams = Array.isArray((payload as any).streams) ? (payload as any).streams : [];
+  const payload = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+  const streams: StreamEntry[] = Array.isArray((payload as any).streams) ? (payload as any).streams : [];
   const generatedAt = typeof (payload as any).generatedAt === "string" ? (payload as any).generatedAt : null;
-  const headline = streams.slice(0, 3);
-  const remaining = streams.slice(3);
 
-  const renderStreamCard = (stream: any, index: number) => {
-    const title: string = stream?.name || stream?.symbol || stream?.mintId || stream?.channel || `Stream ${index + 1}`;
-    const viewersRaw = stream?.currentViewers ?? stream?.viewer_count ?? stream?.viewers;
-    const marketCap = formatUsd(stream?.marketCapUsd ?? stream?.market_cap_usd ?? stream?.marketCap, { precise: false });
-    const momentum = stream?.momentum ?? stream?.signal;
-    const momentumLabel = typeof momentum === "number"
-      ? `${momentum >= 0 ? "+" : ""}${momentum.toFixed(2)}%`
-      : typeof momentum === "string"
-        ? momentum
-        : undefined;
-
-    const inferredHref = typeof stream?.url === "string" && stream.url
-      ? stream.url
-      : typeof stream?.streamUrl === "string" && stream.streamUrl
-        ? stream.streamUrl
-        : typeof stream?.mintId === "string" && stream.mintId
-          ? `https://pump.fun/${stream.mintId}`
+  const items: ListViewItem[] = streams
+    .slice(0, isExpanded ? streams.length : 6)
+    .map((stream, index): ListViewItem => {
+      const rawTitle =
+        stream.name || stream.symbol || stream.mintId || stream.channel || `Stream ${index + 1}`;
+      const title = truncateLabel(rawTitle ?? `Stream ${index + 1}`);
+      const viewersRaw = stream.currentViewers ?? stream.viewer_count ?? stream.viewers;
+      const viewerLabel = typeof viewersRaw === "number"
+        ? `${countFormatter.format(viewersRaw)} watching`
+        : viewersRaw
+          ? String(viewersRaw)
           : undefined;
 
-    const card = (
-      <div className="flex h-full flex-col gap-3 rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3">
-        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-neutral-900/60">
-          {typeof stream?.thumbnail === "string" && stream.thumbnail ? (
-            <Image
-              src={stream.thumbnail}
-              alt={title}
-              fill
-              sizes="(min-width: 1024px) 12rem, 100vw"
-              className="object-cover"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-[#F0BFA1]">
-              Preview unavailable
-            </div>
-          )}
-        </div>
-        <div className="flex flex-col gap-1">
-          <div className="text-sm font-semibold text-[#FFF6EC]" title={title}>
-            {title}
-          </div>
-          <div className="text-xs text-[#F9D9C3]">
-            {typeof viewersRaw === "number"
-              ? `${countCompactFormatter.format(viewersRaw)} watching`
-              : viewersRaw
-                ? String(viewersRaw)
-                : "Viewer data pending"}
-          </div>
-          <div className="flex flex-wrap items-center gap-2 text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">
-            {marketCap && <span>MCAP {marketCap}</span>}
-            {momentumLabel && <span className="rounded-full border border-[#F7BE8A]/30 px-2 py-[1px] text-[10px] text-[#FFF2E2]">Momentum {momentumLabel}</span>}
-          </div>
-        </div>
-      </div>
-    );
+      const marketCap =
+        formatCurrency(stream.marketCapUsd ?? stream.market_cap_usd ?? stream.marketCap);
+      const momentumLabel = formatMomentum(stream.momentum ?? stream.signal);
+      const momentumValue = typeof (stream.momentum ?? stream.signal) === "number"
+        ? Number(stream.momentum ?? stream.signal)
+        : undefined;
 
-    if (!inferredHref) {
-      return (
-        <div key={stream?.mintId || title} className="h-full">
-          {card}
-        </div>
-      );
-    }
+      const href = typeof stream.url === "string" && stream.url
+        ? stream.url
+        : typeof stream.streamUrl === "string" && stream.streamUrl
+          ? stream.streamUrl
+          : typeof stream.mintId === "string" && stream.mintId
+            ? `https://pump.fun/${stream.mintId}`
+            : undefined;
 
-    return (
-      <a
-        key={inferredHref}
-        href={inferredHref}
-        target="_blank"
-        rel="noreferrer"
-        className="h-full transition hover:border-flux/50"
-      >
-        {card}
-      </a>
-    );
+      const badges: Badge[] = [];
+      if (marketCap) badges.push(createBadge(`MCAP ${marketCap}`, "info"));
+      if (momentumLabel) {
+        badges.push(
+          createBadge(
+            `Momentum ${momentumLabel}`,
+            momentumValue !== undefined && momentumValue < 0 ? "danger" : "success",
+          ),
+        );
+      }
+
+      const children: ListViewItem["children"] = [
+        {
+          type: "Row",
+          gap: 12,
+          align: "start" as Alignment,
+          children: [
+            stream.thumbnail
+              ? {
+                  type: "Image",
+                  src: stream.thumbnail,
+                  alt: title,
+                  width: 120,
+                  height: 72,
+                  radius: "12px",
+                }
+              : undefined,
+            {
+              type: "Col",
+              gap: 6,
+              children: [
+                { type: "Text", value: title, weight: "semibold", size: "md" },
+                viewerLabel ? { type: "Caption", value: viewerLabel, size: "sm" } : undefined,
+                badges.length
+                  ? {
+                      type: "Row",
+                      gap: 6,
+                      children: badges,
+                    }
+                  : undefined,
+              ].filter(Boolean) as any,
+            },
+          ].filter(Boolean) as any,
+        },
+      ];
+
+      return {
+        type: "ListViewItem",
+        id: stream.mintId ?? `stream-${index}`,
+        onClickAction: href ? { type: "open_url", payload: { url: href } } : undefined,
+        children,
+        gap: 8,
+      };
+    });
+
+  const headerCard: Card = {
+    type: "Card",
+    id: "pumpstream-header",
+    children: [
+      {
+        type: "Row",
+        justify: "between",
+        align: "center",
+        children: [
+          {
+            type: "Col",
+            gap: 4,
+            children: [
+              { type: "Title", value: "Pump.fun Streams", size: "md" },
+              generatedAt
+                ? { type: "Caption", value: `Updated ${new Date(generatedAt).toLocaleTimeString()}`, size: "xs" }
+                : undefined,
+            ].filter(Boolean) as any,
+          },
+          streams.length
+            ? createBadge(`${streams.length} live`, "info", { id: "pumpstream-count" })
+            : undefined,
+        ].filter(Boolean) as any,
+      },
+    ],
   };
+
+  const listView: ListView = {
+    type: "ListView",
+    id: "pumpstream-streams",
+    children: items,
+  };
+
+  const widgetPayload = [headerCard, listView];
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className={SECTION_TITLE_CLASS}>Pump.fun Streams</div>
-          {generatedAt && (
-            <div className="text-xs text-[#F0BFA1]">Updated {new Date(generatedAt).toLocaleTimeString()}</div>
-          )}
-        </div>
-        {streams.length > 0 && (
-          <div className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#FFE4CF]">
-            {streams.length} live
-          </div>
-        )}
-      </div>
-
-      {headline.length > 0 ? (
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          {headline.map((stream: any, index: number) => renderStreamCard(stream, index))}
-        </div>
-      ) : (
-        <div className="mt-4 rounded-lg border border-dashed border-[#F7BE8A]/24 px-4 py-6 text-center text-sm text-[#F9D9C3]">
-          No live streams reported in the last response.
-        </div>
-      )}
-
-      {remaining.length > 0 && (
+      <ChatKitWidgetRenderer widgets={widgetPayload} />
+      {streams.length > 6 && (
         <div className="mt-4">
-          {!isExpanded ? (
-            <button
-              type="button"
-              onClick={onToggle}
-              className="text-xs uppercase tracking-[0.24em] text-flux transition hover:text-flux/80"
-            >
-              Show {remaining.length} more
-            </button>
-          ) : (
-            <>
-              <div className="grid gap-3 md:grid-cols-2">
-                {remaining.map((stream: any, index: number) => renderStreamCard(stream, index + headline.length))}
-              </div>
-              <button
-                type="button"
-                onClick={onToggle}
-                className="mt-3 text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
-              >
-                Hide extra streams
-              </button>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={onToggle}
+            className="text-xs uppercase tracking-[0.24em] text-flux transition hover:text-flux/80"
+          >
+            {isExpanded ? "Hide extra streams" : `Show ${streams.length - 6} more`}
+          </button>
         </div>
       )}
 
