@@ -273,7 +273,7 @@ export function TopRibbon({
             />
           </div>
 
-          <div className="pointer-events-none absolute left-1/2 top-1/2 flex -translate-x-1/2 -translate-y-1/2 justify-center">
+          <div className="pointer-events-none absolute left-4 top-3 flex items-start justify-start">
             <AnimatePresence>
               {showHeaderCrest ? (
                 <motion.button
@@ -283,9 +283,9 @@ export function TopRibbon({
                   className="pointer-events-auto group relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#FF6500]"
                   aria-label="Reload Dexter brand"
                   layoutId="dexter-crest"
-                  initial={{ opacity: 0, scale: 0.82, rotate: -6, y: -14 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 0, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.88, rotate: 6, y: -18 }}
+                  initial={{ opacity: 0, scale: 0.9, rotate: -8, y: -18, x: -18 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 0, y: 0, x: 0 }}
+                  exit={{ opacity: 0, scale: 0.92, rotate: 8, y: -12, x: -10 }}
                   transition={{ duration: 0.6, ease: [0.19, 1, 0.22, 1] }}
                   whileHover={{ scale: 1.04, rotate: 4 }}
                   whileFocus={{ scale: 1.04, rotate: -3 }}
