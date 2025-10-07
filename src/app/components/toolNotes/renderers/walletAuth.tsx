@@ -1,86 +1,172 @@
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, HashBadge, SECTION_TITLE_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
+import {
+  ChatKitWidgetRenderer,
+  type Card,
+  type ChatKitWidgetComponent,
+  type Button,
+} from "../ChatKitWidgetRenderer";
+
+type Diagnostics = {
+  bearer_source?: string;
+  has_token?: boolean;
+  override_session?: string;
+  detail?: string;
+  wallets_cached?: number;
+};
+
+type Summary = {
+  wallet_address?: string;
+  user_id?: string;
+  source?: string;
+  diagnostics?: Diagnostics;
+};
+
+type Alignment = "start" | "center" | "end" | "stretch";
 
 const walletAuthRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, any> | undefined) || {};
-  const payload = unwrapStructured(rawOutput);
+  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+  const payload = unwrapStructured(rawOutput) as Summary;
 
-  const summary = payload && typeof payload === "object" ? payload : {};
-  const diagnostics = typeof (summary as any)?.diagnostics === "object" && (summary as any).diagnostics ? (summary as any).diagnostics : null;
+  const rows: ChatKitWidgetComponent[] = [];
+
+  if (payload.wallet_address) {
+    rows.push({
+      type: "Row",
+      justify: "between",
+      align: "center" as Alignment,
+      children: [
+        { type: "Caption", value: "Active wallet", size: "xs" },
+        {
+          type: "Row",
+          gap: 6,
+          children: [
+            {
+              type: "Button",
+              label: `${payload.wallet_address.slice(0, 4)}…${payload.wallet_address.slice(-4)}`,
+              onClickAction: { type: "copy", payload: { value: payload.wallet_address } },
+              variant: "outline",
+              size: "sm",
+            } as Button,
+            {
+              type: "Button",
+              label: "Solscan",
+              onClickAction: { type: "open_url", payload: { url: `https://solscan.io/account/${payload.wallet_address}` } },
+              variant: "outline",
+              size: "sm",
+            } as Button,
+          ],
+        },
+      ],
+    });
+  } else {
+    rows.push({ type: "Text", value: "No wallet bound to this session.", size: "sm" });
+  }
+
+  if (payload.user_id) {
+    rows.push({
+      type: "Row",
+      justify: "between",
+      align: "center" as Alignment,
+      children: [
+        { type: "Caption", value: "Supabase user", size: "xs" },
+        {
+          type: "Button",
+          label: payload.user_id,
+          onClickAction: { type: "copy", payload: { value: payload.user_id } },
+          variant: "outline",
+          size: "sm",
+        },
+      ],
+    });
+  }
+
+  const diagnostics = payload.diagnostics;
+  const widgets: Card[] = [
+    {
+      type: "Card",
+      id: "wallet-auth-header",
+      children: [
+        {
+          type: "Row",
+          justify: "between",
+          align: "center",
+          children: [
+            {
+              type: "Col",
+              gap: 4,
+              children: [
+                { type: "Title", value: "Auth Diagnostics", size: "md" },
+                item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
+              ].filter(Boolean) as ChatKitWidgetComponent[],
+            },
+            payload.source
+              ? { type: "Badge", label: `Source: ${payload.source}`, color: "secondary", variant: "outline" } as any
+              : undefined,
+          ].filter(Boolean) as ChatKitWidgetComponent[],
+        },
+      ],
+    },
+    {
+      type: "Card",
+      id: "wallet-auth-body",
+      children: [{ type: "Col", gap: 8, children: rows }],
+    },
+  ];
+
+  if (diagnostics) {
+    const diagRows: ChatKitWidgetComponent[] = [];
+    if (diagnostics.bearer_source) diagRows.push(makeDiagRow("Bearer source", diagnostics.bearer_source));
+    if (diagnostics.has_token !== undefined) diagRows.push(makeDiagRow("Has token", diagnostics.has_token ? "yes" : "no"));
+    if (diagnostics.override_session) diagRows.push(makeDiagRow("Session override", diagnostics.override_session));
+    if (diagnostics.detail) diagRows.push(makeDiagRow("Resolver detail", diagnostics.detail));
+    if (diagnostics.wallets_cached !== undefined) diagRows.push(makeDiagRow("Wallets cached", String(diagnostics.wallets_cached)));
+
+    widgets.push({
+      type: "Card",
+      id: "wallet-diagnostics",
+      children: [
+        { type: "Title", value: "Diagnostics", size: "sm" },
+        { type: "Col", gap: 6, children: diagRows },
+      ],
+    });
+  }
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className={SECTION_TITLE_CLASS}>Auth Diagnostics</div>
-          <div className="mt-2 text-xs text-[#F9D9C3]">{item.timestamp}</div>
-        </div>
-        <div className="rounded-full border border-[#F7BE8A]/30 px-3 py-1 text-[11px] uppercase tracking-[0.2em] text-[#FFE4CF]">
-          Source: {(summary as any)?.source || "unknown"}
-        </div>
-      </div>
-
-      <div className="mt-4 space-y-3 text-xs text-[#FFE4CF]">
-        {(summary as any)?.wallet_address ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[#F0BFA1] uppercase tracking-[0.24em]">Active wallet</span>
-            <HashBadge value={(summary as any).wallet_address} href={`https://solscan.io/account/${(summary as any).wallet_address}`} ariaLabel="Active wallet" />
-          </div>
-        ) : (
-          <div className="rounded-lg border border-[#F7BE8A]/22 bg-[#1A090D]/70 px-3 py-2 text-[#F9D9C3]">
-            No wallet bound to this session.
-          </div>
-        )}
-
-        {(summary as any)?.user_id && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[#F0BFA1] uppercase tracking-[0.24em]">Supabase user</span>
-            <HashBadge value={(summary as any).user_id} />
-          </div>
-        )}
-
-        {diagnostics && (
-          <div className="rounded-xl border border-[#F7BE8A]/22 bg-[#1A090D]/70 p-3">
-            <div className="text-[10px] uppercase tracking-[0.22em] text-[#F0BFA1]">Diagnostics</div>
-            <div className="mt-2 grid gap-2 text-xs text-[#FFE4CF]">
-              <DiagnosticRow label="Bearer source" value={diagnostics.bearer_source} />
-              <DiagnosticRow label="Has token" value={diagnostics.has_token ? "yes" : "no"} />
-              <DiagnosticRow label="Session override" value={diagnostics.override_session || "none"} />
-              <DiagnosticRow label="Resolver detail" value={diagnostics.detail || ""} />
-              <DiagnosticRow label="Wallets cached" value={diagnostics.wallets_cached?.toString()} />
-            </div>
-          </div>
-        )}
-      </div>
-
+      <ChatKitWidgetRenderer widgets={widgets} />
       {debug && (
-        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+        <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
+          <summary
+            className="cursor-pointer text-xs uppercase tracking-[0.24em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
+            onClick={(event) => {
+              event.preventDefault();
+              onToggle();
+            }}
           >
             {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </button>
+          </summary>
           {isExpanded && (
             <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
               {JSON.stringify(rawOutput, null, 2)}
             </pre>
           )}
-        </div>
+        </details>
       )}
     </div>
   );
 };
 
-function DiagnosticRow({ label, value }: { label: string; value?: string | null }) {
-  if (value === undefined || value === null || value === "") return null;
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[#F0BFA1] uppercase tracking-[0.24em]">{label}</span>
-      <span className="text-[#FFF6EC]">{value}</span>
-    </div>
-  );
+function makeDiagRow(label: string, value: string): ChatKitWidgetComponent {
+  return {
+    type: "Row",
+    justify: "between",
+    align: "center" as Alignment,
+    children: [
+      { type: "Caption", value: label, size: "xs" },
+      { type: "Text", value, size: "sm" },
+    ],
+  };
 }
 
 export default walletAuthRenderer;
