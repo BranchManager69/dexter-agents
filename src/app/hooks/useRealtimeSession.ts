@@ -14,6 +14,7 @@ import { MODEL_IDS } from '../config/models';
 export interface RealtimeSessionCallbacks {
   onConnectionChange?: (status: SessionStatus) => void;
   onAgentHandoff?: (agentName: string) => void;
+  onUsage?: (usage: any) => void;
 }
 
 export interface ConnectOptions {
@@ -185,6 +186,10 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
           // No tools emitted and nothing pending — model likely wants to continue
           safeCreateFollowupResponse();
           stepActiveRef.current = false;
+        }
+
+        if (resp?.usage) {
+          callbacks.onUsage?.(resp.usage);
         }
         logServerEvent(event);
         break;
