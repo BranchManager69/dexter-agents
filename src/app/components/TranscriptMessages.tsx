@@ -242,25 +242,29 @@ export function TranscriptMessages({
             const containerClasses = `group/message relative flex flex-col gap-1 ${
               isUser ? "items-end" : "items-start"
             }`;
-            const bubbleBase = `relative max-w-2xl rounded-3xl px-4 py-3 transition-colors`;
+            const bubbleBase = `relative max-w-2xl px-1 py-1 transition-colors`;
             const isBracketedMessage =
               title.startsWith("[") && title.endsWith("]");
-            const messageStyle = isBracketedMessage ? "italic text-[#F4CDAA]" : "";
             const displayTitle = isBracketedMessage ? title.slice(1, -1) : title;
-            const bubbleTone = isUser
-              ? "bg-[#3B1609]/85 border border-[#F6A878]/25"
-              : "bg-[#16070C]/85 border border-[#F7BE8A]/18";
-            const messageTextClass = isUser ? "text-[#FFE4C4]" : "text-[#FFEBDD]";
+            const isTranscribingCue =
+              isBracketedMessage && displayTitle.toLowerCase() === "transcribing...";
+            const messageStyle = isBracketedMessage && !isTranscribingCue ? "italic text-neutral-600" : "";
+            const bubbleTone = "bg-transparent";
+            const messageTextClass = isUser ? "text-neutral-900" : "text-neutral-800";
 
             return (
               <div key={itemId} className={containerClasses}>
                 <div className="max-w-2xl space-y-2">
                   <div className={`${bubbleBase} ${bubbleTone} ${guardrailResult ? "rounded-b-none" : ""}`}>
-                    <MessageMarkdown
-                      className={`whitespace-pre-wrap break-words text-[15px] leading-relaxed ${messageStyle} ${messageTextClass}`}
-                    >
-                      {displayTitle}
-                    </MessageMarkdown>
+                    {isTranscribingCue ? (
+                      <TypingIndicator />
+                    ) : (
+                      <MessageMarkdown
+                        className={`whitespace-pre-wrap break-words text-[15px] leading-relaxed ${messageStyle} ${messageTextClass}`}
+                      >
+                        {displayTitle}
+                      </MessageMarkdown>
+                    )}
                   </div>
                   {guardrailResult && (
                     <div className="rounded-b-3xl border border-[#F6A878]/25 bg-[#2A0D08]/85 px-4 py-3 text-[#FFE5D2]">
@@ -400,3 +404,23 @@ export function TranscriptMessages({
 }
 
 export default TranscriptMessages;
+
+function TypingIndicator() {
+  const dotDelays = [0, 0.2, 0.4];
+
+  return (
+    <span
+      className="inline-flex items-center gap-1"
+      role="status"
+      aria-label="Dexter is transcribing"
+    >
+      {dotDelays.map((delay) => (
+        <span
+          key={delay}
+          className="h-2 w-2 rounded-full bg-neutral-500/80 opacity-80 animate-pulse"
+          style={{ animationDelay: `${delay}s` }}
+        />
+      ))}
+    </span>
+  );
+}
