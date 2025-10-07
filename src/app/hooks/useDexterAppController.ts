@@ -2331,7 +2331,6 @@ export function useDexterAppController(): DexterAppController {
   const bottomStatusProps: BottomStatusRailProps = {
     onOpenDebugModal: () => setIsDebugModalOpen(true),
     onOpenSignals: () => setIsMobileSignalsOpen(true),
-    canUseAdminTools,
     voiceControl: {
       isLive: sessionStatus === 'CONNECTED',
       isMuted: isVoiceMuted,

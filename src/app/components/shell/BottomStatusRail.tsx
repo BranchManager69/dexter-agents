@@ -3,7 +3,6 @@ import React from "react";
 interface BottomStatusRailProps {
   onOpenDebugModal: () => void;
   onOpenSignals: () => void;
-  canUseAdminTools: boolean;
   voiceControl: {
     isLive: boolean;
     isMuted: boolean;
@@ -14,7 +13,6 @@ interface BottomStatusRailProps {
 export function BottomStatusRail({
   onOpenDebugModal,
   onOpenSignals,
-  canUseAdminTools,
   voiceControl,
 }: BottomStatusRailProps) {
   return (
@@ -64,21 +62,19 @@ export function BottomStatusRail({
           </button>
         ) : null}
 
-        {!canUseAdminTools && (
-          <button
-            type="button"
-            onClick={onOpenSignals}
-            className="inline-flex items-center gap-2 rounded-full border border-neutral-800/60 bg-neutral-900/40 px-3 py-1 font-display text-[11px] tracking-[0.08em] text-neutral-300 transition hover:border-flux/40 hover:text-flux"
-            title="Open signals"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="6" x2="6" y1="4" y2="20" />
-              <line x1="12" x2="12" y1="9" y2="20" />
-              <line x1="18" x2="18" y1="14" y2="20" />
-            </svg>
-            Signals
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={onOpenSignals}
+          className="inline-flex items-center gap-2 rounded-full border border-neutral-800/60 bg-neutral-900/40 px-3 py-1 font-display text-[11px] tracking-[0.08em] text-neutral-300 transition hover:border-flux/40 hover:text-flux"
+          title="Open signals"
+        >
+          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="6" x2="6" y1="4" y2="20" />
+            <line x1="12" x2="12" y1="9" y2="20" />
+            <line x1="18" x2="18" y1="14" y2="20" />
+          </svg>
+          Signals
+        </button>
       </div>
 
       {/* Right: Debug info icon */}
