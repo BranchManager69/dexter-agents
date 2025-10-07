@@ -1513,13 +1513,17 @@ export function useDexterAppController(): DexterAppController {
     }
   };
 
-  const disconnectFromRealtime = () => {
+  const disconnectFromRealtime = (options?: { resetIdentity?: boolean }) => {
     disconnect();
     void deleteRealtimeSession();
     setSessionStatus("DISCONNECTED");
-    void fetchActiveWallet().then((wallet) => {
-      syncIdentityToAuthSession(wallet);
-    });
+    if (options?.resetIdentity) {
+      resetSessionIdentity();
+    } else {
+      void fetchActiveWallet().then((wallet) => {
+        syncIdentityToAuthSession(wallet);
+      });
+    }
     setHasActivatedSession(false);
     setPendingAutoConnect(false);
   };
@@ -1534,7 +1538,7 @@ export function useDexterAppController(): DexterAppController {
       if (!response.ok) {
         throw new Error(`Logout endpoint returned ${response.status}`);
       }
-      disconnectFromRealtime();
+      disconnectFromRealtime({ resetIdentity: true });
     } catch (err) {
       console.error('Sign-out error:', err);
       if (typeof window !== 'undefined') {
