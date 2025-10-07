@@ -23,6 +23,7 @@ declare global {
 // Types
 import { SessionStatus } from "@/app/types";
 import type { DexterUserBadge } from "@/app/types";
+import type { UserBadgeVariant } from "@/app/components/UserBadge";
 import type { RealtimeAgent } from '@openai/agents/realtime';
 
 // Context providers & hooks
@@ -118,6 +119,54 @@ const createGuestIdentity = (instructions: string = DEFAULT_GUEST_SESSION_INSTRU
   guestProfile: { label: "Dexter Demo Wallet", instructions },
   wallet: null,
 });
+
+const resolveSessionRoleVariant = (
+  identity: DexterSessionSummary,
+  explicitBadge: DexterUserBadge | null,
+): UserBadgeVariant => {
+  if (explicitBadge === 'dev' || explicitBadge === 'pro') {
+    return explicitBadge;
+  }
+
+  if (identity.type !== 'user') {
+    return 'demo';
+  }
+
+  const normalizedRoles = (identity.user?.roles ?? []).map((role) => role.toLowerCase());
+  if (identity.user?.isSuperAdmin || normalizedRoles.includes('superadmin')) {
+    return 'dev';
+  }
+  if (normalizedRoles.includes('admin')) {
+    return 'admin';
+  }
+  return 'user';
+};
+
+const resolveSessionRoleLabel = (variant: UserBadgeVariant): string => {
+  switch (variant) {
+    case 'dev':
+      return 'Dev';
+    case 'pro':
+      return 'Pro';
+    case 'admin':
+      return 'Admin';
+    case 'user':
+      return 'User';
+    default:
+      return 'Demo';
+  }
+};
+
+const formatWalletAddress = (address?: string | null): string => {
+  if (!address || address === 'Auto' || address.trim().length === 0) {
+    return 'Auto';
+  }
+  const trimmed = address.trim();
+  if (trimmed.length <= 10) {
+    return trimmed;
+  }
+  return `${trimmed.slice(0, 4)}…${trimmed.slice(-4)}`;
+};
 
 const SOLANA_NATIVE_MINT = 'So11111111111111111111111111111111111111112';
 
@@ -2187,6 +2236,35 @@ export function useDexterAppController(): DexterAppController {
     return HERO_RETURNING_PROMPTS[deterministicPromptIndex];
   }, [heroLoading, sessionIdentity.type, deterministicPromptIndex, nextConversationPrompt]);
 
+  const sessionRoleVariant = useMemo(
+    () => resolveSessionRoleVariant(sessionIdentity, userBadge),
+    [sessionIdentity, userBadge],
+  );
+
+  const sessionRoleLabel = useMemo(
+    () => resolveSessionRoleLabel(sessionRoleVariant),
+    [sessionRoleVariant],
+  );
+
+  const walletSecondaryLabel = useMemo(() => {
+    if (!walletPortfolioSummary) return null;
+    if (walletPortfolioPending) return 'Syncing…';
+    if (walletPortfolioStatus === 'loading') return 'Loading…';
+    if (walletPortfolioStatus === 'error') return walletPortfolioError ?? 'Balance error';
+
+    const parts: string[] = [];
+    if (walletPortfolioSummary.solBalanceFormatted) {
+      parts.push(walletPortfolioSummary.solBalanceFormatted);
+    }
+    if (walletPortfolioSummary.totalUsdFormatted) {
+      parts.push(walletPortfolioSummary.totalUsdFormatted);
+    }
+    if (walletPortfolioSummary.tokenCount) {
+      parts.push(`${walletPortfolioSummary.tokenCount} tokens`);
+    }
+    return parts.length ? parts.join(' • ') : null;
+  }, [walletPortfolioSummary, walletPortfolioPending, walletPortfolioStatus, walletPortfolioError]);
+
   const heroControlsProps: HeroControlsProps = {
     sessionStatus,
     className: heroControlsClassName,
@@ -2260,6 +2338,29 @@ export function useDexterAppController(): DexterAppController {
     ?? signalData.wallet.summary.activeWallet
     ?? null;
 
+  const walletLabel = useMemo(
+    () => formatWalletAddress(activeWalletAddress),
+    [activeWalletAddress],
+  );
+
+  const walletDebugInfo = useMemo(() => ({
+    address: activeWalletAddress,
+    formattedLabel: walletLabel,
+    secondaryText: walletSecondaryLabel,
+    status: walletPortfolioStatus,
+    pending: walletPortfolioPending,
+    error: walletPortfolioError,
+    summary: walletPortfolioSummary,
+  }), [
+    activeWalletAddress,
+    walletLabel,
+    walletSecondaryLabel,
+    walletPortfolioStatus,
+    walletPortfolioPending,
+    walletPortfolioError,
+    walletPortfolioSummary,
+  ]);
+
   const topRibbonProps: TopRibbonProps = {
     sessionStatus,
     onToggleConnection,
@@ -2291,7 +2392,12 @@ export function useDexterAppController(): DexterAppController {
     connectionStatus: sessionStatus,
     identityLabel,
     mcpStatus: mcpStatus.label,
-    walletStatus: signalData.wallet.summary.activeWallet || "Auto",
+    mcpDetail: mcpStatus.detail ?? null,
+    roleLabel: sessionRoleLabel,
+    roleVariant: sessionRoleVariant,
+    authEmail,
+    walletStatus: walletLabel ?? (signalData.wallet.summary.activeWallet || "Auto"),
+    walletInfo: walletDebugInfo,
     isAudioPlaybackEnabled,
     setIsAudioPlaybackEnabled,
     isEventsPaneExpanded,
