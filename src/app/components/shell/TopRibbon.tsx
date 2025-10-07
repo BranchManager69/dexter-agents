@@ -197,12 +197,12 @@ export function TopRibbon({
         data-can-toggle-connection={hasConnectionToggle}
       >
         <div className="relative mx-auto flex w-full max-w-6xl items-center gap-3">
-          {hasWalletAddress ? (
-            <div className="ml-auto flex flex-shrink-0 items-center gap-3 whitespace-nowrap font-display text-[10px] font-semibold tracking-[0.08em] text-[#FFF3E3]/85">
+          <div className="ml-auto flex flex-shrink-0 items-center gap-3 pl-2 whitespace-nowrap">
+            {hasWalletAddress ? (
               <button
                 type="button"
                 onClick={handleWalletCopy}
-                className="relative flex items-center gap-2 rounded-full border border-[#FEFBF4]/30 px-3 py-1 text-[#FEFBF4] transition hover:border-[#FEFBF4]/50 hover:text-[#FFF3E3]"
+                className="relative flex items-center gap-2 rounded-full border border-[#FEFBF4]/30 px-3 py-1 font-display text-[10px] font-semibold tracking-[0.08em] text-[#FEFBF4] transition hover:border-[#FEFBF4]/50 hover:text-[#FFF3E3]"
                 title={walletAddressValue ? `Copy ${walletAddressValue}` : undefined}
               >
                 <span className="text-[9px] uppercase tracking-[0.28em] text-[#FEFBF4]/60">Wallet</span>
@@ -213,24 +213,24 @@ export function TopRibbon({
                   </span>
                 )}
               </button>
-            </div>
-          ) : null}
+            ) : null}
 
-          <div className="flex flex-shrink-0 items-center pl-2">
-            <AuthMenu
-              isAuthenticated={authState.isAuthenticated}
-              loading={authState.loading}
-              email={authState.email}
-              onSignIn={handleAuthSignIn}
-              onSignOut={handleAuthSignOut}
-              turnstileSiteKey={turnstileSiteKey}
-              roleLabel={sessionLabel}
-              buttonToneClass="rounded-none border-transparent px-0 py-0 bg-transparent text-[#FEFBF4] hover:text-[#FFF3E3]"
-              buttonTitle={sessionIdentity.type === 'user' ? sessionIdentity.user?.email ?? undefined : undefined}
-              activeWalletKey={sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined}
-              walletPortfolio={walletPortfolio ?? undefined}
-              userBadge={userBadge ?? undefined}
-            />
+            <div className="flex items-center">
+              <AuthMenu
+                isAuthenticated={authState.isAuthenticated}
+                loading={authState.loading}
+                email={authState.email}
+                onSignIn={handleAuthSignIn}
+                onSignOut={handleAuthSignOut}
+                turnstileSiteKey={turnstileSiteKey}
+                roleLabel={sessionLabel}
+                buttonToneClass="rounded-none border-transparent px-0 py-0 bg-transparent text-[#FEFBF4] hover:text-[#FFF3E3]"
+                buttonTitle={sessionIdentity.type === 'user' ? sessionIdentity.user?.email ?? undefined : undefined}
+                activeWalletKey={sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined}
+                walletPortfolio={walletPortfolio ?? undefined}
+                userBadge={userBadge ?? undefined}
+              />
+            </div>
           </div>
 
           <AnimatePresence>
