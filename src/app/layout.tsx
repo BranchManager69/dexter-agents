@@ -5,8 +5,11 @@ import { Providers } from "./providers";
 import { activeThemeVariables } from "../theme/palette";
 
 export const metadata: Metadata = {
-  title: "Dexter Beta",
-  description: "Dexter Beta – realtime trading copilots and MCP tools.",
+  title: "Dexter • Voice",
+  description: "Dexter Voice – realtime crypto copilot.",
+  icons: {
+    icon: "/assets/logos/logo.svg",
+  },
 };
 
 export default function RootLayout({
