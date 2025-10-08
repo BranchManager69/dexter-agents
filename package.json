@@ -20,7 +20,10 @@
     "harness": "node scripts/run-tool-harness.js",
     "agent-tools": "node scripts/list-agent-tools.mjs",
     "harness:report": "node scripts/reportHarness.js",
-    "screenshot": "node scripts/screenshot.js"
+    "screenshot": "node scripts/screenshot.js",
+    "ladle": "ladle dev --viteConfig ladle.vite.config.mjs",
+    "ladle:bg": "sh -c 'PORT=${PORT:-61000} nohup ladle dev --viteConfig ladle.vite.config.mjs > /tmp/ladle.log 2>&1 & echo Ladle PID: $!'",
+    "ladle:build": "ladle build --viteConfig ladle.vite.config.mjs"
   },
   "bin": {
     "dexchat": "./scripts/dexchat.js"
@@ -51,6 +54,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@ladle/react": "^5.1.0",
     "@playwright/test": "^1.55.1",
     "@types/node": "^20",
     "@types/react": "^19",
