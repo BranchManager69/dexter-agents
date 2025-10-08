@@ -10,8 +10,6 @@ interface TurnstileWidgetProps {
   cData?: string;
   className?: string;
   refreshKey?: number;
-  theme?: "light" | "dark";
-  onLoad?: () => void;
 }
 
 export function TurnstileWidget({
@@ -21,8 +19,6 @@ export function TurnstileWidget({
   cData,
   className,
   refreshKey = 0,
-  theme = "dark",
-  onLoad,
 }: TurnstileWidgetProps) {
   useEffect(() => {
     if (!siteKey) {
@@ -36,11 +32,10 @@ export function TurnstileWidget({
     <Turnstile
       key={`${siteKey}:${refreshKey}`}
       siteKey={siteKey}
-      options={{ theme, action, cData }}
+      options={{ theme: "dark", action, cData }}
       onSuccess={(token) => onToken(token)}
       onError={() => onToken(null)}
       onExpire={() => onToken(null)}
-      onLoad={onLoad}
       className={className}
     />
   );

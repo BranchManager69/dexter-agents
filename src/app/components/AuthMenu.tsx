@@ -264,8 +264,6 @@ export function AuthMenu({
                 siteKey={turnstileSiteKey}
                 onToken={(token) => setCaptchaToken(token)}
                 className={styles.turnstile}
-                theme="light"
-                onLoad={() => setTurnstileReady(true)}
               />
             </div>
           ) : (
