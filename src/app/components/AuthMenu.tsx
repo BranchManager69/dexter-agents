@@ -79,16 +79,10 @@ export function AuthMenu({
     if (!accountOpen && turnstileSiteKey) {
       setCaptchaToken(null);
       setTurnstileVisible(Boolean(turnstileSiteKey));
-      setTurnstileKey((key) => key + 1);
       setTurnstileReady(false);
+      setTurnstileKey((key) => key + 1);
     }
   }, [accountOpen, turnstileSiteKey]);
-
-  useEffect(() => {
-    if (turnstileVisible) {
-      setTurnstileReady(true);
-    }
-  }, [turnstileVisible]);
 
   useEffect(() => {
     if (!accountOpen) return;
@@ -270,6 +264,8 @@ export function AuthMenu({
                 siteKey={turnstileSiteKey}
                 onToken={(token) => setCaptchaToken(token)}
                 className={styles.turnstile}
+                theme="light"
+                onLoad={() => setTurnstileReady(true)}
               />
             </div>
           ) : (
