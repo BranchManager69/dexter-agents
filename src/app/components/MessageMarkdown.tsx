@@ -76,9 +76,24 @@ export function MessageMarkdown({ children, className }: MessageMarkdownProps) {
          * Custom artifact nodes are passed through from remark (see passThrough above).
          * When introducing new artifact node types, register them here so they render.
          */
-        solanaArtifact: ({ node }: { node: any }) => (
-          <SolanaArtifactBadge value={node?.value} type={node?.data?.artifactType} />
-        ),
+        solanaArtifact: ({ node }: { node: any }) => {
+          const artifactValue =
+            typeof node?.value === "string"
+              ? node.value
+              : typeof node?.properties?.value === "string"
+                ? node.properties.value
+                : Array.isArray(node?.children) && typeof node.children[0]?.value === "string"
+                  ? node.children[0].value
+                  : undefined;
+
+          const artifactType = node?.data?.artifactType ?? node?.properties?.artifactType;
+
+          if (!artifactValue || !artifactType) {
+            return <>{artifactValue ?? ""}</>;
+          }
+
+          return <SolanaArtifactBadge value={artifactValue} type={artifactType} />;
+        },
       }) as Record<string, any>,
     [],
   );

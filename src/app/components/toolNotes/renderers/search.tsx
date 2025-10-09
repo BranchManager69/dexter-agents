@@ -1,15 +1,8 @@
+import React from "react";
+
 import type { ToolNoteRenderer } from "./types";
 import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
-import {
-  ChatKitWidgetRenderer,
-  type Badge,
-  type Card,
-  type ListView,
-  type ListViewItem,
-  type ChatKitWidgetComponent,
-} from "../ChatKitWidgetRenderer";
-
-type Alignment = "start" | "center" | "end" | "stretch";
+import { LinkPill, MetricPill } from "./solanaVisuals";
 
 type SearchResult = {
   id?: string;
@@ -22,120 +15,65 @@ type SearchPayload = {
   results?: SearchResult[];
 };
 
-type SearchArgs = Record<string, unknown>;
+type SearchArgs = {
+  query?: string;
+};
 
-const searchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
-  const payload = unwrapStructured(rawOutput) as SearchPayload | SearchResult[];
-  const args = (item.data as any)?.arguments as SearchArgs | undefined;
+const searchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
+  const normalized = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+  const payload = unwrapStructured(normalized) as SearchPayload | SearchResult[];
+  const args = ((item.data as any)?.arguments ?? {}) as SearchArgs;
 
-  const results: SearchResult[] = Array.isArray(payload)
-    ? payload as SearchResult[]
-    : Array.isArray(payload?.results)
-      ? payload.results!
+  const results: SearchResult[] = Array.isArray((payload as SearchPayload)?.results)
+    ? ((payload as SearchPayload).results as SearchResult[])
+    : Array.isArray(payload)
+      ? (payload as SearchResult[])
       : [];
 
-  const query = typeof args?.query === "string" ? args.query : undefined;
-
-  const headerCard: Card = {
-    type: "Card",
-    id: "search-header",
-    children: [
-      {
-        type: "Row",
-        justify: "between",
-        align: "center",
-        children: [
-          {
-            type: "Col",
-            gap: 4,
-            children: [
-              { type: "Title", value: "Dexter Search", size: "md" },
-              item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
-            ].filter(Boolean) as ChatKitWidgetComponent[],
-          },
-          { type: "Badge", label: `${results.length} hit${results.length === 1 ? "" : "s"}`, color: "secondary", variant: "outline" } as Badge,
-        ],
-      },
-    ],
-  };
-
-  const listItems: ListViewItem[] = results.map((result, index) => {
-    const title = result.title?.trim() || `Result ${index + 1}`;
-    const snippet = result.snippet?.trim();
-    const url = result.url?.trim();
-
-    const children: ChatKitWidgetComponent[] = [
-      url
-        ? {
-            type: "Button",
-            label: title,
-            onClickAction: { type: "open_url", payload: { url } },
-            variant: "outline",
-            size: "sm",
-          }
-        : { type: "Text", value: title, size: "sm", weight: "semibold" },
-    ];
-    if (snippet) {
-      children.push({ type: "Text", value: snippet, size: "sm" });
-    }
-
-    return {
-      type: "ListViewItem",
-      id: result.id ?? url ?? `result-${index}`,
-      children,
-    };
-  });
-
-  const widgets: Array<Card | ListView> = [headerCard];
-
-  if (query) {
-    widgets.push({
-      type: "Card",
-      id: "search-query",
-      children: [
-        {
-          type: "Row",
-          justify: "between",
-          align: "center" as Alignment,
-          children: [
-            { type: "Caption", value: "Query", size: "xs" },
-            { type: "Text", value: query, size: "sm" },
-          ],
-        },
-      ],
-    });
-  }
-
-  if (results.length) {
-    widgets.push({ type: "ListView", id: "search-results", children: listItems });
-  } else {
-    widgets.push({
-      type: "Card",
-      id: "search-empty",
-      children: [{ type: "Text", value: "No documents matched this query.", size: "sm" }],
-    });
-  }
+  const query = typeof args.query === "string" && args.query.trim().length > 0 ? args.query.trim() : undefined;
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <ChatKitWidgetRenderer widgets={widgets} />
+      <section className="flex flex-col gap-7">
+        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Dexter Search</span>
+            {query && <span className="text-sm text-slate-500">Query · {query}</span>}
+            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+          </div>
+          <MetricPill label="Hits" value={`${results.length}`} tone={results.length ? "neutral" : "notice"} />
+        </header>
+
+        <div className="flex flex-col gap-4">
+          {results.map((result, index) => {
+            const title = result.title?.trim() || `Result ${index + 1}`;
+            const snippet = result.snippet?.trim();
+            const url = result.url?.trim();
+
+            return (
+              <article key={result.id ?? url ?? `result-${index}`} className="flex flex-col gap-2 border-b border-slate-200/60 pb-4 last:border-0 last:pb-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-slate-900">{title}</span>
+                  {url && <LinkPill value="Open" href={url} />}
+                </div>
+                {snippet && <p className="text-sm text-slate-600">{snippet}</p>}
+                {!snippet && <p className="text-sm text-slate-500">No excerpt available.</p>}
+              </article>
+            );
+          })}
+
+          {results.length === 0 && <p className="text-sm text-slate-500">No documents matched this query.</p>}
+        </div>
+      </section>
+
       {debug && (
-        <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
-          <summary
-            className="cursor-pointer font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
-            onClick={(event) => {
-              event.preventDefault();
-              onToggle();
-            }}
-          >
-            {isExpanded ? "Hide raw payload" : "Show raw payload"}
+        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+            Raw search payload
           </summary>
-          {isExpanded && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
-              {JSON.stringify(rawOutput, null, 2)}
-            </pre>
-          )}
+          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-xs">
+            {JSON.stringify(normalized, null, 2)}
+          </pre>
         </details>
       )}
     </div>

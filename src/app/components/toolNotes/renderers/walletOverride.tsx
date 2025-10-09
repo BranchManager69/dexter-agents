@@ -1,13 +1,8 @@
-import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
-import {
-  ChatKitWidgetRenderer,
-  type Badge,
-  type Card,
-  type ChatKitWidgetComponent,
-} from "../ChatKitWidgetRenderer";
+import React from "react";
 
-type Alignment = "start" | "center" | "end" | "stretch";
+import type { ToolNoteRenderer } from "./types";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge } from "./helpers";
+import { LinkPill, MetricPill } from "./solanaVisuals";
 
 type OverridePayload = {
   ok?: boolean;
@@ -15,105 +10,58 @@ type OverridePayload = {
   wallet_address?: string;
 };
 
-type OverrideArgs = Record<string, unknown>;
+type OverrideArgs = {
+  wallet_address?: string;
+};
 
-const walletOverrideRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
-  const payload = unwrapStructured(rawOutput) as OverridePayload;
-  const args = (item.data as any)?.arguments as OverrideArgs | undefined;
+const walletOverrideRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
+  const normalized = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+  const payload = unwrapStructured(normalized) as OverridePayload;
+  const args = ((item.data as any)?.arguments ?? {}) as OverrideArgs;
 
   const cleared = Boolean(payload.cleared);
   const ok = Boolean(payload.ok);
-  const walletAddress = payload.wallet_address || (typeof args?.wallet_address === "string" ? args.wallet_address : undefined);
+  const walletAddress = payload.wallet_address ?? args.wallet_address ?? undefined;
 
   const statusLabel = cleared ? "Override cleared" : ok ? "Override active" : "Override failed";
-  const statusColor: Badge["color"] = cleared ? "secondary" : ok ? "success" : "danger";
-
-  const rows: ChatKitWidgetComponent[] = [];
-  if (!cleared && walletAddress) {
-    rows.push({
-      type: "Row",
-      justify: "between",
-      align: "center" as Alignment,
-      children: [
-        { type: "Caption", value: "Override wallet", size: "xs" },
-        {
-          type: "Row",
-          gap: 6,
-          children: [
-            {
-              type: "Button",
-              label: `${walletAddress.slice(0, 4)}…${walletAddress.slice(-4)}`,
-              onClickAction: { type: "copy", payload: { value: walletAddress } },
-              variant: "outline",
-              size: "sm",
-            },
-            {
-              type: "Button",
-              label: "Solscan",
-              onClickAction: { type: "open_url", payload: { url: `https://solscan.io/account/${walletAddress}` } },
-              variant: "outline",
-              size: "sm",
-            },
-          ],
-        },
-      ],
-    });
-  } else if (cleared) {
-    rows.push({ type: "Text", value: "Override removed. Session is back to resolver defaults.", size: "sm" });
-  } else {
-    rows.push({ type: "Text", value: "Override failed.", size: "sm" });
-  }
-
-  const widgets: Card[] = [
-    {
-      type: "Card",
-      id: "wallet-override-header",
-      children: [
-        {
-          type: "Row",
-          justify: "between",
-          align: "center",
-          children: [
-            {
-              type: "Col",
-              gap: 4,
-              children: [
-                { type: "Title", value: "Session Wallet Override", size: "md" },
-                item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
-              ].filter(Boolean) as ChatKitWidgetComponent[],
-            },
-            { type: "Badge", label: statusLabel, color: statusColor, variant: "outline" } as Badge,
-          ],
-        },
-      ],
-    },
-    {
-      type: "Card",
-      id: "wallet-override-body",
-      children: [{ type: "Col", gap: 8, children: rows }],
-    },
-  ];
+  const statusTone: "neutral" | "positive" | "negative" | "notice" = cleared ? "notice" : ok ? "positive" : "negative";
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <ChatKitWidgetRenderer widgets={widgets} />
-      {debug && (
-        <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
-          <summary
-            className="cursor-pointer font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
-            onClick={(event) => {
-              event.preventDefault();
-              onToggle();
-            }}
-          >
-            {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </summary>
-          {isExpanded && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
-              {JSON.stringify(rawOutput, null, 2)}
-            </pre>
+      <section className="flex flex-col gap-7">
+        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Wallet Override</span>
+            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+          </div>
+          <MetricPill label="Status" value={statusLabel} tone={statusTone} />
+        </header>
+
+        <div className="flex flex-col gap-3 text-sm text-slate-600">
+          {walletAddress ? (
+            <>
+              <span className="text-[11px] uppercase tracking-[0.24em] text-slate-300">Override wallet</span>
+              <HashBadge value={walletAddress} href={`https://solscan.io/account/${walletAddress}`} ariaLabel="Override wallet address" />
+              <div className="flex flex-wrap gap-2">
+                <LinkPill value="View on Solscan" href={`https://solscan.io/account/${walletAddress}`} />
+              </div>
+            </>
+          ) : (
+            <span className="text-slate-500">No wallet provided for this override.</span>
           )}
+
+          {cleared && <span className="text-xs uppercase tracking-[0.22em] text-slate-400">Session reverted to resolver defaults.</span>}
+        </div>
+      </section>
+
+      {debug && (
+        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+            Raw override payload
+          </summary>
+          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-xs">
+            {JSON.stringify(normalized, null, 2)}
+          </pre>
         </details>
       )}
     </div>

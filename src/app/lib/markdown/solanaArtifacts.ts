@@ -45,6 +45,10 @@ function createArtifactNode(value: string, artifactType: SolanaArtifactType): Md
     value,
     data: {
       artifactType,
+      hProperties: {
+        value,
+        artifactType,
+      },
     },
   };
 }
