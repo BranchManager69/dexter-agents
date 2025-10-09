@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
-export const BASE_CARD_CLASS = "w-full max-w-xl space-y-4 text-[#FFF6EC]";
-export const SECTION_TITLE_CLASS = "font-display text-sm font-semibold tracking-[0.08em] text-[#F9D9C3]";
+export const BASE_CARD_CLASS = "w-full max-w-2xl space-y-6 text-[#111827]";
+export const SECTION_TITLE_CLASS = "font-display text-sm font-semibold tracking-[0.08em] text-[#4B5563]";
 
 const usdCompactFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
@@ -47,7 +47,8 @@ export function resolveSourceBadge(source: string | null) {
   if (!source) {
     return {
       label: "Unknown source",
-      className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#FFE4CF]",
+      className:
+        "rounded-full border border-[#D1D5DB] bg-white px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#1F2937]",
     };
   }
   const normalized = source.toLowerCase();
@@ -55,39 +56,46 @@ export function resolveSourceBadge(source: string | null) {
     case "resolver":
       return {
         label: "Resolver default",
-        className: "border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-emerald-300",
+        className:
+          "rounded-full border border-[#34D399]/40 bg-[#ECFDF5] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#047857]",
       };
     case "session":
     case "override":
       return {
         label: "Session override",
-        className: "border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-amber-200",
+        className:
+          "rounded-full border border-[#FB923C]/40 bg-[#FFF7ED] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#9A3412]",
       };
     case "primary":
       return {
         label: "Primary wallet",
-        className: "border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-emerald-300",
+        className:
+          "rounded-full border border-[#34D399]/40 bg-[#ECFDF5] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#047857]",
       };
     case "demo":
       return {
         label: "Demo wallet",
-        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#FFE4CF]",
+        className:
+          "rounded-full border border-[#A855F7]/30 bg-[#F5F3FF] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#6D28D9]",
       };
     case "env":
     case "environment":
       return {
         label: "Env fallback",
-        className: "border border-sky-500/30 bg-sky-500/10 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-sky-200",
+        className:
+          "rounded-full border border-[#60A5FA]/40 bg-[#EFF6FF] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#1D4ED8]",
       };
     case "none":
       return {
         label: "No wallet bound",
-        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#F9D9C3]",
+        className:
+          "rounded-full border border-[#D1D5DB] bg-white px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#4B5563]",
       };
     default:
       return {
         label: source,
-        className: "border border-[#F7BE8A]/30 bg-neutral-800/80 px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#FFE4CF]",
+        className:
+          "rounded-full border border-[#D1D5DB] bg-white px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#1F2937]",
       };
   }
 }
@@ -130,6 +138,12 @@ export function formatSolDisplay(value: unknown, { fromLamports = false }: { fro
   return `${formatted} SOL`;
 }
 
+export function formatSolAmount(value: unknown, { fromLamports = false }: { fromLamports?: boolean } = {}) {
+  const display = formatSolDisplay(value, { fromLamports });
+  if (!display) return undefined;
+  return display.replace(/\s*SOL$/i, "");
+}
+
 interface HashBadgeProps {
   value: string;
   href?: string;
@@ -152,18 +166,18 @@ export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
   const display = formatAddress(value, { prefix: 6, suffix: 6 }) ?? value;
 
   return (
-    <div className="flex items-center gap-2 text-xs text-[#FFE4CF]">
+    <div className="flex items-center gap-2 text-xs text-[#4B5563]">
       <button
         type="button"
         onClick={handleCopy}
-        className="font-mono text-sm text-[#FFF6EC] underline decoration-dotted decoration-neutral-500 transition hover:text-flux"
+        className="font-mono text-sm text-[#111827] underline decoration-dotted decoration-neutral-400 transition hover:text-[#0F172A]"
         title={value}
         aria-label={ariaLabel ? `Copy ${ariaLabel}` : "Copy value"}
       >
         {display}
       </button>
       {copied && (
-        <span className="font-display text-[10px] font-semibold tracking-[0.08em] text-flux">Copied</span>
+        <span className="font-display text-[10px] font-semibold tracking-[0.08em] text-[#2563EB]">Copied</span>
       )}
       {href && (
         <a
@@ -171,7 +185,7 @@ export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
           target="_blank"
           rel="noreferrer"
           aria-label={ariaLabel ? `Open ${ariaLabel}` : "Open in new tab"}
-          className="rounded-full border border-[#F7BE8A]/30 px-2 py-[2px] font-display text-[10px] font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:border-flux/50 hover:text-flux"
+          className="rounded-full border border-[#D1D5DB] px-2 py-[2px] font-display text-[10px] font-semibold tracking-[0.08em] text-[#1F2937] transition hover:border-[#9CA3AF] hover:text-[#111827]"
         >
           ↗
         </a>

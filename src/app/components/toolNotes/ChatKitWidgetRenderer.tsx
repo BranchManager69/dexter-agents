@@ -236,17 +236,17 @@ const justifyMap: Record<Justification, React.CSSProperties["justifyContent"]> =
 };
 
 const badgeColorMap: Record<NonNullable<Badge["color"]>, string> = {
-  secondary: "bg-neutral-800/60 text-neutral-200 border-neutral-700",
-  success: "bg-emerald-500/10 text-emerald-200 border-emerald-500/40",
-  danger: "bg-rose-500/10 text-rose-200 border-rose-500/40",
-  warning: "bg-amber-500/10 text-amber-200 border-amber-500/40",
-  info: "bg-sky-500/10 text-sky-200 border-sky-500/40",
-  discovery: "bg-violet-500/10 text-violet-200 border-violet-500/40",
+  secondary: "bg-[#F3F4F6] text-[#1F2937] border-[#E5E7EB]",
+  success: "bg-[#ECFDF3] text-[#047857] border-[#A7F3D0]",
+  danger: "bg-[#FEF2F2] text-[#B91C1C] border-[#FECACA]",
+  warning: "bg-[#FFFBEB] text-[#B45309] border-[#FDE68A]",
+  info: "bg-[#EFF6FF] text-[#1D4ED8] border-[#BFDBFE]",
+  discovery: "bg-[#F5F3FF] text-[#6D28D9] border-[#DDD6FE]",
 };
 
 const badgeVariantMap: Record<NonNullable<Badge["variant"]>, string> = {
-  solid: "",
-  soft: "bg-neutral-800/70",
+  solid: "border-transparent",
+  soft: "",
   outline: "bg-transparent",
 };
 
@@ -310,9 +310,9 @@ function applyBoxStyles(node: {
 
   if (node.border !== undefined) {
     if (typeof node.border === "number") {
-      style.border = `${node.border}px solid rgba(255,255,255,0.08)`;
+      style.border = `${node.border}px solid rgba(17,24,39,0.08)`;
     } else {
-      style.border = `${node.border.size}px ${node.border.style ?? "solid"} ${resolveThemeColor(node.border.color) ?? "rgba(255,255,255,0.12)"}`;
+      style.border = `${node.border.size}px ${node.border.style ?? "solid"} ${resolveThemeColor(node.border.color) ?? "rgba(17,24,39,0.12)"}`;
     }
   }
 
@@ -322,19 +322,18 @@ function applyBoxStyles(node: {
 }
 
 function renderBadge(component: Badge) {
-  const color = component.color ? badgeColorMap[component.color] : "bg-neutral-900/60 text-neutral-200 border-neutral-700";
+  const color = component.color ? badgeColorMap[component.color] : "bg-[#F3F4F6] text-[#1F2937] border-[#E5E7EB]";
   const variant = component.variant ? badgeVariantMap[component.variant] : "";
-  const sizeClass = component.size === "lg" ? "text-sm px-3 py-1.5" : component.size === "sm" ? "text-[10px] px-2 py-[2px]" : "text-xs px-2.5 py-1";
+  const sizeClass =
+    component.size === "lg"
+      ? "text-sm px-3 py-1.5"
+      : component.size === "sm"
+        ? "text-[11px] px-2 py-[3px]"
+        : "text-xs px-2.5 py-1";
   return (
     <span
       key={component.id}
-      className={cx(
-        "inline-flex items-center gap-1 rounded-full border",
-        color,
-        variant,
-        sizeClass,
-        component.pill && "rounded-full"
-      )}
+      className={cx("inline-flex items-center gap-1 rounded-full border border-solid", color, variant, sizeClass, component.pill && "rounded-full")}
     >
       {component.label}
     </span>
@@ -350,7 +349,7 @@ function renderText(component: TextComponent | Caption | Title) {
   if (component.type === "Title") {
     const size = titleSizeMap[component.size ?? "md"];
     return (
-      <h3 key={component.id} className={cx("leading-tight text-[#FFF6EC]", size, weight, align)} style={style}>
+      <h3 key={component.id} className={cx("leading-tight text-[#0F172A]", size, weight, align)} style={style}>
         {component.value}
       </h3>
     );
@@ -359,7 +358,7 @@ function renderText(component: TextComponent | Caption | Title) {
   if (component.type === "Caption") {
     const size = captionSizeMap[component.size ?? "sm"];
     return (
-      <p key={component.id} className={cx("text-[#F9D9C3]", size, weight, align)} style={style}>
+      <p key={component.id} className={cx("text-[#6B7280]", size, weight, align)} style={style}>
         {component.value}
       </p>
     );
@@ -369,7 +368,7 @@ function renderText(component: TextComponent | Caption | Title) {
   return (
     <p
       key={component.id}
-      className={cx("text-[#FFE4CF]", size, weight, align, component.italic && "italic")}
+      className={cx("text-[#1F2937]", size, weight, align, component.italic && "italic")}
       style={style}
     >
       {component.value}
@@ -382,9 +381,11 @@ function renderButton(component: Button) {
   const baseClass = cx(
     "inline-flex items-center justify-center gap-2 rounded-full border px-3 py-1 font-display text-xs font-semibold tracking-[0.08em] transition",
     component.style === "primary"
-      ? "border-flux/60 bg-flux/10 text-flux hover:bg-flux/20"
-      : "border-[#F7BE8A]/30 bg-transparent text-[#FFE4CF] hover:border-flux/40 hover:text-flux",
-    component.variant === "ghost" && "border-transparent bg-transparent",
+      ? "border-transparent bg-[#111827] text-white hover:bg-[#0F172A]"
+      : "border-[#D1D5DB] bg-white text-[#1F2937] hover:border-[#9CA3AF] hover:text-[#0F172A]",
+    component.variant === "ghost" && "border-transparent bg-transparent hover:bg-[#F3F4F6]",
+    component.variant === "outline" && "bg-transparent",
+    component.disabled && "cursor-not-allowed opacity-50",
   );
 
   if (actionHref) {
@@ -428,8 +429,9 @@ function renderImage(component: ImageComponent) {
   );
 
   return (
-    <div key={component.id}
-      className="relative overflow-hidden rounded-lg border border-[#F7BE8A]/18 bg-neutral-900/70"
+    <div
+      key={component.id}
+      className="relative overflow-hidden rounded-lg border border-[#E5E7EB] bg-white shadow-sm"
       style={{ ...style, position: "relative", minHeight: style.height ?? "80px" }}
     >
       {content}
@@ -438,7 +440,7 @@ function renderImage(component: ImageComponent) {
 }
 
 function renderDivider(component: Divider) {
-  const color = resolveThemeColor(component.color) ?? "rgba(255,255,255,0.1)";
+  const color = resolveThemeColor(component.color) ?? "rgba(17,24,39,0.12)";
   const style: React.CSSProperties = {
     borderColor: color,
   };
@@ -492,7 +494,7 @@ function renderComponent(component: WidgetComponent, keyPrefix: string): React.R
       return (
         <div
           key={component.id}
-          className="prose prose-invert max-w-none text-sm"
+          className="prose max-w-none text-sm text-[#1F2937]"
           dangerouslySetInnerHTML={{ __html: component.value }}
         />
       );
@@ -531,24 +533,19 @@ function renderChildren(children: (WidgetComponent | ChatKitWidgetRoot)[], keyPr
 
 function renderCard(card: Card, keyPrefix: string) {
   const style = applyBoxStyles(card);
-  const sizeClass =
+  const spacingClass =
     card.size === "sm"
-      ? "p-3"
-      : card.size === "lg"
-        ? "p-6"
-        : card.size === "full"
-          ? "p-6"
-          : "p-4";
+      ? "gap-3"
+      : card.size === "lg" || card.size === "full"
+        ? "gap-5"
+        : "gap-4";
   return (
     <div
       key={card.id ?? keyPrefix}
-      className={cx(
-        "rounded-2xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 shadow-[0_8px_32px_rgba(14,5,3,0.42)]",
-        sizeClass
-      )}
+      className={cx("flex flex-col", spacingClass)}
       style={style}
     >
-      <div className="flex flex-col gap-3">{renderChildren(card.children, `${keyPrefix}-card`)}</div>
+      {renderChildren(card.children, `${keyPrefix}-card`)}
     </div>
   );
 }
@@ -557,7 +554,7 @@ function renderListView(list: ListView, keyPrefix: string) {
   const limit = typeof list.limit === "number" ? list.limit : undefined;
   const items = limit ? list.children.slice(0, limit) : list.children;
   return (
-    <div key={list.id ?? keyPrefix} className="flex flex-col gap-3">
+    <div key={list.id ?? keyPrefix} className="flex flex-col gap-4">
       {items.map((item, index) => {
         const key = item.id ?? `${keyPrefix}-item-${index}`;
         const style: React.CSSProperties = {};
@@ -569,16 +566,16 @@ function renderListView(list: ListView, keyPrefix: string) {
             {renderChildren(item.children, `${keyPrefix}-item-${index}`)}
           </div>
         );
-        const wrapperClass = "rounded-xl border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3 transition hover:border-flux/40";
+        const interactiveClass = item.onClickAction ? "cursor-pointer transition-colors hover:text-[#0F172A]" : "";
         if (href) {
           return (
-            <a key={key} href={href} target="_blank" rel="noreferrer" className={wrapperClass}>
+            <a key={key} href={href} target="_blank" rel="noreferrer" className={cx("block py-2", interactiveClass)}>
               {body}
             </a>
           );
         }
         return (
-          <div key={key} className={wrapperClass}>
+          <div key={key} className={cx("py-2", interactiveClass)}>
             {body}
           </div>
         );

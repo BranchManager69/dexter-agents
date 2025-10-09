@@ -1,39 +1,43 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import {
-  BASE_CARD_CLASS,
-  normalizeOutput,
-  unwrapStructured,
-  formatSolDisplay,
-  formatUsd,
-} from "./helpers";
-import {
-  ChatKitWidgetRenderer,
-  type Badge,
-  type Button,
-  type Card,
-  type ListView,
-  type ListViewItem,
-  type ChatKitWidgetComponent,
-} from "../ChatKitWidgetRenderer";
-
-type Alignment = "start" | "center" | "end" | "stretch";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatSolDisplay } from "./helpers";
+import { LinkPill, MetricPill, TokenFlow } from "./solanaVisuals";
+import type { TokenSide } from "./solanaVisuals";
 
 type SwapArgs = Record<string, unknown>;
 
-type SwapSummary = {
-  headerCard: Card;
-  infoRows: ChatKitWidgetComponent[];
-  routeSection?: Card | ListView;
-  warningsCard?: Card;
-  raw: any;
+type Metric = {
+  label: string;
+  value: string;
+  tone?: "neutral" | "positive" | "negative" | "notice";
+  href?: string;
+};
+
+type SwapViewModel = {
+  title: string;
+  timestamp?: string;
+  hero: {
+    from: TokenSide;
+    to: TokenSide;
+    priceImpact?: { value: string; tone: "neutral" | "positive" | "negative" };
+  };
+  metrics: Metric[];
+  meta: Metric[];
+  warnings: string[];
+  errorMessage?: string;
+  rawData: any;
 };
 
 const percentFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 2,
   signDisplay: "always",
 });
+
+const WELL_KNOWN_MINTS: Record<string, string> = {
+  USDC11111111111111111111111111111111111111: "USDC",
+  So11111111111111111111111111111111111111112: "SOL",
+};
 
 function formatPercent(value: unknown): string | undefined {
   if (value === null || value === undefined) return undefined;
@@ -51,83 +55,132 @@ function pick<T = unknown>(...candidates: Array<T | null | undefined>): T | unde
   return undefined;
 }
 
-function truncateAddress(address: string, visible = 4) {
-  if (address.length <= visible * 2 + 1) return address;
-  return `${address.slice(0, visible)}…${address.slice(-visible)}`;
+function symbolFromMint(mint?: string): string | undefined {
+  if (!mint) return undefined;
+  const known = WELL_KNOWN_MINTS[mint];
+  if (known) return known;
+  return mint.slice(0, 3).toUpperCase();
 }
 
-function buildBadge(label: string, color: Badge["color"], extra?: Partial<Badge>): Badge {
+function parseAmountDisplay(raw: unknown, fallbackMint?: string): { amount: string; asset?: string } | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const parts = trimmed.split(/\s+/);
+    if (parts.length > 1) {
+      return { amount: parts[0], asset: parts.slice(1).join(" ").toUpperCase() };
+    }
+    return { amount: parts[0], asset: symbolFromMint(fallbackMint) };
+  }
+  if (typeof raw === "number") {
+    const formatted =
+      Math.abs(raw) >= 1
+        ? raw.toLocaleString("en-US", { maximumFractionDigits: 2 })
+        : raw.toLocaleString("en-US", { maximumFractionDigits: 6 });
+    return { amount: formatted, asset: symbolFromMint(fallbackMint) };
+  }
+  return null;
+}
+
+function resolveTokenImage(structured: any, kind: "input" | "output"): string | undefined {
+  if (!structured) return undefined;
+  const lower = kind === "input";
+  const direct = lower
+    ? pick(
+        structured?.inputLogo,
+        structured?.input_logo,
+        structured?.inputIcon,
+        structured?.input_icon,
+        structured?.sourceLogo,
+        structured?.source_icon,
+        structured?.route?.[0]?.icon,
+        structured?.legs?.[0]?.icon
+      )
+    : pick(
+        structured?.outputLogo,
+        structured?.output_logo,
+        structured?.destinationLogo,
+        structured?.destination_icon,
+        structured?.outputIcon,
+        structured?.output_icon,
+        structured?.legs?.[structured?.legs?.length - 1]?.icon,
+        structured?.route?.[structured?.route?.length - 1]?.icon
+      );
+  if (typeof direct === "string" && direct.startsWith("http")) return direct;
+  return undefined;
+}
+
+function toTokenSide(kind: "from" | "to", amountRaw: unknown, amountLamports: unknown, mint: string | undefined, imageUrl?: string): TokenSide {
+  const display =
+    parseAmountDisplay(amountRaw, mint) ??
+    (amountLamports ? parseAmountDisplay(formatSolDisplay(amountLamports, { fromLamports: true }), "So11111111111111111111111111111111111111112") : null);
+  const asset = display?.asset ?? symbolFromMint(mint) ?? "TOKEN";
+  const explorerUrl = mint ? `https://solscan.io/token/${mint}` : undefined;
+
   return {
-    type: "Badge",
-    label,
-    color,
-    variant: "outline",
-    size: "sm",
-    pill: true,
-    ...extra,
+    heading: kind === "from" ? "You give" : "You receive",
+    amount: display?.amount ?? undefined,
+    asset,
+    mintAddress: mint,
+    explorerUrl,
+    imageUrl,
+    accent: kind,
   };
 }
 
-function buildLinkButton(label: string, url: string): Button {
-  return {
-    type: "Button",
-    label,
-    onClickAction: { type: "open_url", payload: { url } },
-    variant: "outline",
-    size: "sm",
-  };
+function buildMetrics(structured: any, variant: "preview" | "execute"): { metrics: Metric[]; meta: Metric[]; priceImpact?: { value: string; tone: "neutral" | "positive" | "negative" } } {
+  const metrics: Metric[] = [];
+  const meta: Metric[] = [];
+
+  const slippage = pick(structured?.slippageBps, structured?.slippage_bps, structured?.slippageBpsPercent);
+  if (slippage !== undefined) {
+    const numeric = typeof slippage === "number" ? slippage : Number(slippage);
+    const percent = Number.isFinite(numeric) ? `${(numeric / 100).toFixed(2)}%` : String(slippage);
+    metrics.push({
+      label: "Slippage",
+      value: percent,
+    });
+  }
+
+  const priceImpactRaw = pick(structured?.priceImpactPercent, structured?.priceImpact, structured?.price_impact_percent, structured?.price_impact);
+  let priceImpact: { value: string; tone: "neutral" | "positive" | "negative" } | undefined;
+  if (priceImpactRaw !== undefined) {
+    const formatted = formatPercent(priceImpactRaw) ?? String(priceImpactRaw);
+    const numeric = typeof priceImpactRaw === "number" ? priceImpactRaw : Number(priceImpactRaw);
+    const tone = Number.isFinite(numeric) ? (numeric >= 0 ? "positive" : "negative") : "neutral";
+    priceImpact = { value: formatted, tone };
+  }
+
+  if (variant === "preview") {
+    const quoteSource = pick(structured?.quoteSource, structured?.provider, structured?.routeSource);
+    if (quoteSource) {
+      meta.push({ label: "Quote", value: String(quoteSource) });
+    }
+    const eta = pick(structured?.estimatedSeconds, structured?.ETASeconds, structured?.eta_seconds);
+    if (eta !== undefined) {
+      const seconds = typeof eta === "number" ? eta : Number(eta);
+      const label = Number.isFinite(seconds) ? `${seconds.toFixed(0)}s` : String(eta);
+      meta.push({ label: "ETA", value: label });
+    }
+  }
+
+  return { metrics, meta, priceImpact };
 }
 
-function buildRow(label: string, children: ChatKitWidgetComponent[]): ChatKitWidgetComponent {
-  return {
-    type: "Row",
-    justify: "between",
-    align: "center" as Alignment,
-    gap: 8,
-    children: [
-      { type: "Caption", value: label, size: "xs" },
-      {
-        type: "Row",
-        gap: 6,
-        wrap: "wrap",
-        align: "center" as Alignment,
-        children,
-      },
-    ],
-  };
+function formatTimestamp(value?: string): string | undefined {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-function asText(value: string, options?: { weight?: "normal" | "medium" | "semibold" | "bold"; size?: "xs" | "sm" | "md" }) {
-  return {
-    type: "Text", value, size: options?.size ?? "sm", weight: options?.weight ?? "normal",
-  } as ChatKitWidgetComponent;
-}
-
-function computeSummary(label: string, item: any, structured: any, args: SwapArgs): SwapSummary {
-  const headerCard: Card = {
-    type: "Card",
-    id: `${label.toLowerCase().replace(/\s+/g, "-")}-header`,
-    children: [
-      {
-        type: "Row",
-        justify: "between",
-        align: "center",
-        children: [
-          {
-            type: "Col",
-            gap: 4,
-            children: [
-              { type: "Title", value: label, size: "md" },
-              item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
-            ].filter(Boolean) as ChatKitWidgetComponent[],
-          },
-        ],
-      },
-    ],
-  };
-
-  const infoRows: ChatKitWidgetComponent[] = [];
-
+function buildSwapViewModel(label: string, item: any, structured: any, args: SwapArgs, variant: "preview" | "execute"): SwapViewModel {
   const fromMint = pick<string>(structured?.inputMint, structured?.sourceMint, args?.from_mint as string, args?.input_mint as string);
   const toMint = pick<string>(structured?.outputMint, structured?.destinationMint, args?.to_mint as string, args?.output_mint as string);
   const amountIn = pick(structured?.inputAmount, structured?.amountIn, args?.amount_in, args?.amountIn);
@@ -135,146 +188,135 @@ function computeSummary(label: string, item: any, structured: any, args: SwapArg
   const amountInLamports = pick(structured?.inputAmountLamports, structured?.amountInLamports, args?.amount_in_lamports);
   const amountOutLamports = pick(structured?.outputAmountLamports, structured?.amountOutLamports, structured?.expected_output_lamports);
 
-  if (fromMint || amountIn || amountInLamports) {
-    const pieces: ChatKitWidgetComponent[] = [];
-    if (amountIn) {
-      pieces.push(asText(String(amountIn), { weight: "semibold" }));
-    } else if (amountInLamports) {
-      const solDisplay = formatSolDisplay(amountInLamports, { fromLamports: true });
-      if (solDisplay) {
-        pieces.push(asText(solDisplay, { weight: "semibold" }));
-      }
+  const heroFrom = toTokenSide("from", amountIn, amountInLamports, fromMint, resolveTokenImage(structured, "input"));
+  const heroTo = toTokenSide("to", amountOut, amountOutLamports, toMint, resolveTokenImage(structured, "output"));
+
+  const { metrics, meta, priceImpact } = buildMetrics(structured, variant);
+
+  if (variant === "execute") {
+    const status = pick<string>(structured?.status);
+    if (status) {
+      const tone: Metric["tone"] =
+        status.toLowerCase() === "confirmed" ? "positive" : status.toLowerCase() === "failed" ? "negative" : "notice";
+      meta.push({ label: "Status", value: status, tone });
     }
-    if (fromMint) {
-      pieces.push(buildLinkButton(truncateAddress(fromMint), `https://solscan.io/token/${fromMint}`));
+    const signature = pick<string>(structured?.signature, structured?.txSignature, structured?.signatureId, structured?.transaction);
+    if (signature) {
+      meta.push({
+        label: "Explorer",
+        value: "View on Solscan",
+        href: `https://solscan.io/tx/${signature}`,
+      });
     }
-    infoRows.push(buildRow("From", pieces));
-  }
-
-  if (toMint || amountOut || amountOutLamports) {
-    const pieces: ChatKitWidgetComponent[] = [];
-    if (amountOut) {
-      pieces.push(asText(String(amountOut), { weight: "semibold" }));
-    } else if (amountOutLamports) {
-      const solDisplay = formatSolDisplay(amountOutLamports, { fromLamports: true });
-      if (solDisplay) {
-        pieces.push(asText(solDisplay, { weight: "semibold" }));
-      }
-    }
-    if (toMint) {
-      pieces.push(buildLinkButton(truncateAddress(toMint), `https://solscan.io/token/${toMint}`));
-    }
-    infoRows.push(buildRow("To", pieces));
-  }
-
-  const usdIn = pick(structured?.inputUsdValue, structured?.usdIn, structured?.usd_in);
-  if (usdIn) {
-    const formatted = formatUsd(usdIn) ?? String(usdIn);
-    infoRows.push(buildRow("Input USD", [asText(formatted, { weight: "semibold" })]));
-  }
-
-  const usdOut = pick(structured?.outputUsdValue, structured?.usdOut, structured?.usd_out);
-  if (usdOut) {
-    const formatted = formatUsd(usdOut) ?? String(usdOut);
-    infoRows.push(buildRow("Output USD", [asText(formatted, { weight: "semibold" })]));
-  }
-
-  const priceImpact = pick(structured?.priceImpactPercent, structured?.priceImpact, structured?.price_impact_percent, structured?.price_impact);
-  if (priceImpact) {
-    const formatted = formatPercent(priceImpact) ?? String(priceImpact);
-    infoRows.push(buildRow("Price impact", [asText(formatted)]));
-  }
-
-  const feeLamports = pick(structured?.feesLamports, structured?.platformFeeLamports, structured?.totalFeesLamports);
-  if (feeLamports) {
-    const formatted = formatSolDisplay(feeLamports, { fromLamports: true }) ?? String(feeLamports);
-    infoRows.push(buildRow("Platform fees", [asText(formatted)]));
-  }
-
-  const slippage = pick(structured?.slippageBps, structured?.slippage_bps, args?.slippage_bps);
-  if (slippage !== undefined) {
-    const bps = typeof slippage === "number" ? slippage : Number(slippage);
-    const percent = Number.isFinite(bps) ? `${(bps / 100).toFixed(2)}%` : String(slippage);
-    infoRows.push(buildRow("Slippage", [asText(percent)]));
-  }
-
-  const route = structured?.route ?? structured?.legs;
-  let routeSection: Card | ListView | undefined;
-  if (Array.isArray(route)) {
-    const listItems: ListViewItem[] = route.map((leg: any, index: number) => {
-      const label = pick<string>(leg?.label, leg?.pool, leg?.dex, `Leg ${index + 1}`) ?? `Leg ${index + 1}`;
-      const provider = pick<string>(leg?.provider, leg?.source);
-      const inMint = pick<string>(leg?.inputMint, leg?.inMint);
-      const outMint = pick<string>(leg?.outputMint, leg?.outMint);
-      const legBadges: Badge[] = [];
-      if (provider) legBadges.push(buildBadge(provider, "secondary"));
-      const mintRowChildren: ChatKitWidgetComponent[] = [];
-      if (inMint) mintRowChildren.push(buildLinkButton(`From ${truncateAddress(inMint)}`, `https://solscan.io/token/${inMint}`));
-      if (outMint) mintRowChildren.push(buildLinkButton(`To ${truncateAddress(outMint)}`, `https://solscan.io/token/${outMint}`));
-      return {
-        type: "ListViewItem",
-        id: leg?.id ?? leg?.pool ?? `leg-${index}`,
-        gap: 6,
-        children: [
-          {
-            type: "Row",
-            justify: "between",
-            align: "center" as Alignment,
-            children: [
-              { type: "Text", value: label, weight: "semibold", size: "sm" },
-              legBadges.length ? { type: "Row", gap: 6, children: legBadges } : undefined,
-            ].filter(Boolean) as ChatKitWidgetComponent[],
-          },
-          mintRowChildren.length
-            ? { type: "Row", gap: 6, wrap: "wrap", children: mintRowChildren }
-            : undefined,
-        ].filter(Boolean) as ChatKitWidgetComponent[],
-      };
-    });
-    routeSection = {
-      type: "ListView",
-      id: "swap-route",
-      children: listItems,
-    };
-  } else if (typeof route === "string") {
-    routeSection = {
-      type: "Card",
-      id: "swap-route-text",
-      children: [
-        { type: "Title", value: "Route", size: "sm" },
-        { type: "Text", value: route, size: "sm" },
-      ],
-    };
   }
 
   const warnings = Array.isArray(structured?.warnings)
     ? structured.warnings.filter((warn: unknown): warn is string => typeof warn === "string" && warn.length > 0)
     : [];
 
-  const warningsCard = warnings.length
-    ? ({
-        type: "Card",
-        id: "swap-warnings",
-        children: [
-          { type: "Title", value: "Warnings", size: "sm" },
-          {
-            type: "Col",
-            gap: 6,
-            children: warnings.map((warn: string) => ({ type: "Text", value: warn, size: "sm" })) as ChatKitWidgetComponent[],
-          },
-        ],
-      } as Card)
-    : undefined;
-
-  const enrichedInfoRows = infoRows.filter(Boolean);
+  const errorMessage = pick<string>(structured?.error, structured?.errorMessage);
 
   return {
-    headerCard,
-    infoRows: enrichedInfoRows,
-    routeSection,
-    warningsCard,
-    raw: structured,
+    title: label,
+    timestamp: formatTimestamp(item.timestamp),
+    hero: {
+      from: heroFrom,
+      to: heroTo,
+      priceImpact,
+    },
+    metrics,
+    meta,
+    warnings,
+    errorMessage,
+    rawData: structured,
   };
+}
+
+function MetricCard({ metric }: { metric: Metric }) {
+  return <MetricPill label={metric.label} value={metric.value} tone={metric.tone ?? "neutral"} />;
+}
+
+function SwapNote({ view, debug, debugLabel }: { view: SwapViewModel; debug?: boolean; debugLabel: string }) {
+  return (
+    <div className={BASE_CARD_CLASS}>
+      <section className="relative flex flex-col gap-8">
+        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">{view.title}</span>
+            {view.timestamp && <span className="text-xs text-slate-400">{view.timestamp}</span>}
+          </div>
+          {view.hero.priceImpact && (
+            <span
+              className={`inline-flex h-8 items-center justify-center rounded-full px-4 text-sm font-semibold ${
+                view.hero.priceImpact.tone === "positive"
+                  ? "bg-emerald-500/10 text-emerald-600"
+                  : view.hero.priceImpact.tone === "negative"
+                    ? "bg-rose-500/10 text-rose-600"
+                    : "bg-slate-900/5 text-slate-700"
+              }`}
+            >
+              {`Price impact ${view.hero.priceImpact.value}`}
+            </span>
+          )}
+        </header>
+
+        <TokenFlow from={view.hero.from} to={view.hero.to} animate />
+
+        {view.metrics.length > 0 && (
+          <div className="relative mt-2 flex flex-wrap gap-3">
+            {view.metrics.map((metric) => (
+              <MetricCard key={`${metric.label}-${metric.value}`} metric={metric} />
+            ))}
+          </div>
+        )}
+
+        {view.meta.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
+            {view.meta.map((meta) =>
+              meta.href ? (
+                <LinkPill key={`${meta.label}-${meta.value}`} value={meta.value} href={meta.href} />
+              ) : (
+                <MetricPill key={`${meta.label}-${meta.value}`} label={meta.label} value={meta.value} tone={meta.tone ?? "neutral"} />
+              )
+            )}
+          </div>
+        )}
+
+        {view.warnings.length > 0 && (
+          <section className="mt-4 flex flex-col gap-2 text-sm text-amber-900">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-amber-600">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-amber-700">!</span>
+              Pay attention
+            </div>
+            <ul className="space-y-2">
+              {view.warnings.map((warn, idx) => (
+                <li key={`${warn}-${idx}`} className="leading-relaxed">
+                  {warn}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {view.errorMessage && (
+          <section className="mt-4 flex flex-col gap-2 text-sm text-rose-600">
+            <div className="text-xs font-semibold uppercase tracking-[0.22em]">Execution error</div>
+            <p className="mt-2 leading-relaxed">{view.errorMessage}</p>
+          </section>
+        )}
+      </section>
+
+      {debug && (
+        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+            {debugLabel}
+          </summary>
+          <pre className="mt-3 max-h-64 overflow-y-auto whitespace-pre-wrap break-words text-xs">{JSON.stringify(view.rawData, null, 2)}</pre>
+        </details>
+      )}
+
+    </div>
+  );
 }
 
 export const solanaSwapPreviewRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
@@ -282,52 +324,9 @@ export const solanaSwapPreviewRenderer: ToolNoteRenderer = ({ item, debug = fals
   const structured = unwrapStructured(rawOutput);
   const args = (item.data as any)?.arguments ?? {};
 
-  const summary = computeSummary("Swap Preview", item, structured, args);
+  const view = buildSwapViewModel("Swap Preview", item, structured, args, "preview");
 
-  const previewRows: ChatKitWidgetComponent[] = [];
-  const quoteSource = pick(structured?.quoteSource, structured?.provider, structured?.routeSource);
-  if (quoteSource) {
-    previewRows.push(buildRow("Quote source", [asText(String(quoteSource))]));
-  }
-  const estimatedTime = pick(structured?.estimatedSeconds, structured?.ETASeconds, structured?.eta_seconds);
-  if (estimatedTime !== undefined) {
-    const seconds = typeof estimatedTime === "number" ? estimatedTime : Number(estimatedTime);
-    const label = Number.isFinite(seconds) ? `${seconds.toFixed(0)}s` : String(estimatedTime);
-    previewRows.push(buildRow("ETA", [asText(label)]));
-  }
-
-  const widgets: Array<Card | ListView> = [summary.headerCard];
-  if (summary.infoRows.length || previewRows.length) {
-    widgets.push({
-      type: "Card",
-      id: "swap-preview-info",
-      children: [
-        {
-          type: "Col",
-          gap: 8,
-          children: [...summary.infoRows, ...previewRows],
-        },
-      ],
-    });
-  }
-  if (summary.routeSection) widgets.push(summary.routeSection);
-  if (summary.warningsCard) widgets.push(summary.warningsCard);
-
-  return (
-    <div className={BASE_CARD_CLASS}>
-      <ChatKitWidgetRenderer widgets={widgets} />
-      {debug && (
-        <details className="mt-4 rounded-md border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3 text-sm text-[#FFEBD7]">
-          <summary className="cursor-pointer font-display text-[10px] font-semibold tracking-[0.08em] text-[#F0BFA1]">
-            Raw preview data
-          </summary>
-          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words text-xs text-[#FFF6EC]">
-            {JSON.stringify(rawOutput, null, 2)}
-          </pre>
-        </details>
-      )}
-    </div>
-  );
+  return <SwapNote view={view} debug={debug} debugLabel="Raw preview data" />;
 };
 
 export const solanaSwapExecuteRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
@@ -335,64 +334,7 @@ export const solanaSwapExecuteRenderer: ToolNoteRenderer = ({ item, debug = fals
   const structured = unwrapStructured(rawOutput);
   const args = (item.data as any)?.arguments ?? {};
 
-  const summary = computeSummary("Swap Execution", item, structured, args);
+  const view = buildSwapViewModel("Swap Execution", item, structured, args, "execute");
 
-  const extraRows: ChatKitWidgetComponent[] = [];
-  const status = pick(structured?.status, rawOutput?.status);
-  if (status) {
-    extraRows.push(buildRow("Status", [asText(String(status), { weight: "semibold" })]));
-  }
-  const slot = pick(structured?.slot, rawOutput?.slot);
-  if (slot !== undefined) {
-    extraRows.push(buildRow("Slot", [asText(String(slot))]));
-  }
-  const signature = pick<string>(structured?.signature, structured?.txSignature, structured?.signatureId, structured?.transaction);
-  if (signature) {
-    extraRows.push(buildRow("Signature", [buildLinkButton(truncateAddress(signature, 6), `https://solscan.io/tx/${signature}`)]));
-  }
-
-  const errorMessage = pick<string>(rawOutput?.errorMessage, rawOutput?.error, structured?.error);
-
-  const widgets: Array<Card | ListView> = [summary.headerCard];
-  if (summary.infoRows.length || extraRows.length) {
-    widgets.push({
-      type: "Card",
-      id: "swap-execution-info",
-      children: [
-        {
-          type: "Col",
-          gap: 8,
-          children: [...summary.infoRows, ...extraRows],
-        },
-      ],
-    });
-  }
-  if (summary.routeSection) widgets.push(summary.routeSection);
-  if (summary.warningsCard) widgets.push(summary.warningsCard);
-  if (errorMessage) {
-    widgets.push({
-      type: "Card",
-      id: "swap-execution-error",
-      children: [
-        { type: "Title", value: "Execution error", size: "sm" },
-        { type: "Text", value: errorMessage, size: "sm" },
-      ],
-    });
-  }
-
-  return (
-    <div className={BASE_CARD_CLASS}>
-      <ChatKitWidgetRenderer widgets={widgets} />
-      {debug && (
-        <details className="mt-4 rounded-md border border-[#F7BE8A]/18 bg-[#1A090D]/70 p-3 text-sm text-[#FFEBD7]">
-          <summary className="cursor-pointer font-display text-[10px] font-semibold tracking-[0.08em] text-[#F0BFA1]">
-            Raw execution data
-          </summary>
-          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words text-xs text-[#FFF6EC]">
-            {JSON.stringify(rawOutput, null, 2)}
-          </pre>
-        </details>
-      )}
-    </div>
-  );
+  return <SwapNote view={view} debug={debug} debugLabel="Raw execution data" />;
 };

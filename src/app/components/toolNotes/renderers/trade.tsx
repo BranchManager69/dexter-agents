@@ -1,19 +1,15 @@
+import React from "react";
+
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatSolDisplay } from "./helpers";
-import {
-  ChatKitWidgetRenderer,
-  type Badge,
-  type Card,
-  type ChatKitWidgetComponent,
-} from "../ChatKitWidgetRenderer";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatSolDisplay, formatSolAmount, HashBadge } from "./helpers";
+import { LinkPill, MetricPill, TokenFlow } from "./solanaVisuals";
+import type { TokenSide } from "./solanaVisuals";
 
-import { formatSolValue } from "@/app/components/solana/SolanaAmount";
-
-type Alignment = "start" | "center" | "end" | "stretch";
+type TradeMode = "buy" | "sell";
 
 type TradeArgs = Record<string, unknown>;
 
-type TradePayload = {
+type TradeStructured = {
   walletAddress?: string;
   signature?: string;
   txSignature?: string;
@@ -28,243 +24,267 @@ type TradePayload = {
   error?: string;
 };
 
-function buildRow(label: string, components: ChatKitWidgetComponent[]): ChatKitWidgetComponent {
+type Metric = {
+  label: string;
+  value: string;
+  tone?: "neutral" | "positive" | "negative" | "notice";
+  href?: string;
+};
+
+type TradeViewModel = {
+  title: string;
+  timestamp?: string;
+  hero: {
+    from: TokenSide;
+    to: TokenSide;
+  };
+  metrics: Metric[];
+  meta: Metric[];
+  walletAddress?: string;
+  walletHref?: string;
+  warnings: string[];
+  errorMessage?: string;
+  rawData: any;
+  requestData?: any;
+};
+
+const WELL_KNOWN_MINTS: Record<string, string> = {
+  USDC11111111111111111111111111111111111111: "USDC",
+  So11111111111111111111111111111111111111112: "SOL",
+};
+
+function symbolFromMint(mint?: string) {
+  if (!mint) return undefined;
+  return WELL_KNOWN_MINTS[mint] ?? mint.slice(0, 3).toUpperCase();
+}
+
+function formatTimestamp(value?: string) {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function buildTokenSide(kind: "from" | "to", opts: { amount?: string | null; symbol?: string | null; mint?: string | null }): TokenSide {
   return {
-    type: "Row",
-    justify: "between",
-    align: "center" as Alignment,
-    children: [
-      { type: "Caption", value: label, size: "xs" },
-      {
-        type: "Row",
-        gap: 6,
-        wrap: "wrap",
-        align: "center" as Alignment,
-        children: components,
-      },
-    ],
+    heading: kind === "from" ? "You spend" : "You receive",
+    amount: opts.amount ?? undefined,
+    asset: opts.symbol ?? undefined,
+    mintAddress: opts.mint ?? undefined,
+    explorerUrl: opts.mint ? `https://solscan.io/token/${opts.mint}` : undefined,
+    accent: kind,
   };
 }
 
-function createTradeRenderer(mode: "buy" | "sell"): ToolNoteRenderer {
-  const heading = mode === "buy" ? "Buy Execution" : "Sell Execution";
-  const badgeColor = mode === "buy" ? "success" : "warning";
-  const badgeLabel = mode === "buy" ? "Buy filled" : "Sell filled";
+function resolveStatusTone(status?: string): Metric["tone"] {
+  if (!status) return "neutral";
+  const normalized = status.toLowerCase();
+  if (normalized === "confirmed" || normalized === "success") return "positive";
+  if (normalized === "failed" || normalized === "error") return "negative";
+  return "notice";
+}
 
-  const TradeRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-    const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
-    const trade = unwrapStructured(rawOutput) as TradePayload;
-    const args = (item.data as any)?.arguments as TradeArgs | undefined;
+function buildTradeView(
+  mode: TradeMode,
+  item: Parameters<ToolNoteRenderer>[0]["item"],
+  structured: TradeStructured,
+  args: TradeArgs,
+): TradeViewModel {
+  const swapLamports = structured.swapLamports ?? structured.swap_lamports;
+  const feeLamports = structured.feeLamports ?? structured.fee_lamports;
+  const signature = structured.signature ?? structured.txSignature;
+  const solscanUrl = structured.solscanUrl || (signature ? `https://solscan.io/tx/${signature}` : undefined);
 
-    const walletAddress = trade.walletAddress || (typeof args?.wallet_address === "string" ? args.wallet_address : undefined);
-    const mint = trade.mint || (typeof args?.mint === "string" ? args.mint : undefined);
-    const signature = trade.signature || trade.txSignature;
-    const solscanUrl = trade.solscanUrl || (signature ? `https://solscan.io/tx/${signature}` : undefined);
+  const walletAddress =
+    structured.walletAddress ??
+    (typeof args.wallet_address === "string" ? args.wallet_address : undefined);
 
-    const spendSolValue = args?.amount_sol ?? args?.amountSol;
-    const spendDisplay = mode === "buy" && spendSolValue !== undefined
-      ? formatSolValue(spendSolValue)
+  const mint = structured.mint ?? (typeof args.mint === "string" ? args.mint : undefined);
+  const tokenSymbol = symbolFromMint(mint);
+
+  const spendFromArgs = typeof args.amount_sol === "number" ? args.amount_sol : typeof args.amount_sol === "string" ? Number(args.amount_sol) : undefined;
+  const spendDisplay = spendFromArgs !== undefined ? formatSolAmount(spendFromArgs) : undefined;
+  const swapDisplay = swapLamports !== undefined ? formatSolAmount(swapLamports, { fromLamports: true }) : undefined;
+  const feeDisplay = feeLamports !== undefined ? formatSolDisplay(feeLamports, { fromLamports: true }) : undefined;
+
+  const percentage = typeof args.percentage === "number" ? `${args.percentage}%` : undefined;
+  const amountRaw = typeof args.amount_raw === "string" ? args.amount_raw : undefined;
+
+  const fromSide: TokenSide =
+    mode === "buy"
+      ? buildTokenSide("from", { amount: spendDisplay ?? swapDisplay ?? undefined, symbol: "SOL" })
+      : buildTokenSide("from", { amount: amountRaw ?? percentage ?? undefined, symbol: tokenSymbol ?? "TOKEN", mint });
+
+  const toSide: TokenSide =
+    mode === "buy"
+      ? buildTokenSide("to", { amount: undefined, symbol: tokenSymbol ?? "TOKEN", mint })
+      : buildTokenSide("to", { amount: swapDisplay, symbol: "SOL" });
+
+  const metrics: Metric[] = [];
+  if (mode === "buy" && (spendDisplay ?? swapDisplay)) {
+    metrics.push({ label: "Spend", value: `${spendDisplay ?? swapDisplay} SOL` });
+  }
+  if (mode === "sell" && swapDisplay) {
+    metrics.push({ label: "Proceeds", value: `${swapDisplay} SOL`, tone: "positive" });
+  }
+  if (feeDisplay) {
+    metrics.push({ label: "Fees", value: feeDisplay });
+  }
+  if (mode === "sell" && percentage) {
+    metrics.push({ label: "Portion", value: percentage });
+  }
+
+  const meta: Metric[] = [];
+  const status = typeof structured.status === "string" ? structured.status : undefined;
+  if (status) {
+    meta.push({ label: "Status", value: status, tone: resolveStatusTone(status) });
+  }
+  if (solscanUrl) {
+    meta.push({ label: "Explorer", value: "View on Solscan", href: solscanUrl });
+  }
+
+  const warnings = Array.isArray(structured?.warnings)
+    ? structured.warnings.filter((warn): warn is string => typeof warn === "string" && warn.length > 0)
+    : [];
+
+  const errorMessage =
+    typeof structured.error === "string"
+      ? structured.error
       : undefined;
 
-    const amountRaw = mode === "sell" && typeof args?.amount_raw === "string" ? args.amount_raw : undefined;
-    const percentage = mode === "sell" && typeof args?.percentage === "number" ? `${args.percentage}%` : undefined;
+  return {
+    title: mode === "buy" ? "Buy Execution" : "Sell Execution",
+    timestamp: formatTimestamp(item.timestamp),
+    hero: {
+      from: fromSide,
+      to: toSide,
+    },
+    metrics,
+    meta,
+    walletAddress,
+    walletHref: walletAddress ? `https://solscan.io/account/${walletAddress}` : undefined,
+    warnings,
+    errorMessage,
+    rawData: structured,
+    requestData: args,
+  };
+}
 
-    const swapLamports = trade.swapLamports ?? trade.swap_lamports;
-    const feeLamports = trade.feeLamports ?? trade.fee_lamports;
+function TradeNote({
+  view,
+  debug,
+}: {
+  view: TradeViewModel;
+  debug?: boolean;
+}) {
+  return (
+    <div className={BASE_CARD_CLASS}>
+      <section className="flex flex-col gap-7">
+        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">{view.title}</span>
+            {view.timestamp && <span className="text-xs text-slate-400">{view.timestamp}</span>}
+          </div>
+        </header>
 
-    const infoRows: ChatKitWidgetComponent[] = [];
+        <TokenFlow from={view.hero.from} to={view.hero.to} />
 
-    if (mint) {
-      infoRows.push(buildRow("Token", [
-        {
-          type: "Button",
-          label: `${mint.slice(0, 4)}…${mint.slice(-4)}`,
-          onClickAction: { type: "open_url", payload: { url: `https://solscan.io/token/${mint}` } },
-          variant: "outline",
-          size: "sm",
-        },
-      ]));
-    }
+        {view.metrics.length > 0 && (
+          <div className="flex flex-wrap gap-3">
+            {view.metrics.map((metric) => (
+              metric.href ? (
+                <LinkPill key={`${metric.label}-${metric.value}`} value={metric.value} href={metric.href} />
+              ) : (
+                <MetricPill key={`${metric.label}-${metric.value}`} label={metric.label} value={metric.value} tone={metric.tone ?? "neutral"} />
+              )
+            ))}
+          </div>
+        )}
 
-    if (walletAddress) {
-      infoRows.push(buildRow("Wallet", [
-        {
-          type: "Button",
-          label: `${walletAddress.slice(0, 4)}…${walletAddress.slice(-4)}`,
-          onClickAction: { type: "open_url", payload: { url: `https://solscan.io/account/${walletAddress}` } },
-          variant: "outline",
-          size: "sm",
-        },
-        {
-          type: "Button",
-          label: "Copy",
-          onClickAction: { type: "copy", payload: { value: walletAddress } },
-          variant: "outline",
-          size: "sm",
-        },
-      ]));
-    }
+        {view.meta.length > 0 && (
+          <div className="flex flex-wrap gap-3 text-sm text-slate-600">
+            {view.meta.map((meta) =>
+              meta.href ? (
+                <LinkPill key={`${meta.label}-${meta.value}`} value={meta.value} href={meta.href} />
+              ) : (
+                <MetricPill key={`${meta.label}-${meta.value}`} label={meta.label} value={meta.value} tone={meta.tone ?? "neutral"} />
+              )
+            )}
+          </div>
+        )}
 
-    if (mode === "buy" && spendDisplay) {
-      infoRows.push(buildRow("Spend", [
-        { type: "Text", value: spendDisplay, weight: "semibold", size: "sm" },
-      ]));
-    }
+        {view.walletAddress && (
+          <div className="flex flex-col gap-2 text-sm text-slate-600">
+            <span className="text-[11px] uppercase tracking-[0.24em] text-slate-300">Wallet</span>
+            <HashBadge value={view.walletAddress} href={view.walletHref} ariaLabel="Wallet address" />
+          </div>
+        )}
 
-    if (mode === "sell" && percentage) {
-      infoRows.push(buildRow("Portion", [{ type: "Text", value: percentage, size: "sm" }]));
-    }
+        {view.warnings.length > 0 && (
+          <section className="flex flex-col gap-2 text-sm text-amber-900">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-amber-600">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-amber-700">!</span>
+              Pay attention
+            </div>
+            <ul className="space-y-2">
+              {view.warnings.map((warn, idx) => (
+                <li key={`${warn}-${idx}`} className="leading-relaxed">
+                  {warn}
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
-    if (mode === "sell" && amountRaw) {
-      infoRows.push(buildRow("Amount (raw)", [{ type: "Text", value: amountRaw, size: "sm" }]));
-    }
+        {view.errorMessage && (
+          <section className="flex flex-col gap-2 text-sm text-rose-600">
+            <div className="text-xs font-semibold uppercase tracking-[0.22em]">Execution error</div>
+            <p className="leading-relaxed">{view.errorMessage}</p>
+          </section>
+        )}
+      </section>
 
-    if (swapLamports !== undefined) {
-      const swapDisplay = formatSolDisplay(swapLamports, { fromLamports: true });
-      if (swapDisplay) {
-        infoRows.push(buildRow(mode === "buy" ? "Swap out" : "Swap in", [{ type: "Text", value: swapDisplay, size: "sm", weight: "semibold" }]));
-      }
-    }
-
-    if (feeLamports !== undefined) {
-      const feeDisplay = formatSolDisplay(feeLamports, { fromLamports: true });
-      if (feeDisplay) {
-        infoRows.push(buildRow("Platform fee", [{ type: "Text", value: feeDisplay, size: "sm" }]));
-      }
-    }
-
-    if (signature) {
-      infoRows.push(buildRow("Signature", [
-        {
-          type: "Button",
-          label: `${signature.slice(0, 6)}…${signature.slice(-6)}`,
-          onClickAction: { type: "copy", payload: { value: signature } },
-          variant: "outline",
-          size: "sm",
-        },
-        solscanUrl
-          ? {
-              type: "Button",
-              label: "Solscan",
-              onClickAction: { type: "open_url", payload: { url: solscanUrl } },
-              variant: "outline",
-              size: "sm",
-            }
-          : undefined,
-      ].filter(Boolean) as ChatKitWidgetComponent[]));
-    }
-
-    const warnings = Array.isArray(trade?.warnings)
-      ? trade.warnings.filter((warn: unknown): warn is string => typeof warn === "string" && warn.length > 0)
-      : [];
-
-    const status = typeof trade?.status === "string" ? trade.status : undefined;
-    const errorMessage = typeof trade?.error === "string" ? trade.error : (typeof rawOutput?.error === "string" ? rawOutput.error : undefined);
-
-    const cards: Card[] = [
-      {
-        type: "Card",
-        id: `${mode}-trade-header`,
-        children: [
-          {
-            type: "Row",
-            justify: "between",
-            align: "center",
-            children: [
-              {
-                type: "Col",
-                gap: 4,
-                children: [
-                  { type: "Title", value: heading, size: "md" },
-                  item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
-                ].filter(Boolean) as ChatKitWidgetComponent[],
-              },
-              { type: "Badge", label: badgeLabel, color: badgeColor, variant: "outline" } as Badge,
-            ],
-          },
-        ],
-      },
-      {
-        type: "Card",
-        id: `${mode}-trade-info`,
-        children: [{ type: "Col", gap: 8, children: infoRows }],
-      },
-    ];
-
-    if (status) {
-      cards.push({
-        type: "Card",
-        id: `${mode}-trade-status`,
-        children: [{ type: "Row", justify: "between", align: "center", children: [
-          { type: "Caption", value: "Status", size: "xs" },
-          { type: "Text", value: status, size: "sm", weight: "semibold" },
-        ] }],
-      });
-    }
-
-    if (warnings.length) {
-      cards.push({
-        type: "Card",
-        id: `${mode}-trade-warnings`,
-        children: [
-          { type: "Title", value: "Warnings", size: "sm" },
-          { type: "Col", gap: 6, children: warnings.map((warn) => ({ type: "Text", value: warn, size: "sm" })) as ChatKitWidgetComponent[] },
-        ],
-      });
-    }
-
-    if (errorMessage) {
-      cards.push({
-        type: "Card",
-        id: `${mode}-trade-error`,
-        children: [
-          { type: "Title", value: "Error", size: "sm" },
-          { type: "Text", value: errorMessage, size: "sm" },
-        ],
-      });
-    }
-
-    const hasRequestArgs = args && typeof args === "object" && Object.keys(args).length > 0;
-    const hasRawDetails = debug && Object.keys(rawOutput || {}).length > 0;
-
-    return (
-      <div className={BASE_CARD_CLASS}>
-        <ChatKitWidgetRenderer widgets={cards} />
-        {(hasRequestArgs || hasRawDetails) && (
-          <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
-            <summary
-              className="cursor-pointer font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
-              onClick={(event) => {
-                event.preventDefault();
-                onToggle();
-              }}
-            >
-              {isExpanded ? "Hide details" : "Show details"}
-            </summary>
-            {isExpanded && (
-              <div className="mt-3 space-y-3 text-[11px] text-[#FFE4CF]">
-                {hasRequestArgs && (
-                  <div>
-                    <div className="font-display text-[10px] font-semibold tracking-[0.08em] text-[#F0BFA1]">Request</div>
-                    <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[#FFF2E2]">
-                      {JSON.stringify(args, null, 2)}
-                    </pre>
-                  </div>
-                )}
-                {hasRawDetails && (
-                  <div>
-                    <div className="font-display text-[10px] font-semibold tracking-[0.08em] text-[#F0BFA1]">Raw response</div>
-                    <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[#FFF2E2]">
-                      {JSON.stringify(rawOutput, null, 2)}
-                    </pre>
-                  </div>
-                )}
+      {debug && (
+        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+            Debug details
+          </summary>
+          <div className="mt-3 space-y-3 text-xs">
+            {view.requestData && Object.keys(view.requestData).length > 0 && (
+              <div>
+                <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Request</div>
+                <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-slate-700">
+                  {JSON.stringify(view.requestData, null, 2)}
+                </pre>
               </div>
             )}
-          </details>
-        )}
-      </div>
-    );
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Response</div>
+              <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-slate-700">
+                {JSON.stringify(view.rawData, null, 2)}
+              </pre>
+            </div>
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function createTradeRenderer(mode: TradeMode): ToolNoteRenderer {
+  const TradeRenderer: ToolNoteRenderer = ({ item, debug }) => {
+    const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+    const structured = unwrapStructured(rawOutput) as TradeStructured;
+    const args = ((item.data as any)?.arguments ?? {}) as TradeArgs;
+
+    const view = buildTradeView(mode, item, structured, args);
+
+    return <TradeNote view={view} debug={debug} />;
   };
 
   (TradeRenderer as ToolNoteRenderer & { displayName?: string }).displayName =
