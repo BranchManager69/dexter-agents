@@ -16,6 +16,11 @@
 - `ops/scripts/apply-nginx-alpha.sh` – example bootstrap for nginx configs; inspect outputs before running in production.
 - **Dexchat harness** – `scripts/dexchat.js` exposes the Playwright driver with CLI flags; `scripts/check-realtime.js` is the legacy wrapper that reads the same parameters from `HARNESS_*` env vars. Both call `scripts/runHarness.js`, so behavior stays identical whether a run is triggered by flags or exported variables. `scripts/run-pumpstream-harness.js` extends the same engine with MCP API checks—use `npm run pumpstream:harness` when you need the dual UI+API scenario. Append `--guest` to either harness when you want to ignore stored auth for the UI; the API leg will still reuse the shared demo bearer (`TOKEN_AI_MCP_TOKEN`).
 
+## UI Guidelines
+- **Tool notes** now share the primitives in `src/app/components/toolNotes/solanaVisuals.tsx`. Prefer those `MetricPill`, `TokenFlow`, and `HashBadge` helpers when adding or modifying renderers to keep spacing consistent.
+- **Web research tools** (`search`, `fetch`) operate on Tavily output. Expect `snippet`, `text`, `favicon`, and `response_time` fields and surface them prominently—avoid the old “document search” copy.
+- Markdown output auto-detects Solana addresses/signatures via the `solanaArtifactsRemarkPlugin`; do not strip base58 values from transcripts, the badge renderer handles them safely.
+
 ## Deployment & Verification
 - PM2 process definitions live in `ops/ecosystem.config.cjs`. After edits, use `pm2 restart <process>` and confirm the change with `npm run smoke:prod`.
 - nginx updates require `sudo nginx -t && sudo systemctl reload nginx`; keep config diffs small and documented.

@@ -121,7 +121,7 @@ function FloatingConnectionStatus({
   heroCollapsed,
 }: FloatingConnectionStatusProps) {
   const [mounted, setMounted] = React.useState(false);
-  const [position, setPosition] = React.useState({ top: 132, right: 20 });
+  const [position, setPosition] = React.useState({ top: 132, left: 24 });
 
   const updatePosition = React.useCallback(() => {
     if (typeof window === "undefined") return;
@@ -130,16 +130,16 @@ function FloatingConnectionStatus({
 
     if (target instanceof HTMLElement) {
       const rect = target.getBoundingClientRect();
-      const nextTop = Math.max(rect.top, 72);
-      const nextRight = Math.max(window.innerWidth - rect.right, 16);
+      const nextTop = Math.max(rect.top + 12, 72);
+      const nextLeft = Math.max(rect.left + 8, 16);
 
       setPosition((prev) => {
         const diffTop = Math.abs(prev.top - nextTop);
-        const diffRight = Math.abs(prev.right - nextRight);
-        if (diffTop < 1 && diffRight < 1) {
+        const diffLeft = Math.abs(prev.left - nextLeft);
+        if (diffTop < 1 && diffLeft < 1) {
           return prev;
         }
-        return { top: nextTop, right: nextRight };
+        return { top: nextTop, left: nextLeft };
       });
     }
   }, []);
@@ -175,7 +175,7 @@ function FloatingConnectionStatus({
   return createPortal(
     <motion.div
       className="pointer-events-none fixed z-40"
-      style={{ top: position.top, right: position.right + 40 }}
+      style={{ top: position.top, left: position.left }}
       initial={{ opacity: 0, y: -10, scale: 0.94 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.35, ease: [0.22, 0.61, 0.36, 1], delay: 0.1 }}
