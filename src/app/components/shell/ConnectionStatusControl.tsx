@@ -5,6 +5,7 @@ interface ConnectionStatusControlProps {
   sessionStatus: SessionStatus;
   onToggleConnection?: () => void;
   className?: string;
+  allowReconnect?: boolean;
 }
 
 function getStatusVisual(sessionStatus: SessionStatus) {
@@ -20,10 +21,11 @@ function getStatusVisual(sessionStatus: SessionStatus) {
   }
 }
 
-function getConnectionLabel(sessionStatus: SessionStatus) {
+function getConnectionLabel(sessionStatus: SessionStatus, allowReconnect: boolean) {
   if (sessionStatus === "CONNECTED") return "Disconnect";
   if (sessionStatus === "CONNECTING") return "Connecting…";
   if (sessionStatus === "ERROR") return "Retry";
+  if (sessionStatus === "DISCONNECTED" && allowReconnect) return "Connect";
   return "";
 }
 
@@ -31,13 +33,14 @@ export function ConnectionStatusControl({
   sessionStatus,
   onToggleConnection,
   className,
+  allowReconnect = false,
 }: ConnectionStatusControlProps) {
   const { label, dotClass, textClass } = getStatusVisual(sessionStatus);
-  const buttonLabel = getConnectionLabel(sessionStatus);
+  const buttonLabel = getConnectionLabel(sessionStatus, allowReconnect);
   const showLabel = buttonLabel.trim().length > 0;
   const buttonAriaLabel = showLabel
     ? buttonLabel
-    : sessionStatus === "DISCONNECTED"
+    : sessionStatus === "DISCONNECTED" && allowReconnect
       ? "Connect"
       : "Connection control";
 

@@ -156,6 +156,7 @@ export interface DexterAppController {
   superAdminModalProps: SuperAdminModalProps;
   personaModalProps: AgentPersonaModalProps;
   vadPanelProps: VadControlPanelProps;
+  hasConnectedOnce: boolean;
 }
 
 import { resolveConciergeProfile, type ResolvedConciergeProfile } from '@/app/agentConfigs/customerServiceRetail/promptProfile';
@@ -1175,6 +1176,7 @@ export function useDexterAppController(): DexterAppController {
 
   const [sessionStatus, setSessionStatus] =
     useState<SessionStatus>("DISCONNECTED");
+  const [hasConnectedOnce, setHasConnectedOnce] = useState<boolean>(false);
   const isAdminSession = useMemo(() => {
     if (sessionIdentity.type !== 'user') {
       return false;
@@ -1429,6 +1431,12 @@ export function useDexterAppController(): DexterAppController {
     }
   }, [isVoiceMuted, vadSettings, sessionStatus]);
 
+  useEffect(() => {
+    if (sessionStatus === "CONNECTED") {
+      setHasConnectedOnce(true);
+    }
+  }, [sessionStatus]);
+
   const fetchEphemeralKey = async (): Promise<string | null> => {
     logClientEvent({ url: "/session" }, "fetch_session_token_request");
     const tokenResponse = await fetch("/api/session", {
@@ -1602,6 +1610,7 @@ export function useDexterAppController(): DexterAppController {
     setSessionStatus("DISCONNECTED");
     if (options?.resetIdentity) {
       resetSessionIdentity();
+      setHasConnectedOnce(false);
     } else {
       void fetchActiveWallet().then((wallet) => {
         syncIdentityToAuthSession(wallet);
@@ -2703,5 +2712,6 @@ export function useDexterAppController(): DexterAppController {
     superAdminModalProps,
     personaModalProps,
     vadPanelProps,
+    hasConnectedOnce,
   };
 }
