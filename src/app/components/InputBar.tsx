@@ -6,7 +6,7 @@ import { motion, type Variants } from "framer-motion";
 import TextInput from "./TextInput";
 import SendButton from "./SendButton";
 
-type ComposerAttachment = {
+export type ComposerAttachment = {
   id: string;
   label: string;
   description?: string;
@@ -19,7 +19,7 @@ interface InputBarProps {
   canSend: boolean;
   attachments?: ComposerAttachment[];
   onRemoveAttachment?: (id: string) => void;
-  onOpenAttachmentPicker?: () => void;
+  onAddAttachments?: (files: File[]) => void;
 }
 
 const trayVariants: Variants = {
@@ -53,9 +53,10 @@ export function InputBar({
   canSend,
   attachments = [],
   onRemoveAttachment,
-  onOpenAttachmentPicker,
+  onAddAttachments,
 }: InputBarProps) {
-  const canSubmit = canSend && userText.trim().length > 0;
+  const fileInputRef = React.useRef<HTMLInputElement | null>(null);
+  const canSubmit = canSend && (userText.trim().length > 0 || attachments.length > 0);
   const [shouldAutoFocus, setShouldAutoFocus] = React.useState(false);
 
   React.useEffect(() => {
@@ -80,6 +81,22 @@ export function InputBar({
   }, [canSend]);
 
   const hasAttachments = attachments.length > 0;
+
+  const handleAttachmentButton = () => {
+    if (!onAddAttachments) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelection = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!onAddAttachments) return;
+    const files = event.target.files ? Array.from(event.target.files) : [];
+    if (files.length > 0) {
+      onAddAttachments(files);
+    }
+    if (event.target) {
+      event.target.value = "";
+    }
+  };
 
   return (
     <motion.div
@@ -116,10 +133,18 @@ export function InputBar({
         ) : null}
 
         <div className="relative flex w-full items-center gap-2 rounded-full border border-neutral-800/40 bg-[rgba(12,8,3,0.72)] px-2 py-1.5 shadow-[0_24px_48px_rgba(9,5,0,0.35)] backdrop-blur-2xl transition focus-within:border-[#F26B1A]/50">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            className="hidden"
+            onChange={handleFileSelection}
+          />
           <button
             type="button"
-            onClick={onOpenAttachmentPicker}
-            disabled={!onOpenAttachmentPicker}
+            onClick={handleAttachmentButton}
+            disabled={!onAddAttachments}
             className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F26B1A]/15 text-[#F26B1A] transition hover:bg-[#F26B1A]/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9CF9D]/70 disabled:cursor-not-allowed disabled:bg-[#F26B1A]/10 disabled:text-[#F26B1A]/50 disabled:opacity-60"
             aria-label="Add attachments"
           >
