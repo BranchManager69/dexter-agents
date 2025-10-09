@@ -24,6 +24,8 @@ export interface ConnectOptions {
   outputGuardrails?: any[];
 }
 
+type RealtimeUserInputPayload = Parameters<RealtimeSession['sendMessage']>[0];
+
 export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
   const sessionRef = useRef<RealtimeSession | null>(null);
   const [status, setStatus] = useState<
@@ -358,12 +360,23 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
   const interrupt = useCallback(() => {
     sessionRef.current?.interrupt();
   }, []);
-  
-  const sendUserText = useCallback((text: string) => {
+
+  const sendUserMessage = useCallback((message: RealtimeUserInputPayload) => {
     assertconnected();
-    historyHandlersRef.current.logOutgoingUserText?.(text);
-    sessionRef.current!.sendMessage(text);
+    if (typeof message === 'string') {
+      historyHandlersRef.current.logOutgoingUserText?.(message);
+    } else if (message && typeof message === 'object' && Array.isArray((message as any).content)) {
+      const textChunk = (message as any).content.find((entry: any) => entry?.type === 'input_text' && typeof entry.text === 'string');
+      if (textChunk?.text) {
+        historyHandlersRef.current.logOutgoingUserText?.(textChunk.text);
+      }
+    }
+    sessionRef.current!.sendMessage(message);
   }, [historyHandlersRef]);
+
+  const sendUserText = useCallback((text: string) => {
+    sendUserMessage(text);
+  }, [sendUserMessage]);
 
   const sendEvent = useCallback((ev: any) => {
     try {
@@ -394,6 +407,7 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
     status,
     connect,
     disconnect,
+    sendUserMessage,
     sendUserText,
     sendEvent,
     mute,

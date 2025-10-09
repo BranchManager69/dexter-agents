@@ -78,6 +78,55 @@ type McpStatusState = {
   minted?: boolean | null;
 };
 
+type ComposerAttachmentState = {
+  id: string;
+  label: string;
+  description?: string;
+  mimeType: string;
+  dataUrl: string;
+  size: number;
+};
+
+const IMAGE_MIME_PATTERN = /^image\//i;
+
+function isSupportedImageFile(file: File) {
+  if (IMAGE_MIME_PATTERN.test(file.type)) return true;
+  const name = file.name || "";
+  const extension = name.includes(".") ? name.split(".").pop()?.toLowerCase() : undefined;
+  if (!extension) return false;
+  return ["png", "jpg", "jpeg", "gif", "webp", "bmp", "heic", "heif", "avif"].includes(extension);
+}
+
+function formatFileSize(bytes: number | null | undefined) {
+  if (typeof bytes !== "number" || !Number.isFinite(bytes) || bytes <= 0) {
+    return undefined;
+  }
+  if (bytes < 1024) return `${bytes} B`;
+  const kb = bytes / 1024;
+  if (kb < 1024) return `${kb.toFixed(kb >= 10 ? 0 : 1)} KB`;
+  const mb = kb / 1024;
+  if (mb < 1024) return `${mb.toFixed(mb >= 10 ? 1 : 2)} MB`;
+  const gb = mb / 1024;
+  return `${gb.toFixed(gb >= 10 ? 1 : 2)} GB`;
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        resolve(reader.result);
+      } else {
+        reject(new Error("Unsupported attachment result"));
+      }
+    };
+    reader.onerror = () => {
+      reject(reader.error ?? new Error("Failed to read attachment"));
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 type TopRibbonProps = ComponentProps<typeof TopRibbonComponent>;
 type BottomStatusRailProps = ComponentProps<typeof BottomStatusRailComponent>;
 type SignalStackComponentProps = ComponentProps<typeof SignalStackComponent>;
@@ -1104,6 +1153,7 @@ export function useDexterAppController(): DexterAppController {
   const {
     connect,
     disconnect,
+    sendUserMessage,
     sendUserText,
     sendEvent,
     interrupt,
@@ -1190,6 +1240,7 @@ export function useDexterAppController(): DexterAppController {
   const [isEventsPaneExpanded, setIsEventsPaneExpanded] =
     useState<boolean>(true);
   const [userText, setUserText] = useState<string>("");
+  const [composerAttachments, setComposerAttachments] = useState<ComposerAttachmentState[]>([]);
   const [vadSettings, setVadSettings] = useState<VadSettings>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -1657,11 +1708,11 @@ export function useDexterAppController(): DexterAppController {
         });
     }
 
-    await new Promise<void>((resolve, reject) => {
-      const timeoutMs = requireUserIdentity ? 15000 : 10000;
-      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  await new Promise<void>((resolve, reject) => {
+    const timeoutMs = requireUserIdentity ? 15000 : 10000;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
-      const entry: McpReadyCallbackEntry = {
+    const entry: McpReadyCallbackEntry = {
         requireUserIdentity,
         resolve: () => {
           if (timeoutId) {
@@ -1690,16 +1741,76 @@ export function useDexterAppController(): DexterAppController {
         }
       }, timeoutMs);
 
-      mcpReadyCallbacksRef.current.push(entry);
+    mcpReadyCallbacksRef.current.push(entry);
+  });
+};
+
+  const handleAddComposerAttachments = useCallback(async (files: File[]) => {
+    if (!files || files.length === 0) return;
+
+    const accepted: File[] = [];
+    const rejected: string[] = [];
+
+    files.forEach((file) => {
+      if (isSupportedImageFile(file)) {
+        accepted.push(file);
+      } else {
+        rejected.push(file.name || file.type || 'Unknown file');
+      }
     });
-  };
+
+    if (rejected.length) {
+      addTranscriptBreadcrumb('Attachment skipped', {
+        reason: 'Only image uploads are supported in realtime chats right now.',
+        files: rejected,
+      });
+    }
+
+    if (!accepted.length) return;
+
+    const results = await Promise.all(
+      accepted.map(async (file) => {
+        try {
+          const dataUrl = await readFileAsDataUrl(file);
+          return {
+            id: uuidv4(),
+            label: file.name?.trim() || 'Image',
+            description: formatFileSize(file.size),
+            mimeType: file.type || 'image/*',
+            dataUrl,
+            size: file.size ?? 0,
+          } satisfies ComposerAttachmentState;
+        } catch (error) {
+          console.error('Failed to read attachment', error);
+          addTranscriptBreadcrumb('Attachment failed', {
+            file: file.name || 'unknown',
+            reason: error instanceof Error ? error.message : 'Unknown read error',
+          });
+          return null;
+        }
+      }),
+    );
+
+    const next = results.filter(Boolean) as ComposerAttachmentState[];
+    if (!next.length) return;
+
+    setComposerAttachments((prev) => [...prev, ...next]);
+  }, [addTranscriptBreadcrumb]);
+
+  const handleRemoveComposerAttachment = useCallback((id: string) => {
+    setComposerAttachments((prev) => prev.filter((attachment) => attachment.id !== id));
+  }, []);
 
   const handleSendTextMessage = async (directMessage?: string) => {
     // Use provided message or fall back to state
-    const messageToSend = (directMessage || userText).trim();
-    if (!messageToSend) return;
+    const rawMessage = directMessage ?? userText;
+    const messageToSend = rawMessage.trim();
+    const hasAttachments = composerAttachments.length > 0;
+    if (!messageToSend && !hasAttachments) return;
 
-    setUserText("");
+    if (directMessage === undefined) {
+      setUserText("");
+    }
 
     // If not connected, connect first
     if (sessionStatus !== 'CONNECTED') {
@@ -1707,7 +1818,9 @@ export function useDexterAppController(): DexterAppController {
         await connectToRealtime();
       } catch (err) {
         console.error('Failed to connect', err);
-        setUserText(messageToSend);
+        if (directMessage === undefined) {
+          setUserText(rawMessage);
+        }
         return;
       }
     }
@@ -1724,7 +1837,9 @@ export function useDexterAppController(): DexterAppController {
           guidance: 'Sign out/in or run the Supabase refresh helper to restore your session.',
         },
       );
-      setUserText(messageToSend);
+      if (directMessage === undefined) {
+        setUserText(rawMessage);
+      }
       return;
     }
 
@@ -1732,9 +1847,47 @@ export function useDexterAppController(): DexterAppController {
     setHasActivatedSession(true);
 
     try {
-      sendUserText(messageToSend);
+      if (hasAttachments) {
+        const content: Array<
+          | { type: 'input_text'; text: string }
+          | { type: 'input_image'; image: string; providerData?: Record<string, any> }
+        > = [];
+
+        if (messageToSend.length > 0) {
+          content.push({ type: 'input_text', text: messageToSend });
+        }
+
+        composerAttachments.forEach((attachment) => {
+          content.push({
+            type: 'input_image',
+            image: attachment.dataUrl,
+            providerData: {
+              filename: attachment.label,
+              mimeType: attachment.mimeType,
+              size: attachment.size,
+            },
+          });
+        });
+
+        if (!content.length) {
+          throw new Error('Attachment payload missing content');
+        }
+
+        sendUserMessage({
+          type: 'message',
+          role: 'user',
+          content,
+        });
+        setComposerAttachments([]);
+      } else {
+        sendUserText(messageToSend);
+      }
     } catch (err) {
       console.error('Failed to send via SDK', err);
+      if (directMessage === undefined) {
+        setUserText(rawMessage);
+      }
+      return;
     }
   };
 
@@ -2197,6 +2350,16 @@ export function useDexterAppController(): DexterAppController {
   ].join(" ");
   const heroControlsClassName = heroCollapsed ? "mt-0 lg:mt-0" : "mt-5";
 
+  const composerAttachmentDisplay = useMemo(
+    () =>
+      composerAttachments.map(({ id, label, description }) => ({
+        id,
+        label,
+        description,
+      })),
+    [composerAttachments],
+  );
+
   const [timeOfDaySlot, setTimeOfDaySlot] = useState<'morning' | 'afternoon' | 'evening' | 'night'>('morning');
 
   useEffect(() => {
@@ -2385,6 +2548,9 @@ export function useDexterAppController(): DexterAppController {
       void handleSendTextMessage();
     },
     canSend: sessionStatus !== 'CONNECTING',
+    attachments: composerAttachmentDisplay,
+    onRemoveAttachment: handleRemoveComposerAttachment,
+    onAddAttachments: handleAddComposerAttachments,
   };
 
   const signalStackProps: SignalStackLayoutProps = {
@@ -2404,6 +2570,7 @@ export function useDexterAppController(): DexterAppController {
       isOpen: isVadPanelOpen,
       onToggle: () => setIsVadPanelOpen((prev) => !prev),
     },
+    canUseSignals: canUseAdminTools,
   };
 
   const signalsDrawerProps: SignalsDrawerShellProps = {
