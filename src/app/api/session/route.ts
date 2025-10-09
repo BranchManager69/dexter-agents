@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { MODEL_IDS } from "../../config/models";
 import { getDexterApiRoute } from "../../config/env";
+import { resolveConciergeProfile } from "@/app/agentConfigs/customerServiceRetail/promptProfile";
 
 type Database = any;
 
@@ -10,6 +11,24 @@ const ALLOW_GUEST_SESSIONS =
   process.env.NEXT_PUBLIC_ALLOW_GUEST_SESSIONS === "false" ? false : true;
 
 export const dynamic = 'force-dynamic';
+
+let cachedGuestInstructions: { value: string; expiresAt: number } | null = null;
+
+async function getGuestInstructions(): Promise<string> {
+  const now = Date.now();
+  if (cachedGuestInstructions && cachedGuestInstructions.expiresAt > now) {
+    return cachedGuestInstructions.value;
+  }
+
+  const profile = await resolveConciergeProfile();
+  const instructions = profile?.guestInstructions?.trim();
+  if (!instructions) {
+    throw new Error("guestInstructions missing from concierge profile");
+  }
+
+  cachedGuestInstructions = { value: instructions, expiresAt: now + 60_000 };
+  return instructions;
+}
 
 export async function GET(request: Request) {
   try {
@@ -48,10 +67,10 @@ export async function GET(request: Request) {
     } else if (bearerToken) {
       payload.supabaseAccessToken = bearerToken;
     } else {
+      const guestInstructions = await getGuestInstructions();
       payload.guestProfile = {
         label: "Dexter Demo Wallet",
-        instructions:
-          "Operate only in read-only or low-risk flows and encourage the user to sign in for persistent, personalized sessions.",
+        instructions: guestInstructions,
       };
     }
 
