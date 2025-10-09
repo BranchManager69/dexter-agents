@@ -1,19 +1,8 @@
-import type { ToolNoteRenderer } from "./types";
-import {
-  BASE_CARD_CLASS,
-  normalizeOutput,
-  unwrapStructured,
-} from "./helpers";
-import {
-  ChatKitWidgetRenderer,
-  type Badge,
-  type Button,
-  type Card,
-  type ListView,
-  type ListViewItem,
-} from "../ChatKitWidgetRenderer";
+import React from "react";
 
-type Alignment = "start" | "center" | "end" | "stretch";
+import type { ToolNoteRenderer } from "./types";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge } from "./helpers";
+import { LinkPill, MetricPill, TokenIcon } from "./solanaVisuals";
 
 type BalanceEntry = {
   mint?: string;
@@ -26,12 +15,30 @@ type BalanceEntry = {
   logo?: string;
 };
 
-const percentFormatter = new Intl.NumberFormat("en-US", {
-  maximumFractionDigits: 2,
-  signDisplay: "always",
-});
+type BalancesPayload = {
+  balances?: BalanceEntry[];
+};
 
-function pickNumber(...values: unknown[]): number | undefined {
+const WELL_KNOWN_MINTS: Record<string, string> = {
+  USDC11111111111111111111111111111111111111: "USDC",
+  So11111111111111111111111111111111111111112: "SOL",
+};
+
+function pick<T>(...values: Array<T | null | undefined>): T | undefined {
+  for (const value of values) {
+    if (value !== null && value !== undefined) return value;
+  }
+  return undefined;
+}
+
+function pickString(...values: Array<string | null | undefined>) {
+  return pick(...values.map((value) => {
+    if (typeof value === "string" && value.trim().length > 0) return value.trim();
+    return undefined;
+  }));
+}
+
+function pickNumber(...values: Array<number | string | null | undefined>) {
   for (const value of values) {
     if (typeof value === "number" && Number.isFinite(value)) return value;
     if (typeof value === "string") {
@@ -42,18 +49,15 @@ function pickNumber(...values: unknown[]): number | undefined {
   return undefined;
 }
 
-function pickString(...values: unknown[]): string | undefined {
-  for (const value of values) {
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value.trim();
-    }
-  }
-  return undefined;
+function symbolFromMint(mint?: string) {
+  if (!mint) return undefined;
+  return WELL_KNOWN_MINTS[mint] ?? mint.slice(0, 3).toUpperCase();
 }
 
-function truncateAddress(address: string, visible = 4) {
-  if (address.length <= visible * 2 + 1) return address;
-  return `${address.slice(0, visible)}…${address.slice(-visible)}`;
+function formatAmount(amount?: number, decimals?: number) {
+  if (amount === undefined) return undefined;
+  const maxDigits = decimals && decimals > 4 ? 4 : decimals ?? 6;
+  return amount.toLocaleString("en-US", { maximumFractionDigits: maxDigits });
 }
 
 function formatUsd(value: unknown, precise = false) {
@@ -66,211 +70,123 @@ function formatUsd(value: unknown, precise = false) {
   }).format(numeric);
 }
 
-function formatPercent(value: unknown) {
-  const numeric = pickNumber(value);
-  if (numeric === undefined) return undefined;
-  return `${percentFormatter.format(numeric)}%`;
-}
-
-function buildLinkButton(label: string, url: string): Button {
-  return {
-    type: "Button",
-    label,
-    onClickAction: { type: "open_url", payload: { url } },
-    variant: "outline",
-    size: "sm",
-  };
-}
-
-function buildBadge(label: string, color: Badge["color"]): Badge {
-  return {
-    type: "Badge",
-    label,
-    color,
-    variant: "outline",
-    size: "sm",
-    pill: true,
-  };
-}
-
-const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
+const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug = false }) => {
   const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
-  const payload = unwrapStructured(rawOutput);
-
-  const balances: BalanceEntry[] = Array.isArray((payload as any)?.balances)
-    ? (payload as any).balances
+  const payload = unwrapStructured(rawOutput) as BalancesPayload | BalanceEntry[];
+  const balances: BalanceEntry[] = Array.isArray((payload as BalancesPayload)?.balances)
+    ? ((payload as BalancesPayload).balances as BalanceEntry[])
     : Array.isArray(payload)
-      ? payload
+      ? (payload as BalanceEntry[])
       : [];
 
-  const listItems: ListViewItem[] = balances
-    .slice(0, isExpanded ? balances.length : 6)
-    .map((entry, index): ListViewItem => {
-      const mint = pickString(entry?.mint);
-      const ata = pickString(entry?.ata);
-      const tokenMeta = entry?.token && typeof entry.token === "object" ? entry.token : undefined;
-      const symbol = pickString(tokenMeta?.symbol) ?? (mint ? truncateAddress(mint, 3) : `Token ${index + 1}`);
-      const name = pickString(tokenMeta?.name);
-      const iconUrl = pickString(
-        tokenMeta?.imageUrl,
-        tokenMeta?.openGraphImageUrl,
-        tokenMeta?.headerImageUrl,
-        entry?.icon,
-        entry?.logo,
-      );
-
-      const amountUi = pickNumber(entry?.amountUi, entry?.amount_ui);
-      const decimals = typeof entry?.decimals === "number" ? entry.decimals : undefined;
-      const amountDisplay = amountUi !== undefined
-        ? amountUi.toLocaleString("en-US", {
-            maximumFractionDigits: decimals && decimals > 4 ? 4 : decimals ?? 6,
-          })
-        : undefined;
-
-      const price = formatUsd(tokenMeta?.priceUsd ?? tokenMeta?.price_usd, true);
-      const marketCap = formatUsd(
-        tokenMeta?.marketCap ?? tokenMeta?.market_cap ?? tokenMeta?.marketCapUsd ?? tokenMeta?.market_cap_usd,
-      );
-      const priceChange = formatPercent(tokenMeta?.priceChange24h ?? tokenMeta?.price_change_24h);
-      const priceColor = tokenMeta?.priceChange24h !== undefined && Number(tokenMeta.priceChange24h) < 0
-        ? "danger"
-        : "success";
-
-      const badges: (Badge | Button)[] = [];
-      if (price) badges.push(buildBadge(`Price ${price}`, "info"));
-      if (marketCap) badges.push(buildBadge(`MCap ${marketCap}`, "secondary"));
-      if (priceChange) badges.push(buildBadge(`24h ${priceChange}`, priceColor));
-
-      const linkBadges: Button[] = [];
-      if (mint) linkBadges.push(buildLinkButton(truncateAddress(mint), `https://solscan.io/token/${mint}`));
-      if (ata) linkBadges.push(buildLinkButton(truncateAddress(ata), `https://solscan.io/account/${ata}`));
-
-      return {
-        type: "ListViewItem",
-        id: mint ?? ata ?? `balance-${index}`,
-        gap: 10,
-        children: [
-          {
-            type: "Row",
-            gap: 12,
-            align: "center" as Alignment,
-            children: [
-              iconUrl
-                ? {
-                    type: "Image",
-                    src: iconUrl,
-                    alt: symbol,
-                    width: 48,
-                    height: 48,
-                    radius: "50%",
-                  }
-                : {
-                    type: "Box",
-                    align: "center" as Alignment,
-                    justify: "center",
-                    background: "rgba(255,255,255,0.04)",
-                    width: 48,
-                    height: 48,
-                    radius: "50%",
-                    children: [{ type: "Text", value: symbol.slice(0, 2), size: "sm", weight: "semibold" }],
-                  },
-              {
-                type: "Col",
-                gap: 6,
-                children: [
-                  {
-                    type: "Row",
-                    justify: "between",
-                    align: "center" as Alignment,
-                    children: [
-                      {
-                        type: "Col",
-                        gap: 2,
-                        children: [
-                          { type: "Text", value: symbol, weight: "semibold" },
-                          name ? { type: "Caption", value: name, size: "xs" } : undefined,
-                        ].filter(Boolean) as any,
-                      },
-                      amountDisplay ? { type: "Text", value: amountDisplay, size: "sm", weight: "semibold" } : undefined,
-                    ].filter(Boolean) as any,
-                  },
-                  badges.length
-                    ? { type: "Row", gap: 6, wrap: "wrap", children: badges }
-                    : undefined,
-                  linkBadges.length
-                    ? { type: "Row", gap: 6, wrap: "wrap", children: linkBadges }
-                    : undefined,
-                ].filter(Boolean) as any,
-              },
-            ].filter(Boolean) as any,
-          },
-        ],
-      };
-    });
-
-  const headerCard: Card = {
-    type: "Card",
-    id: "balances-header",
-    children: [
-      {
-        type: "Row",
-        justify: "between",
-        align: "center",
-        children: [
-          {
-            type: "Col",
-            gap: 4,
-            children: [
-              { type: "Title", value: "Token Balances", size: "md" },
-              item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
-            ].filter(Boolean) as any,
-          },
-          balances.length
-            ? buildBadge(`${balances.length} token${balances.length === 1 ? "" : "s"}`, "info")
-            : undefined,
-        ].filter(Boolean) as any,
-      },
-    ],
-  };
-
-  const listView: ListView = {
-    type: "ListView",
-    id: "balances-list",
-    children: listItems,
-  };
-
-  const widgetPayload = [headerCard, listView];
+  const visibleBalances = isExpanded ? balances : balances.slice(0, 6);
+  const hasMore = balances.length > visibleBalances.length;
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <ChatKitWidgetRenderer widgets={widgetPayload} />
-      {balances.length > 6 && (
-        <div className="mt-4">
+      <section className="flex flex-col gap-7">
+        <header className="flex flex-col gap-1">
+          <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token Balances</span>
+          <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+        </header>
+
+        <div className="flex flex-col gap-4">
+          {visibleBalances.map((entry, index) => {
+            const mint = pickString(entry.mint);
+            const ata = pickString(entry.ata);
+            const tokenMeta = entry.token && typeof entry.token === "object" ? entry.token : undefined;
+            const symbol =
+              pickString((tokenMeta as any)?.symbol) ??
+              symbolFromMint(mint ?? undefined) ??
+              (mint ? `${mint.slice(0, 4)}…` : `Token ${index + 1}`);
+            const name = pickString((tokenMeta as any)?.name);
+            const iconUrl = pickString(
+              (tokenMeta as any)?.imageUrl,
+              (tokenMeta as any)?.openGraphImageUrl,
+              (tokenMeta as any)?.headerImageUrl,
+              entry.icon,
+              entry.logo,
+            );
+
+            const amountUi = pickNumber(entry.amountUi, entry.amount_ui);
+            const amountDisplay = formatAmount(amountUi, entry.decimals);
+            const price = formatUsd(pickNumber((tokenMeta as any)?.priceUsd, (tokenMeta as any)?.price_usd), true);
+            const marketCap = formatUsd(
+              pickNumber(
+                (tokenMeta as any)?.marketCap,
+                (tokenMeta as any)?.market_cap,
+                (tokenMeta as any)?.marketCapUsd,
+                (tokenMeta as any)?.market_cap_usd,
+              ),
+              false,
+            );
+            const priceChangeRaw = pickNumber(
+              (tokenMeta as any)?.priceChange24h,
+              (tokenMeta as any)?.price_change_24h,
+            );
+            const priceChange =
+              priceChangeRaw !== undefined
+                ? `${priceChangeRaw >= 0 ? "+" : ""}${priceChangeRaw.toFixed(2)}%`
+                : undefined;
+
+            return (
+              <article key={mint ?? ata ?? `balance-${index}`} className="flex flex-col gap-3 border-b border-slate-200/60 pb-4 last:border-0 last:pb-0">
+                <div className="flex items-start gap-3">
+                  <TokenIcon label={symbol} imageUrl={iconUrl} size={48} />
+                  <div className="flex flex-1 flex-col gap-1">
+                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                      <div className="flex flex-col">
+                        <span className="text-base font-semibold text-slate-900">{symbol}</span>
+                        {name && <span className="text-xs text-slate-500">{name}</span>}
+                      </div>
+                      {amountDisplay && (
+                        <span className="text-sm font-semibold text-slate-900">{amountDisplay}</span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                      {mint && <HashBadge value={mint} href={`https://solscan.io/token/${mint}`} ariaLabel={`${symbol} mint`} />}
+                      {ata && <HashBadge value={ata} href={`https://solscan.io/account/${ata}`} ariaLabel={`${symbol} associated token account`} />}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-3">
+                  {price && <MetricPill label="Price" value={price} />}
+                  {marketCap && <MetricPill label="MCap" value={marketCap} />}
+                  {priceChange && (
+                    <MetricPill
+                      label="24h"
+                      value={priceChange}
+                      tone={priceChangeRaw !== undefined && priceChangeRaw < 0 ? "negative" : "positive"}
+                    />
+                  )}
+                  {mint && <LinkPill value="View on Solscan" href={`https://solscan.io/token/${mint}`} />}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        {hasMore && (
           <button
             type="button"
             onClick={onToggle}
-            className="font-display text-xs font-semibold tracking-[0.08em] text-flux transition hover:text-flux/80"
+            className="self-start rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 transition hover:border-slate-300 hover:text-slate-900"
           >
-            {isExpanded ? "Hide extra balances" : `Show ${balances.length - 6} more`}
+            {isExpanded ? "Collapse" : `Show all ${balances.length}`}
           </button>
-        </div>
-      )}
+        )}
+      </section>
 
       {debug && (
-        <div className="mt-4 border-t border-[#F7BE8A]/22 pt-3">
-          <button
-            type="button"
-            onClick={onToggle}
-            className="font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
-          >
-            {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </button>
-          {isExpanded && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
-              {JSON.stringify(rawOutput, null, 2)}
-            </pre>
-          )}
-        </div>
+        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+            Raw balances payload
+          </summary>
+          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-xs">
+            {JSON.stringify(rawOutput, null, 2)}
+          </pre>
+        </details>
       )}
     </div>
   );
