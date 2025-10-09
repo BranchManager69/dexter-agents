@@ -76,6 +76,12 @@ Add the beta surface to the Supabase project so magic links return to the correc
 - `AGENTS.md` – contributor guidelines covering style, testing, and PR expectations.
 - `docs/realtime-session-flow.md` – detailed handshake diagram and guest/user session notes.
 
+## Tool Note Renderers
+- **Shared primitives** – `src/app/components/toolNotes/solanaVisuals.tsx` exports the icon, metric pill, and token flow components used across every renderer (not only Solana tools). Reach for these instead of re-creating bespoke badge layouts.
+- **Search & fetch** – the `search` and `fetch` notes now consume Tavily responses (web search + extraction). Results include structured snippets, favicons, and the source domain; the cards render as single-line links so users can click anywhere to open the page.
+- **Wallet & pumpstream** – wallet notes show copyable `HashBadge`s for mints/accounts, while the pumpstream renderer collapses market cap + momentum into one compact row and links the preview card directly to the stream.
+- **Solana artifacts in markdown** – addresses and signatures inside agent transcripts are replaced with clickable badges via the `solanaArtifactsRemarkPlugin`. When editing markdown-rendered output, leave the base58 strings intact—the plugin handles classification automatically.
+
 ## Agent Scenarios
 - **chatSupervisor** – realtime agent greets and triages while a supervisor model executes complex tool calls.
 - **customerServiceRetail** – sequential handoff flow moving between authentication, returns, sales, and human SIM.
