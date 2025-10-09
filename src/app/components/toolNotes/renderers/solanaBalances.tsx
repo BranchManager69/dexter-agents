@@ -60,7 +60,7 @@ function formatAmount(amount?: number, decimals?: number) {
   return amount.toLocaleString("en-US", { maximumFractionDigits: maxDigits });
 }
 
-function formatUsd(value: unknown, precise = false) {
+function formatUsd(value?: number | string | null, precise = false) {
   const numeric = pickNumber(value);
   if (numeric === undefined) return undefined;
   return new Intl.NumberFormat("en-US", {

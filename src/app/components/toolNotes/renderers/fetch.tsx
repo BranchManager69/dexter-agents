@@ -1,10 +1,8 @@
+import React from "react";
+
 import type { ToolNoteRenderer } from "./types";
 import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
-import {
-  ChatKitWidgetRenderer,
-  type Card,
-  type ChatKitWidgetComponent,
-} from "../ChatKitWidgetRenderer";
+import { LinkPill } from "./solanaVisuals";
 
 type DocumentPayload = {
   title?: string;
@@ -12,83 +10,54 @@ type DocumentPayload = {
   text?: string;
 };
 
-const fetchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug }) => {
-  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
-  const doc = unwrapStructured(rawOutput) as DocumentPayload;
+const fetchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
+  const normalized = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+  const doc = unwrapStructured(normalized) as DocumentPayload;
 
   const title = doc.title?.trim() || "Document";
   const url = doc.url?.trim();
   const text = doc.text ?? "";
-  const excerpt = text
+  const paragraphs = text
     ? text
         .split(/\n+/)
+        .map((paragraph) => paragraph.trim())
         .filter(Boolean)
-        .slice(0, 3)
-        .join("\n")
-    : null;
-
-  const rows: ChatKitWidgetComponent[] = [
-    { type: "Text", value: title, size: "sm", weight: "semibold" },
-    excerpt ? { type: "Text", value: excerpt, size: "sm" } : { type: "Text", value: "No preview text available.", size: "sm" },
-  ];
-
-  const widgets: Card[] = [
-    {
-      type: "Card",
-      id: "fetch-header",
-      children: [
-        {
-          type: "Row",
-          justify: "between",
-          align: "center",
-          children: [
-            {
-              type: "Col",
-              gap: 4,
-              children: [
-                { type: "Title", value: "Dexter Document", size: "md" },
-                item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
-              ].filter(Boolean) as ChatKitWidgetComponent[],
-            },
-            url
-              ? {
-                  type: "Button",
-                  label: "Open",
-                  onClickAction: { type: "open_url", payload: { url } },
-                  variant: "outline",
-                  size: "sm",
-                }
-              : undefined,
-          ].filter(Boolean) as ChatKitWidgetComponent[],
-        },
-      ],
-    },
-    {
-      type: "Card",
-      id: "fetch-body",
-      children: [{ type: "Col", gap: 8, children: rows }],
-    },
-  ];
+    : [];
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <ChatKitWidgetRenderer widgets={widgets} />
-      {debug && (
-        <details className="mt-4 border-t border-[#F7BE8A]/22 pt-3" open={isExpanded}>
-          <summary
-            className="cursor-pointer font-display text-xs font-semibold tracking-[0.08em] text-[#F9D9C3] transition hover:text-[#FFF2E2]"
-            onClick={(event) => {
-              event.preventDefault();
-              onToggle();
-            }}
-          >
-            {isExpanded ? "Hide raw payload" : "Show raw payload"}
-          </summary>
-          {isExpanded && (
-            <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-[#F7BE8A]/24 bg-[#16070C]/85 p-3 text-[11px] text-[#FFF2E2]">
-              {text || JSON.stringify(rawOutput, null, 2)}
-            </pre>
+      <section className="flex flex-col gap-6">
+        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Fetched document</span>
+            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+          </div>
+          {url && <LinkPill value="Open" href={url} />}
+        </header>
+
+        <article className="flex flex-col gap-3">
+          <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+          {paragraphs.length > 0 ? (
+            <div className="space-y-3 text-sm text-slate-600">
+              {paragraphs.slice(0, 3).map((paragraph, index) => (
+                <p key={index}>{paragraph}</p>
+              ))}
+              {paragraphs.length > 3 && <p className="text-xs uppercase tracking-[0.22em] text-slate-400">Excerpt truncated</p>}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">No preview text available.</p>
           )}
+        </article>
+      </section>
+
+      {debug && (
+        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
+          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
+            Raw fetch payload
+          </summary>
+          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-xs">
+            {text || JSON.stringify(normalized, null, 2)}
+          </pre>
         </details>
       )}
     </div>

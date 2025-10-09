@@ -75,7 +75,7 @@ function pickNumber(...values: Array<number | string | null | undefined>) {
   return undefined;
 }
 
-function formatUsd(value: unknown, precise = false) {
+function formatUsd(value?: number | string | null, precise = false) {
   const numeric = pickNumber(value);
   if (numeric === undefined) return undefined;
   return new Intl.NumberFormat("en-US", {
@@ -85,7 +85,7 @@ function formatUsd(value: unknown, precise = false) {
   }).format(numeric);
 }
 
-function formatPercent(value: unknown) {
+function formatPercent(value?: number | string | null) {
   const numeric = pickNumber(value);
   if (numeric === undefined) return undefined;
   return `${numeric >= 0 ? "+" : ""}${numeric.toFixed(2)}%`;
@@ -131,22 +131,24 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
               token.image,
             );
 
-            const price = formatUsd(pickNumber(token.priceUsd, token.price_usd), true);
-            const liquidity = formatUsd(pickNumber(token.liquidityUsd, token.liquidity_usd, token.liquidity?.usd));
-            const volume = formatUsd(
-              pickNumber(token.volume24hUsd, token.volume24h_usd, token.volume24h, token.totalVolume?.h24),
+            const priceValue = pickNumber(token.priceUsd, token.price_usd);
+            const price = formatUsd(priceValue, true);
+            const liquiditySource = token.liquidity && typeof token.liquidity === "object" ? (token.liquidity as Record<string, unknown>).usd : undefined;
+            const liquidityValue = pickNumber(token.liquidityUsd, token.liquidity_usd, liquiditySource as number | string | null | undefined);
+            const liquidity = formatUsd(liquidityValue);
+            const totalVolumeSource = token.totalVolume && typeof token.totalVolume === "object" ? (token.totalVolume as Record<string, unknown>).h24 : undefined;
+            const volumeValue = pickNumber(token.volume24hUsd, token.volume24h_usd, token.volume24h, totalVolumeSource as number | string | null | undefined);
+            const volume = formatUsd(volumeValue);
+            const marketCapValue = pickNumber(
+              token.marketCap,
+              token.market_cap,
+              token.marketCapUsd,
+              token.market_cap_usd,
+              token.fdv,
+              token.fdvUsd,
+              token.fdv_usd,
             );
-            const marketCap = formatUsd(
-              pickNumber(
-                token.marketCap,
-                token.market_cap,
-                token.marketCapUsd,
-                token.market_cap_usd,
-                token.fdv,
-                token.fdvUsd,
-                token.fdv_usd,
-              ),
-            );
+            const marketCap = formatUsd(marketCapValue);
             const priceChangeRaw = pickNumber(
               token.priceChange?.h24,
               token.price_change_24h,
@@ -195,7 +197,11 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
                         const dexLabel = pickString(pair.dexId) ?? `Pool ${idx + 1}`;
                         const url = pickString(pair.url);
                         const liq = formatUsd(
-                          pickNumber(pair.liquidity?.usd, pair.liquidityUsd, pair.liquidity_usd),
+                          pickNumber(
+                            pair.liquidity && typeof pair.liquidity === "object" ? (pair.liquidity as Record<string, unknown>).usd as number | string | null | undefined : undefined,
+                            pair.liquidityUsd,
+                            pair.liquidity_usd,
+                          ),
                         );
                         return url ? (
                           <LinkPill key={url ?? `${dexLabel}-${idx}`} value={`${dexLabel}${liq ? ` · ${liq}` : ""}`} href={url} />
