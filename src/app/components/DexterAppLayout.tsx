@@ -43,6 +43,7 @@ export function DexterAppLayout({
   superAdminModalProps,
   personaModalProps,
   vadPanelProps,
+  hasConnectedOnce,
 }: DexterAppLayoutProps) {
   const { showLogs, toolCatalog } = signalStackProps;
 
@@ -87,6 +88,7 @@ export function DexterAppLayout({
         sessionStatus={topRibbonProps.sessionStatus}
         onToggleConnection={topRibbonProps.onToggleConnection}
         heroCollapsed={heroCollapsed}
+        hasConnectedOnce={hasConnectedOnce}
       />
       <AdminDock
         canUseAdminTools={heroControlsProps.canUseAdminTools}
@@ -116,12 +118,14 @@ type FloatingConnectionStatusProps = {
   sessionStatus: SessionStatus;
   onToggleConnection?: () => void;
   heroCollapsed: boolean;
+  hasConnectedOnce: boolean;
 };
 
 function FloatingConnectionStatus({
   sessionStatus,
   onToggleConnection,
   heroCollapsed,
+  hasConnectedOnce,
 }: FloatingConnectionStatusProps) {
   const [mounted, setMounted] = React.useState(false);
   const [position, setPosition] = React.useState({ top: 132, left: 24 });
@@ -171,7 +175,9 @@ function FloatingConnectionStatus({
     return () => window.cancelAnimationFrame(raf);
   }, [mounted, heroCollapsed, sessionStatus, updatePosition]);
 
-  if (!mounted || typeof window === "undefined") {
+  const shouldDisplay = sessionStatus !== "DISCONNECTED" || hasConnectedOnce;
+
+  if (!mounted || typeof window === "undefined" || !shouldDisplay) {
     return null;
   }
 
@@ -187,6 +193,7 @@ function FloatingConnectionStatus({
         <ConnectionStatusControl
           sessionStatus={sessionStatus}
           onToggleConnection={onToggleConnection}
+          allowReconnect={hasConnectedOnce}
         />
       </div>
     </motion.div>,
