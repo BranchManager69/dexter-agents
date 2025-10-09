@@ -18,6 +18,7 @@ import { DebugInfoModal } from "./DebugInfoModal";
 import SuperAdminModal from "./SuperAdminModal";
 import AgentPersonaModal from "./AgentPersonaModal";
 import { ConnectionStatusControl } from "./shell/ConnectionStatusControl";
+import VadControlPanel from "./shell/VadControlPanel";
 
 import type { SessionStatus } from "@/app/types";
 
@@ -41,6 +42,7 @@ export function DexterAppLayout({
   debugModalProps,
   superAdminModalProps,
   personaModalProps,
+  vadPanelProps,
 }: DexterAppLayoutProps) {
   const { showLogs, toolCatalog } = signalStackProps;
 
@@ -80,6 +82,7 @@ export function DexterAppLayout({
       <DebugInfoModal {...debugModalProps} />
       <SuperAdminModal {...superAdminModalProps} />
       <AgentPersonaModal {...personaModalProps} />
+      <VadControlPanel {...vadPanelProps} />
       <FloatingConnectionStatus
         sessionStatus={topRibbonProps.sessionStatus}
         onToggleConnection={topRibbonProps.onToggleConnection}

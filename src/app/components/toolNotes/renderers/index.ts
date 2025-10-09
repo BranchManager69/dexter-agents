@@ -13,6 +13,7 @@ import fetchRenderer from "./fetch";
 import { codexStartRenderer, codexReplyRenderer, codexExecRenderer } from "./codex";
 import { streamGetSceneRenderer, streamSetSceneRenderer } from "./streamScene";
 import { solanaSwapPreviewRenderer, solanaSwapExecuteRenderer } from "./solanaSwap";
+import twitterSearchRenderer from "./twitterSearch";
 
 const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   pumpstream_live_summary: pumpstreamRenderer,
@@ -34,6 +35,7 @@ const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   stream_set_scene: streamSetSceneRenderer,
   solana_swap_preview: solanaSwapPreviewRenderer,
   solana_swap_execute: solanaSwapExecuteRenderer,
+  twitter_search: twitterSearchRenderer,
 };
 
 export function getToolNoteRenderer(toolName?: string | null): ToolNoteRenderer | undefined {
