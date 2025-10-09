@@ -13,6 +13,8 @@ import type { DebugInfoModal as DebugInfoModalComponent } from "../components/De
 import type SuperAdminModalComponent from "../components/SuperAdminModal";
 import type { TranscriptMessages as TranscriptMessagesComponent } from "../components/TranscriptMessages";
 import type { InputBar as InputBarComponent } from "../components/InputBar";
+import type { VadControlPanelProps } from "../components/shell/VadControlPanel";
+import { DEFAULT_VAD_SETTINGS, clampVadSettings, type VadSettings } from "../config/vad";
 
 declare global {
   interface Window {
@@ -104,6 +106,7 @@ export interface DexterAppController {
   debugModalProps: DebugInfoModalProps;
   superAdminModalProps: SuperAdminModalProps;
   personaModalProps: AgentPersonaModalProps;
+  vadPanelProps: VadControlPanelProps;
 }
 
 import { resolveConciergeProfile, type ResolvedConciergeProfile } from '@/app/agentConfigs/customerServiceRetail/promptProfile';
@@ -1187,6 +1190,35 @@ export function useDexterAppController(): DexterAppController {
   const [isEventsPaneExpanded, setIsEventsPaneExpanded] =
     useState<boolean>(true);
   const [userText, setUserText] = useState<string>("");
+  const [vadSettings, setVadSettings] = useState<VadSettings>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = window.localStorage?.getItem('dexter:vadSettings');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          return clampVadSettings({
+            threshold: typeof parsed?.threshold === 'number' ? parsed.threshold : DEFAULT_VAD_SETTINGS.threshold,
+            prefixPaddingMs:
+              typeof parsed?.prefixPaddingMs === 'number'
+                ? parsed.prefixPaddingMs
+                : DEFAULT_VAD_SETTINGS.prefixPaddingMs,
+            silenceDurationMs:
+              typeof parsed?.silenceDurationMs === 'number'
+                ? parsed.silenceDurationMs
+                : DEFAULT_VAD_SETTINGS.silenceDurationMs,
+            autoRespond:
+              typeof parsed?.autoRespond === 'boolean'
+                ? parsed.autoRespond
+                : DEFAULT_VAD_SETTINGS.autoRespond,
+          });
+        }
+      } catch (error) {
+        console.warn('Failed to read stored VAD settings; falling back to defaults.', error);
+      }
+    }
+    return { ...DEFAULT_VAD_SETTINGS };
+  });
+  const [isVadPanelOpen, setIsVadPanelOpen] = useState<boolean>(false);
   const [isVoiceMuted, setIsVoiceMuted] = useState<boolean>(false);
   const [isMobileSignalsOpen, setIsMobileSignalsOpen] = useState<boolean>(false);
   const [isAudioPlaybackEnabled, setIsAudioPlaybackEnabled] = useState<boolean>(
@@ -1344,7 +1376,7 @@ export function useDexterAppController(): DexterAppController {
     if (sessionStatus === "CONNECTED") {
       updateSession();
     }
-  }, [isVoiceMuted, sessionStatus]);
+  }, [isVoiceMuted, vadSettings, sessionStatus]);
 
   const fetchEphemeralKey = async (): Promise<string | null> => {
     logClientEvent({ url: "/session" }, "fetch_session_token_request");
@@ -1584,14 +1616,15 @@ export function useDexterAppController(): DexterAppController {
     // Reflect the mute toggle by enabling or disabling server VAD on the
     // backend. The Realtime SDK supports live session updates via the
     // `session.update` event.
+    const activeVadSettings = vadSettings;
     const turnDetection = isVoiceMuted
       ? null
       : {
           type: 'server_vad',
-          threshold: 0.9,
-          prefix_padding_ms: 300,
-          silence_duration_ms: 500,
-          create_response: true,
+          threshold: activeVadSettings.threshold,
+          prefix_padding_ms: activeVadSettings.prefixPaddingMs,
+          silence_duration_ms: activeVadSettings.silenceDurationMs,
+          create_response: activeVadSettings.autoRespond,
         };
 
     sendEvent({
@@ -1774,6 +1807,25 @@ export function useDexterAppController(): DexterAppController {
     window.location.replace(url.toString());
   };
 
+  const applyVadSettings = useCallback((next: VadSettings) => {
+    setVadSettings((prev) => {
+      const clamped = clampVadSettings(next);
+      if (
+        prev.threshold === clamped.threshold &&
+        prev.prefixPaddingMs === clamped.prefixPaddingMs &&
+        prev.silenceDurationMs === clamped.silenceDurationMs &&
+        prev.autoRespond === clamped.autoRespond
+      ) {
+        return prev;
+      }
+      return clamped;
+    });
+  }, []);
+
+  const resetVadSettings = useCallback(() => {
+    applyVadSettings({ ...DEFAULT_VAD_SETTINGS });
+  }, [applyVadSettings]);
+
   useEffect(() => {
     const storedVoiceMuted = localStorage.getItem("voiceMuted");
     if (storedVoiceMuted !== null) {
@@ -1794,6 +1846,14 @@ export function useDexterAppController(): DexterAppController {
   useEffect(() => {
     localStorage.setItem("voiceMuted", isVoiceMuted.toString());
   }, [isVoiceMuted]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("dexter:vadSettings", JSON.stringify(vadSettings));
+    } catch (error) {
+      console.warn('Failed to persist VAD settings; continuing with in-memory values.', error);
+    }
+  }, [vadSettings]);
 
   useEffect(() => {
     localStorage.setItem("logsExpanded", isEventsPaneExpanded.toString());
@@ -2340,6 +2400,10 @@ export function useDexterAppController(): DexterAppController {
       isMuted: isVoiceMuted,
       onToggleMuted: () => setIsVoiceMuted((prev) => !prev),
     },
+    vadControl: {
+      isOpen: isVadPanelOpen,
+      onToggle: () => setIsVadPanelOpen((prev) => !prev),
+    },
   };
 
   const signalsDrawerProps: SignalsDrawerShellProps = {
@@ -2445,6 +2509,15 @@ export function useDexterAppController(): DexterAppController {
     presets: PERSONA_PRESETS,
   };
 
+  const vadPanelProps: VadControlPanelProps = {
+    isOpen: isVadPanelOpen,
+    onClose: () => setIsVadPanelOpen(false),
+    settings: vadSettings,
+    defaults: DEFAULT_VAD_SETTINGS,
+    onChange: applyVadSettings,
+    onReset: resetVadSettings,
+  };
+
   return {
     topRibbonProps,
     heroContainerClassName,
@@ -2461,5 +2534,6 @@ export function useDexterAppController(): DexterAppController {
     debugModalProps,
     superAdminModalProps,
     personaModalProps,
+    vadPanelProps,
   };
 }
