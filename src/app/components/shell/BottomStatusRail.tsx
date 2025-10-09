@@ -14,6 +14,7 @@ interface BottomStatusRailProps {
     onToggle: () => void;
   } | null;
   canUseSignals: boolean;
+  canUseDebug: boolean;
 }
 
 export function BottomStatusRail({
@@ -22,6 +23,7 @@ export function BottomStatusRail({
   voiceControl,
   vadControl,
   canUseSignals,
+  canUseDebug,
 }: BottomStatusRailProps) {
   return (
     <div className="flex items-center justify-between gap-6 px-9 py-3 text-sm text-neutral-200">
@@ -106,17 +108,19 @@ export function BottomStatusRail({
       </div>
 
       {/* Right: Debug info icon */}
-      <button
-        onClick={onOpenDebugModal}
-        className="flex items-center justify-center text-neutral-500 transition hover:text-flux"
-        title="Debug Info"
-      >
-        <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <path d="M12 16v-4" />
-          <path d="M12 8h.01" />
-        </svg>
-      </button>
+      {canUseDebug ? (
+        <button
+          onClick={onOpenDebugModal}
+          className="flex items-center justify-center text-neutral-500 transition hover:text-flux"
+          title="Debug Info"
+        >
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4" />
+            <path d="M12 8h.01" />
+          </svg>
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -244,33 +244,35 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
         aria-hidden="true"
       />
 
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
         <div
-          className="w-full max-w-3xl rounded-lg border border-neutral-800/60 bg-surface-glass/95 p-6 shadow-elevated backdrop-blur-xl"
+          className="flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-neutral-800/60 bg-surface-glass/95 shadow-elevated backdrop-blur-xl"
+          style={{ maxHeight: "calc(100vh - 4rem)" }}
           onClick={(event) => event.stopPropagation()}
         >
-          <header className="mb-6 flex items-start justify-between gap-4">
+          <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-neutral-800/60 bg-surface-glass/95/95 px-4 py-3 sm:px-6 sm:py-4">
             <div>
-              <h2 className="font-display text-base font-semibold tracking-[0.08em] text-neutral-100">
+              <h2 className="font-display text-sm font-semibold uppercase tracking-[0.18em] text-neutral-200 sm:text-base sm:tracking-[0.12em]">
                 Debug Control Room
               </h2>
-              <p className="text-xs text-neutral-500">
+              <p className="mt-1 text-[11px] text-neutral-500 sm:text-xs">
                 Inspect live session state, wallet telemetry, role alignment, and audio controls.
               </p>
             </div>
             <button
               onClick={onClose}
-              className="rounded-full p-1 text-neutral-500 transition hover:text-neutral-200"
+              className="rounded-full p-1.5 text-neutral-500 transition hover:text-neutral-200"
               aria-label="Close"
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
           </header>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <DebugSection
+          <div className="flex-1 overflow-y-auto px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
+            <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+              <DebugSection
               title="Session"
               badge={
                 <span className="inline-flex items-center gap-2 text-sm text-neutral-200">
@@ -282,7 +284,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
               footer={!rolesInSync ? <RoleDiffNotice diff={roleDiff} /> : null}
             />
 
-            <DebugSection
+              <DebugSection
               title="Connection"
               badge={
                 <span className="rounded-full bg-neutral-800/70 px-3 py-0.5 text-xs font-semibold text-neutral-100">
@@ -292,7 +294,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
               rows={connectionRows}
             />
 
-            <DebugSection
+              <DebugSection
               title="Wallet"
               badge={
                 <span className="rounded-full bg-neutral-800/70 px-3 py-0.5 text-xs font-semibold text-neutral-100">
@@ -329,7 +331,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
               ) : null}
             </DebugSection>
 
-            <DebugSection title="Controls" rows={[]}>
+              <DebugSection title="Controls" rows={[]}>
               <div className="space-y-4 text-sm text-neutral-300">
                 <label className="flex items-center justify-between cursor-pointer">
                   <span className="text-neutral-400">Audio playback</span>
@@ -381,7 +383,8 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
                   </div>
                 ) : null}
               </div>
-            </DebugSection>
+              </DebugSection>
+            </div>
           </div>
         </div>
       </div>

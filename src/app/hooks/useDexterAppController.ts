@@ -2571,6 +2571,7 @@ export function useDexterAppController(): DexterAppController {
       onToggle: () => setIsVadPanelOpen((prev) => !prev),
     },
     canUseSignals: canUseAdminTools,
+    canUseDebug: canUseAdminTools,
   };
 
   const signalsDrawerProps: SignalsDrawerShellProps = {
