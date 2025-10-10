@@ -51,7 +51,7 @@ interface TopRibbonProps {
   turnstileSiteKey?: string;
   userBadge?: DexterUserBadge | null;
   showHeaderCrest?: boolean;
-  crestOrigin?: { left: number; top: number; width: number; height: number } | null;
+  crestOrigin?: { pageLeft: number; pageTop: number; width: number; height: number } | null;
 }
 
 function formatWalletAddress(address?: string | null) {
@@ -156,101 +156,76 @@ export function TopRibbon({
 
   const crestTargetRef = React.useRef<HTMLDivElement | null>(null);
   const [initialTransform, setInitialTransform] = React.useState<{ x: number; y: number; scale: number } | null>(null);
-  const [headerRect, setHeaderRect] = React.useState<DOMRect | null>(null);
-  const [isHeaderSettled, setIsHeaderSettled] = React.useState(false);
+  const [originReady, setOriginReady] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!showHeaderCrest || !crestOrigin) {
-      setIsHeaderSettled(false);
-      setHeaderRect(null);
+  React.useLayoutEffect(() => {
+    if (!showHeaderCrest) {
+      setInitialTransform(null);
+      setOriginReady(false);
       return;
     }
 
-    setIsHeaderSettled(false);
-    setHeaderRect(null);
-
-    let rafId: number;
-    let lastRect: DOMRect | null = null;
-    let stableCount = 0;
+    let rafTwo: number | undefined;
     let cancelled = false;
-    const threshold = 0.75;
 
-    const resolveHeader = () =>
-      crestTargetRef.current?.closest<HTMLElement>(".dexter-header") ??
-      document.querySelector<HTMLElement>(".dexter-header");
-
-    const tick = () => {
-      if (cancelled) {
-        return;
-      }
-      const headerEl = resolveHeader();
-      if (!headerEl) {
-        stableCount = 0;
-        lastRect = null;
-        rafId = window.requestAnimationFrame(tick);
+    const measure = () => {
+      if (cancelled) return;
+      const targetNode = crestTargetRef.current;
+      if (!targetNode) {
+        rafTwo = window.requestAnimationFrame(measure);
         return;
       }
 
-      const rect = headerEl.getBoundingClientRect();
-      if (lastRect) {
-        const deltaX = Math.abs(rect.left - lastRect.left);
-        const deltaY = Math.abs(rect.top - lastRect.top);
-        if (deltaX < threshold && deltaY < threshold) {
-          stableCount += 1;
-          if (stableCount >= 4) {
-            setHeaderRect(rect);
-            setIsHeaderSettled(true);
-            return;
-          }
-        } else {
-          stableCount = 0;
-        }
+      const targetRect = targetNode.getBoundingClientRect();
+      if (targetRect.width === 0 || targetRect.height === 0) {
+        rafTwo = window.requestAnimationFrame(measure);
+        return;
       }
 
-      lastRect = rect;
-      rafId = window.requestAnimationFrame(tick);
+      if (crestOrigin && typeof window !== 'undefined') {
+        const scrollX = typeof window.scrollX === 'number' ? window.scrollX : window.pageXOffset;
+        const scrollY = typeof window.scrollY === 'number' ? window.scrollY : window.pageYOffset;
+        const viewport = window.visualViewport;
+        const offsetLeft = viewport?.offsetLeft ?? 0;
+        const offsetTop = viewport?.offsetTop ?? 0;
+
+        const targetLeft = targetRect.left + scrollX + offsetLeft;
+        const targetTop = targetRect.top + scrollY + offsetTop;
+
+        const originCenterX = crestOrigin.pageLeft + crestOrigin.width / 2;
+        const originCenterY = crestOrigin.pageTop + crestOrigin.height / 2;
+        const targetCenterX = targetLeft + targetRect.width / 2;
+        const targetCenterY = targetTop + targetRect.height / 2;
+
+        const safeTargetWidth = targetRect.width > 0 ? targetRect.width : 1;
+        const safeOriginWidth = crestOrigin.width > 0 ? crestOrigin.width : safeTargetWidth;
+        const scale = safeOriginWidth / safeTargetWidth;
+
+        setInitialTransform({
+          x: originCenterX - targetCenterX,
+          y: originCenterY - targetCenterY,
+          scale,
+        });
+      } else {
+        setInitialTransform(null);
+      }
+
+      setOriginReady(true);
     };
 
-    rafId = window.requestAnimationFrame(tick);
+    const rafOne = window.requestAnimationFrame(() => {
+      rafTwo = window.requestAnimationFrame(measure);
+    });
 
     return () => {
       cancelled = true;
-      if (rafId) {
-        window.cancelAnimationFrame(rafId);
+      window.cancelAnimationFrame(rafOne);
+      if (rafTwo) {
+        window.cancelAnimationFrame(rafTwo);
       }
+      setOriginReady(false);
     };
   }, [showHeaderCrest, crestOrigin]);
-
-  React.useLayoutEffect(() => {
-    if (!showHeaderCrest || !crestOrigin || !headerRect || !isHeaderSettled) {
-      setInitialTransform(null);
-      return;
-    }
-
-    const targetRect = crestTargetRef.current?.getBoundingClientRect();
-    if (!targetRect || targetRect.width === 0 || targetRect.height === 0) {
-      setInitialTransform(null);
-      return;
-    }
-
-    const normalizePoint = (rect: { left: number; top: number; width: number; height: number }) => ({
-      x: rect.left + rect.width / 2 - headerRect.left,
-      y: rect.top + rect.height / 2 - headerRect.top,
-    });
-
-    const originCenter = normalizePoint(crestOrigin);
-    const targetCenter = normalizePoint(targetRect);
-
-    const safeOriginWidth = crestOrigin.width > 0 ? crestOrigin.width : 1;
-    const safeTargetWidth = targetRect.width > 0 ? targetRect.width : 1;
-    const scale = safeOriginWidth / safeTargetWidth;
-
-    setInitialTransform({
-      x: originCenter.x - targetCenter.x,
-      y: originCenter.y - targetCenter.y,
-      scale: scale || 1,
-    });
-  }, [showHeaderCrest, crestOrigin, headerRect, isHeaderSettled]);
 
   return (
     <>
@@ -305,7 +280,7 @@ export function TopRibbon({
           </div>
 
           <AnimatePresence>
-            {showHeaderCrest && (!crestOrigin || isHeaderSettled) ? (
+            {showHeaderCrest && (!crestOrigin || originReady) ? (
               <motion.div
                 key="dexter-crest-header"
                 layoutId="dexter-crest"

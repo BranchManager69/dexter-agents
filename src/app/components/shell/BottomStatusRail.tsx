@@ -71,8 +71,8 @@ export function BottomStatusRail({
           <button
             type="button"
             onClick={vadControl.onToggle}
-            className={`transition ${
-              vadControl.isOpen ? 'text-flux' : 'text-neutral-300 hover:text-flux'
+            className={`inline-flex items-center justify-center transition ${
+              vadControl.isOpen ? 'text-flux' : 'text-neutral-100 hover:text-flux'
             }`}
             aria-pressed={vadControl.isOpen}
             title="Voice settings"

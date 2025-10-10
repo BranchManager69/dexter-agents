@@ -141,16 +141,19 @@ export function useHandleSessionHistory() {
   const extractMessageText = (content: any[] = []): string => {
     if (!Array.isArray(content)) return "";
 
-    return content
+    const parts = content
       .map((c) => {
         if (!c || typeof c !== "object") return "";
         if (c.type === "input_text") return c.text ?? "";
         if (c.type === "audio") return c.transcript ?? "";
         if (c.type === "input_audio") return c.transcript ?? "";
+        if (c.type === "input_image") return "[Image attachment]";
         return "";
       })
       .filter(Boolean)
       .join("\n");
+
+    return parts;
   };
 
   const extractFunctionCallByName = (name: string, content: any[] = []): any => {
