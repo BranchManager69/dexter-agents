@@ -2468,7 +2468,7 @@ export function useDexterAppController(): DexterAppController {
     }
 
     if (sessionIdentity.type !== 'user') {
-      return 'I can jump into live Solana tools for you. Ask anything when you are ready.';
+      return 'I can jump into live Solana tools with you. Ask when you are ready.';
     }
 
     if (nextConversationPrompt && nextConversationPrompt.length) {
