@@ -62,6 +62,18 @@ function symbolFromMint(mint?: string): string | undefined {
   return mint.slice(0, 3).toUpperCase();
 }
 
+function normalizeAssetSymbol(symbol?: string, fallbackMint?: string) {
+  if (!symbol || symbol.trim().length === 0) return symbolFromMint(fallbackMint);
+  const normalized = symbol.replace(/\s+/g, " ").trim().toUpperCase();
+  if (normalized === "NAT" || normalized === "NATIVE" || normalized === "NATIVE SOL" || normalized === "NATIVE-SOL") {
+    return "SOL";
+  }
+  if (normalized === "UNKNOWN" && fallbackMint) {
+    return symbolFromMint(fallbackMint);
+  }
+  return normalized;
+}
+
 function parseAmountDisplay(raw: unknown, fallbackMint?: string): { amount: string; asset?: string } | null {
   if (raw === null || raw === undefined) return null;
   if (typeof raw === "string") {
@@ -69,16 +81,17 @@ function parseAmountDisplay(raw: unknown, fallbackMint?: string): { amount: stri
     if (!trimmed) return null;
     const parts = trimmed.split(/\s+/);
     if (parts.length > 1) {
-      return { amount: parts[0], asset: parts.slice(1).join(" ").toUpperCase() };
+      const assetLabel = parts.slice(1).join(" ");
+      return { amount: parts[0], asset: normalizeAssetSymbol(assetLabel, fallbackMint) };
     }
-    return { amount: parts[0], asset: symbolFromMint(fallbackMint) };
+    return { amount: parts[0], asset: normalizeAssetSymbol(undefined, fallbackMint) };
   }
   if (typeof raw === "number") {
     const formatted =
       Math.abs(raw) >= 1
         ? raw.toLocaleString("en-US", { maximumFractionDigits: 2 })
         : raw.toLocaleString("en-US", { maximumFractionDigits: 6 });
-    return { amount: formatted, asset: symbolFromMint(fallbackMint) };
+    return { amount: formatted, asset: normalizeAssetSymbol(undefined, fallbackMint) };
   }
   return null;
 }

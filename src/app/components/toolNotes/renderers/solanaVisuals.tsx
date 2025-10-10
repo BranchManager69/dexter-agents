@@ -54,20 +54,20 @@ interface MetricPillProps {
   tone?: "neutral" | "positive" | "negative" | "notice";
 }
 
-const TONE_STYLES: Record<NonNullable<MetricPillProps["tone"]>, string> = {
-  neutral: "bg-slate-100 text-slate-700",
-  positive: "bg-emerald-100 text-emerald-700",
-  negative: "bg-rose-100 text-rose-700",
-  notice: "bg-indigo-100 text-indigo-700",
+const TONE_TEXT: Record<NonNullable<MetricPillProps["tone"]>, string> = {
+  neutral: "text-slate-800",
+  positive: "text-emerald-600",
+  negative: "text-rose-600",
+  notice: "text-indigo-600",
 };
 
 export function MetricPill({ label, value, tone = "neutral" }: MetricPillProps) {
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${TONE_STYLES[tone] ?? TONE_STYLES.neutral}`}
+      className={`inline-flex items-baseline gap-2 text-sm font-semibold ${TONE_TEXT[tone] ?? TONE_TEXT.neutral}`}
     >
       {label && <span className="text-[0.58rem] uppercase tracking-[0.28em] text-slate-500">{label}</span>}
-      <span>{value}</span>
+      <span className="text-slate-900">{value}</span>
     </span>
   );
 }
@@ -78,9 +78,12 @@ export function LinkPill({ value, href }: { value: string; href: string }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 hover:text-slate-900"
+      className="inline-flex items-center gap-1 text-sm font-semibold text-slate-700 underline decoration-slate-300 decoration-dotted underline-offset-4 transition hover:text-slate-900 hover:decoration-slate-500"
     >
       {value}
+      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+        <path d="M7 17 17 7M9 7h8v8" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
     </a>
   );
 }
@@ -129,20 +132,31 @@ interface TokenFlowProps {
 
 export function TokenFlow({ from, to, animate = false }: TokenFlowProps) {
   return (
-    <div className="relative mt-2 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-      <TokenBadge side={{ ...from, accent: from.accent ?? "from" }} />
+    <div className="mt-2 flex flex-col gap-6">
+      <div className="hidden md:flex md:items-center md:justify-between">
+        <TokenBadge side={{ ...from, accent: from.accent ?? "from" }} />
 
-      {animate ? (
-        <div className="swap-animation relative flex h-18 w-36 items-center justify-center">
-          <div className="swap-animation__track absolute inset-0">
-            <div className="swap-animation__token swap-animation__token--from">
-              <TokenIcon label={from.asset ?? from.heading ?? "TOKEN"} accent="from" imageUrl={from.imageUrl} size={44} />
+        {animate ? (
+          <div className="swap-animation relative flex h-20 w-40 items-center justify-center">
+            <div className="swap-animation__track absolute inset-0">
+              <div className="swap-animation__token swap-animation__token--from">
+                <TokenIcon label={from.asset ?? from.heading ?? "TOKEN"} accent="from" imageUrl={from.imageUrl} size={44} />
+              </div>
+              <div className="swap-animation__token swap-animation__token--to">
+                <TokenIcon label={to.asset ?? to.heading ?? "TOKEN"} accent="to" imageUrl={to.imageUrl} size={44} />
+              </div>
             </div>
-            <div className="swap-animation__token swap-animation__token--to">
-              <TokenIcon label={to.asset ?? to.heading ?? "TOKEN"} accent="to" imageUrl={to.imageUrl} size={44} />
+            <div className="swap-animation__arrow relative z-10 flex h-11 w-11 items-center justify-center">
+              <svg width="24" height="24" viewBox="0 0 24 24">
+                <path
+                  fill="currentColor"
+                  d="M5 12.75h10.19l-2.72 2.72a.75.75 0 1 0 1.06 1.06l4.25-4.25a.75.75 0 0 0 0-1.06l-4.25-4.25a.75.75 0 0 0-1.06 1.06l2.72 2.72H5a.75.75 0 0 0 0 1.5Z"
+                />
+              </svg>
             </div>
           </div>
-          <div className="swap-animation__arrow relative z-10 flex h-11 w-11 items-center justify-center">
+        ) : (
+          <div className="flex h-11 w-11 items-center justify-center text-slate-400">
             <svg width="24" height="24" viewBox="0 0 24 24">
               <path
                 fill="currentColor"
@@ -150,19 +164,37 @@ export function TokenFlow({ from, to, animate = false }: TokenFlowProps) {
               />
             </svg>
           </div>
-        </div>
-      ) : (
-        <div className="flex h-11 w-11 items-center justify-center text-slate-400">
-          <svg width="24" height="24" viewBox="0 0 24 24">
-            <path
-              fill="currentColor"
-              d="M5 12.75h10.19l-2.72 2.72a.75.75 0 1 0 1.06 1.06l4.25-4.25a.75.75 0 0 0 0-1.06l-4.25-4.25a.75.75 0 0 0-1.06 1.06l2.72 2.72H5a.75.75 0 0 0 0 1.5Z"
-            />
-          </svg>
-        </div>
-      )}
+        )}
 
-      <TokenBadge side={{ ...to, accent: to.accent ?? "to" }} />
+        <TokenBadge side={{ ...to, accent: to.accent ?? "to" }} />
+      </div>
+
+      <div className="flex flex-col items-center gap-4 md:hidden">
+        <TokenBadge side={{ ...from, accent: from.accent ?? "from" }} compact />
+        {animate ? (
+          <div className="flex flex-col items-center gap-2 text-slate-600">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
+              <svg className="h-5 w-5 animate-pulse" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M5 12.75h10.19l-2.72 2.72a.75.75 0 1 0 1.06 1.06l4.25-4.25a.75.75 0 0 0 0-1.06l-4.25-4.25a.75.75 0 0 0-1.06 1.06l2.72 2.72H5a.75.75 0 0 0 0 1.5Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </div>
+            <span className="text-xs uppercase tracking-[0.32em] text-slate-500">Swapping</span>
+          </div>
+        ) : (
+          <div className="flex h-9 w-9 items-center justify-center text-slate-500">
+            <svg width="20" height="20" viewBox="0 0 24 24">
+              <path
+                fill="currentColor"
+                d="M5 12.75h10.19l-2.72 2.72a.75.75 0 1 0 1.06 1.06l4.25-4.25a.75.75 0 0 0 0-1.06l-4.25-4.25a.75.75 0 0 0-1.06 1.06l2.72 2.72H5a.75.75 0 0 0 0 1.5Z"
+              />
+            </svg>
+          </div>
+        )}
+        <TokenBadge side={{ ...to, accent: to.accent ?? "to" }} compact />
+      </div>
 
       {animate && (
         <style jsx>{`

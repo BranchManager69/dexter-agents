@@ -8,8 +8,6 @@ const SECOND_WALLET = "7Vq5wvkZpPRsvfv5nPx2EF4nVzcsYwRJQk1vZEBtcDzS";
 const DEMO_WALLET = "F6oHkz8oFqgVqMYUp3NEPoPFcAckU4iRciMghvYDn8LM";
 const TOKEN_MINT = "JUP4bF4YZ8t8oAdjQ1DPZ8PvFJ69wHwgTGh2dCgyRk7";
 const TOKEN_MINT_ALT = "So11111111111111111111111111111111111111112";
-const SIGNATURE = "5j4sEGF1YdfrXwFd3qs3mESyq8pt5TR1f8ZC2yRJ8bDd7ZQyyab4LVqgG9GZQnTWK1xLjf8Rm9jz4zsPXk81Xv4";
-const SIGNATURE_SELL = "3q4kSE8dHTWMB2M6sxJgYwqrXMzFqQw7Z6z9qG5Zh1d1h3D6kQLHzVQK49hw7g2jMaeX97Bjvun1w2La87Yy8pX5";
 
 export const toolFixtures: FixtureRecord = {
   pumpstream_live_summary: {
@@ -136,41 +134,6 @@ export const toolFixtures: FixtureRecord = {
     arguments: {
       amount_raw: "2500000000",
       mint: TOKEN_MINT,
-    },
-  },
-
-  solana_execute_buy: {
-    output: {
-      walletAddress: PRIMARY_WALLET,
-      signature: SIGNATURE,
-      mint: TOKEN_MINT,
-      swap_lamports: 2_150_000_000,
-      fee_lamports: 2_000_000,
-      warnings: ["Maker vault is near cap"],
-      status: "confirmed",
-    },
-    arguments: {
-      wallet_address: PRIMARY_WALLET,
-      mint: TOKEN_MINT,
-      amount_sol: 2.15,
-      slippage_bps: 75,
-    },
-  },
-
-  solana_execute_sell: {
-    output: {
-      walletAddress: PRIMARY_WALLET,
-      signature: SIGNATURE_SELL,
-      mint: TOKEN_MINT,
-      swap_lamports: 1_320_000_000,
-      fee_lamports: 1_500_000,
-      status: "confirmed",
-    },
-    arguments: {
-      wallet_address: PRIMARY_WALLET,
-      mint: TOKEN_MINT,
-      amount_raw: "1850000000",
-      percentage: 35,
     },
   },
 

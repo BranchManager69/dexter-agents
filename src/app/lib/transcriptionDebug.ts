@@ -11,9 +11,9 @@ export function sendTranscriptionDebug(payload: Record<string, any>) {
 
     const blob = new Blob([body], { type: 'application/json' });
     if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-      navigator.sendBeacon('/api/transcript-log', blob);
+      navigator.sendBeacon('/api/transcription-debug', blob);
     } else {
-      fetch('/api/transcript-log', {
+      fetch('/api/transcription-debug', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body,

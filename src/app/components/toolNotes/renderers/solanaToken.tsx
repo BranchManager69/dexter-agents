@@ -105,6 +105,20 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
 
   const visibleTokens = results.slice(0, 5);
 
+  if (item.status === "IN_PROGRESS" && results.length === 0) {
+    return (
+      <div className={BASE_CARD_CLASS}>
+        <section className="flex flex-col gap-4">
+          <header className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token lookup</span>
+            {query && <span className="text-sm text-slate-500">Query · {query}</span>}
+          </header>
+          <p className="text-sm text-slate-500">Searching for tokens…</p>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className={BASE_CARD_CLASS}>
       <section className="flex flex-col gap-7">
@@ -131,8 +145,6 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
               token.image,
             );
 
-            const priceValue = pickNumber(token.priceUsd, token.price_usd);
-            const price = formatUsd(priceValue, true);
             const liquiditySource = token.liquidity && typeof token.liquidity === "object" ? (token.liquidity as Record<string, unknown>).usd : undefined;
             const liquidityValue = pickNumber(token.liquidityUsd, token.liquidity_usd, liquiditySource as number | string | null | undefined);
             const liquidity = formatUsd(liquidityValue);
@@ -176,17 +188,16 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  {price && <MetricPill label="Price" value={price} />}
-                  {marketCap && <MetricPill label="MCap" value={marketCap} />}
-                  {liquidity && <MetricPill label="Liquidity" value={liquidity} />}
-                  {volume && <MetricPill label="24h Volume" value={volume} />}
+                  {marketCap && <MetricPill label="Market Cap" value={marketCap} />}
                   {priceChange && (
                     <MetricPill
-                      label="24h"
+                      label="Change"
                       value={priceChange}
                       tone={priceChangeRaw !== undefined && priceChangeRaw < 0 ? "negative" : "positive"}
                     />
                   )}
+                  {liquidity && <MetricPill label="Liquidity" value={liquidity} />}
+                  {volume && <MetricPill label="24h Volume" value={volume} />}
                 </div>
 
                 {pairs.length > 0 && (
@@ -208,8 +219,12 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
                         ) : (
                           <MetricPill key={`${dexLabel}-${idx}`} label={dexLabel} value={liq ?? "On-chain"} />
                         );
-                      })}
-                    </div>
+          })}
+
+          {visibleTokens.length === 0 && (
+            <p className="text-sm text-slate-500">No tokens matched this query.</p>
+          )}
+        </div>
                   </div>
                 )}
               </article>

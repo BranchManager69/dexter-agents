@@ -7,7 +7,6 @@ import walletOverrideRenderer from "../app/components/toolNotes/renderers/wallet
 import walletAuthRenderer from "../app/components/toolNotes/renderers/walletAuth";
 import solanaBalancesRenderer from "../app/components/toolNotes/renderers/solanaBalances";
 import solanaPreviewSellRenderer from "../app/components/toolNotes/renderers/solanaPreviewSell";
-import { solanaExecuteBuyRenderer, solanaExecuteSellRenderer } from "../app/components/toolNotes/renderers/trade";
 import solanaTokenRenderer from "../app/components/toolNotes/renderers/solanaToken";
 import searchRenderer from "../app/components/toolNotes/renderers/search";
 import fetchRenderer from "../app/components/toolNotes/renderers/fetch";
@@ -71,18 +70,6 @@ const stories: StoryConfig[] = [
     storyName: "Solana – Preview Sell All",
     toolName: "solana_preview_sell_all",
     renderer: solanaPreviewSellRenderer,
-  },
-  {
-    exportName: "SolanaExecuteBuy",
-    storyName: "Solana – Execute Buy",
-    toolName: "solana_execute_buy",
-    renderer: solanaExecuteBuyRenderer,
-  },
-  {
-    exportName: "SolanaExecuteSell",
-    storyName: "Solana – Execute Sell",
-    toolName: "solana_execute_sell",
-    renderer: solanaExecuteSellRenderer,
   },
   {
     exportName: "SolanaToken",
@@ -186,8 +173,6 @@ export const WalletOverride = storyExports.WalletOverride;
 export const WalletAuth = storyExports.WalletAuth;
 export const SolanaBalances = storyExports.SolanaBalances;
 export const SolanaPreviewSell = storyExports.SolanaPreviewSell;
-export const SolanaExecuteBuy = storyExports.SolanaExecuteBuy;
-export const SolanaExecuteSell = storyExports.SolanaExecuteSell;
 export const SolanaToken = storyExports.SolanaToken;
 export const SearchResults = storyExports.SearchResults;
 export const FetchWebPage = storyExports.FetchWebPage;
