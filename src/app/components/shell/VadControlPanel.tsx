@@ -19,6 +19,39 @@ export type VadControlPanelProps = {
 const formatThreshold = (value: number) => value.toFixed(2);
 const formatMs = (value: number) => `${value} ms`;
 
+type VadPreset = {
+  id: string;
+  label: string;
+  description: string;
+  values: Pick<VadSettings, "threshold" | "prefixPaddingMs" | "silenceDurationMs">;
+};
+
+const PRESETS: VadPreset[] = [
+  {
+    id: "snappy",
+    label: "Snappy",
+    description: "Best when you want instant replies.",
+    values: { threshold: 0.65, prefixPaddingMs: 250, silenceDurationMs: 380 },
+  },
+  {
+    id: "balanced",
+    label: "Balanced",
+    description: "Our recommended everyday mix.",
+    values: { threshold: 0.75, prefixPaddingMs: 320, silenceDurationMs: 520 },
+  },
+  {
+    id: "patient",
+    label: "Patient",
+    description: "Gives you a longer pause to think.",
+    values: { threshold: 0.82, prefixPaddingMs: 360, silenceDurationMs: 800 },
+  },
+];
+
+const isPresetMatch = (settings: VadSettings, preset: VadPreset) =>
+  Math.abs(settings.threshold - preset.values.threshold) < 0.005 &&
+  settings.prefixPaddingMs === preset.values.prefixPaddingMs &&
+  settings.silenceDurationMs === preset.values.silenceDurationMs;
+
 export function VadControlPanel({
   isOpen,
   onClose,
@@ -28,6 +61,10 @@ export function VadControlPanel({
   onReset,
 }: VadControlPanelProps) {
   const [mounted, setMounted] = React.useState(false);
+  const activePreset = React.useMemo(() => {
+    const match = PRESETS.find((preset) => isPresetMatch(settings, preset));
+    return match?.id ?? "custom";
+  }, [settings]);
 
   React.useEffect(() => {
     setMounted(true);
@@ -90,11 +127,51 @@ export function VadControlPanel({
                 </button>
               </div>
 
-              <div className="space-y-6">
+              <div className="space-y-5">
+                <div className="space-y-3">
+                  <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">Presets</p>
+                  <div className="flex flex-wrap gap-2">
+                    {PRESETS.map((preset) => {
+                      const isActive = activePreset === preset.id;
+                      return (
+                        <button
+                          key={preset.id}
+                          type="button"
+                          onClick={() =>
+                            onChange({
+                              ...settings,
+                              threshold: preset.values.threshold,
+                              prefixPaddingMs: preset.values.prefixPaddingMs,
+                              silenceDurationMs: preset.values.silenceDurationMs,
+                            })
+                          }
+                          className={`flex flex-col rounded-2xl border px-4 py-2 text-left transition ${
+                            isActive
+                              ? "border-flux/70 bg-flux/10 text-flux"
+                              : "border-white/10 bg-white/[0.02] text-neutral-200 hover:border-flux/40 hover:text-flux"
+                          }`}
+                        >
+                          <span className="font-display text-xs font-semibold tracking-[0.12em]">
+                            {preset.label}
+                          </span>
+                          <span className="text-[11px] text-neutral-400">{preset.description}</span>
+                        </button>
+                      );
+                    })}
+                    <span
+                      className={`flex items-center rounded-2xl border border-dashed px-4 py-2 text-[11px] tracking-[0.12em] ${
+                        activePreset === "custom" ? "border-flux/40 text-flux" : "border-white/10 text-neutral-500"
+                      }`}
+                    >
+                      Custom
+                    </span>
+                  </div>
+                </div>
+
                 <VSlider
                   id="vad-threshold"
                   label="Sensitivity"
-                  description="Higher values make Dexter wait for stronger speech signals before triggering."
+                  description="How loud you need to be before Dexter starts listening."
                   value={settings.threshold}
                   unit={formatThreshold(settings.threshold)}
                   min={VAD_LIMITS.threshold.min}
@@ -107,7 +184,7 @@ export function VadControlPanel({
                 <VSlider
                   id="vad-prefix"
                   label="Lead-in padding"
-                  description="Buffer captured before your speech to avoid clipping the start of sentences."
+                  description="Audio captured just before you speak so we don’t miss the first word."
                   value={settings.prefixPaddingMs}
                   unit={formatMs(settings.prefixPaddingMs)}
                   min={VAD_LIMITS.prefixPaddingMs.min}
@@ -119,7 +196,7 @@ export function VadControlPanel({
                 <VSlider
                   id="vad-silence"
                   label="Silence timeout"
-                  description="How long Dexter waits after you stop before it responds."
+                  description="How long Dexter waits after you stop before replying."
                   value={settings.silenceDurationMs}
                   unit={formatMs(settings.silenceDurationMs)}
                   min={VAD_LIMITS.silenceDurationMs.min}
@@ -245,13 +322,13 @@ function VSlider({
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h3 className="font-display text-[11px] uppercase tracking-[0.2em] text-neutral-300">{label}</h3>
-          <p className="mt-1 text-xs text-neutral-400">{description}</p>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col">
+          <h3 className="font-display text-[11px] uppercase tracking-[0.18em] text-neutral-300">{label}</h3>
+          <p className="text-xs text-neutral-500">{description}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-baseline gap-2">
           <input
             id={`${id}-input`}
             type="number"
@@ -260,7 +337,7 @@ function VSlider({
             step={step}
             value={type === "float" ? value.toFixed(2) : value}
             onChange={handleInputChange}
-            className="w-20 rounded-lg border border-neutral-700/60 bg-neutral-900/80 px-2 py-1 text-right text-xs text-neutral-100 focus:border-flux/60 focus:outline-none"
+            className="w-20 rounded-md border border-neutral-700/70 bg-neutral-900/80 px-2 py-1 text-right text-xs text-neutral-100 focus:border-flux/60 focus:outline-none"
           />
           <span className="text-xs text-neutral-400">{unit}</span>
         </div>
@@ -273,7 +350,7 @@ function VSlider({
         step={step}
         value={value}
         onChange={handleSliderChange}
-        className="mt-4 h-1 w-full appearance-none rounded-full bg-neutral-800 accent-flux focus:outline-none"
+        className="h-1 w-full appearance-none rounded-full bg-neutral-800 accent-flux focus:outline-none"
       />
     </div>
   );

@@ -6,9 +6,9 @@ export type VadSettings = {
 };
 
 export const DEFAULT_VAD_SETTINGS: VadSettings = {
-  threshold: 0.9,
-  prefixPaddingMs: 300,
-  silenceDurationMs: 500,
+  threshold: 0.75,
+  prefixPaddingMs: 320,
+  silenceDurationMs: 520,
   autoRespond: true,
 };
 
