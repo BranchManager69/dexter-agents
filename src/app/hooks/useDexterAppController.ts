@@ -1677,20 +1677,32 @@ export function useDexterAppController(): DexterAppController {
     // backend. The Realtime SDK supports live session updates via the
     // `session.update` event.
     const activeVadSettings = vadSettings;
-    const turnDetection = isVoiceMuted
-      ? null
-      : {
-          type: 'server_vad',
-          threshold: activeVadSettings.threshold,
-          prefix_padding_ms: activeVadSettings.prefixPaddingMs,
-          silence_duration_ms: activeVadSettings.silenceDurationMs,
-          create_response: activeVadSettings.autoRespond,
-        };
+    const turnDetection = {
+      type: 'server_vad',
+      threshold: activeVadSettings.threshold,
+      prefix_padding_ms: activeVadSettings.prefixPaddingMs,
+      silence_duration_ms: activeVadSettings.silenceDurationMs,
+      create_response: activeVadSettings.autoRespond && !isVoiceMuted,
+      interrupt_response: true,
+    };
+
+    const inputAudioUpdate: Record<string, any> = {
+      format: {
+        type: 'audio/pcm',
+        rate: 24000,
+      },
+      transcription: {
+        model: MODEL_IDS.transcription,
+      },
+      turn_detection: turnDetection,
+    };
 
     sendEvent({
       type: 'session.update',
       session: {
-        turn_detection: turnDetection,
+        audio: {
+          input: inputAudioUpdate,
+        },
       },
     });
 
@@ -2041,27 +2053,16 @@ export function useDexterAppController(): DexterAppController {
         audioElementRef.current.pause();
       }
     }
-
-    // Toggle server-side audio stream mute so bandwidth is saved when the
-    // user disables playback. 
-    try {
-      mute(!isAudioPlaybackEnabled);
-    } catch (err) {
-      console.warn('Failed to toggle SDK mute', err);
-    }
   }, [isAudioPlaybackEnabled]);
 
-  // Ensure mute state is propagated to transport right after we connect or
-  // whenever the SDK client reference becomes available.
   useEffect(() => {
-    if (sessionStatus === 'CONNECTED') {
-      try {
-        mute(!isAudioPlaybackEnabled);
-      } catch (err) {
-        console.warn('mute sync after connect failed', err);
-      }
+    if (sessionStatus !== 'CONNECTED') return;
+    try {
+      mute(isVoiceMuted);
+    } catch (err) {
+      console.warn('Failed to toggle microphone mute', err);
     }
-  }, [sessionStatus, isAudioPlaybackEnabled]);
+  }, [sessionStatus, isVoiceMuted]);
 
   useEffect(() => {
     if (sessionStatus === "CONNECTED" && audioElementRef.current?.srcObject) {

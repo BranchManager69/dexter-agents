@@ -20,7 +20,7 @@ export const MODEL_IDS = {
   ),
   transcription: pickEnv(
     ['NEXT_PUBLIC_OPENAI_TRANSCRIPTION_MODEL', 'OPENAI_TRANSCRIPTION_MODEL'],
-    'gpt-4o-transcribe',
+    'gpt-4o-mini-transcribe',
   ),
   supervisor: pickEnv(
     ['NEXT_PUBLIC_OPENAI_SUPERVISOR_MODEL', 'OPENAI_SUPERVISOR_MODEL'],

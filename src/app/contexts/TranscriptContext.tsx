@@ -83,13 +83,27 @@ export const TranscriptProvider: FC<PropsWithChildren> = ({ children }) => {
     });
   };
 
+  const normalizePlaceholder = (text: string | undefined | null) => {
+    if (!text) return '';
+    return text.replace(/\u2026/g, '...').trim().toLowerCase();
+  };
+
   const updateTranscriptMessage: TranscriptContextValue["updateTranscriptMessage"] = (itemId, newText, append = false) => {
     setTranscriptItems((prev) =>
       prev.map((item) => {
         if (item.itemId === itemId && item.type === "MESSAGE") {
+          const currentTitle = item.title ?? "";
+          const normalized = normalizePlaceholder(currentTitle);
+          const isPlaceholder =
+            normalized === "[transcribing...]" ||
+            normalized === "..." ||
+            normalized === "…";
+          const nextTitle = append
+            ? (isPlaceholder || !currentTitle ? newText : currentTitle + newText)
+            : newText;
           return {
             ...item,
-            title: append ? (item.title ?? "") + newText : newText,
+            title: nextTitle,
           };
         }
         return item;

@@ -51,7 +51,29 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
   const stepActiveRef = useRef<boolean>(false);
   const currentResponseIdRef = useRef<string | null>(null);
 
+  function logDebug(event: any) {
+    try {
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('[realtime transport]', event);
+      } else {
+        const type = event?.type;
+        if (
+          type === 'conversation.item.input_audio_transcription.delta' ||
+          type === 'conversation.item.input_audio_transcription.completed' ||
+          type === 'input_audio_transcription.delta' ||
+          type === 'input_audio_transcription.completed' ||
+          type === 'response.audio_transcript.delta' ||
+          type === 'response.audio_transcript.done' ||
+          type === 'session.updated'
+        ) {
+          console.info('[dexter transcription]', event);
+        }
+      }
+    } catch {}
+  }
+
   function handleTransportEvent(event: any) {
+    logDebug(event);
     // Handle additional server events that aren't managed by the session
     switch (event.type) {
       case "conversation.item.input_audio_transcription.delta": {
@@ -311,8 +333,14 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       //  simulate how the voice agent sounds over a PSTN/SIP phone call.
       const codecParam = codecParamRef.current;
       const audioFormat = audioFormatForCodec(codecParam);
+      const audioFormatConfig =
+        audioFormat === 'pcm16'
+          ? ({ type: 'audio/pcm', rate: 24000 } as const)
+          : audioFormat === 'g711_ulaw'
+            ? ({ type: 'audio/pcmu' } as const)
+            : ({ type: 'audio/pcma' } as const);
 
-     sessionRef.current = new RealtimeSession(rootAgent, {
+      sessionRef.current = new RealtimeSession(rootAgent, {
         transport: new OpenAIRealtimeWebRTC({
           audioElement,
           baseUrl:
@@ -327,10 +355,16 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         }),
         model: MODEL_IDS.realtime,
         config: {
-          inputAudioFormat: audioFormat,
-          outputAudioFormat: audioFormat,
-          inputAudioTranscription: {
-            model: MODEL_IDS.transcription,
+          audio: {
+            input: {
+              format: audioFormatConfig,
+              transcription: {
+                model: MODEL_IDS.transcription,
+              },
+            },
+            output: {
+              format: audioFormatConfig,
+            },
           },
         },
         outputGuardrails: outputGuardrails ?? [],
