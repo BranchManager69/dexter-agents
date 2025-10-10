@@ -1,5 +1,5 @@
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
 import {
   ChatKitWidgetRenderer,
   type Badge,
@@ -33,6 +33,8 @@ const streamGetSceneRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
   const activeScene = payload.scene ?? null;
   const updatedAt = payload.updatedAt ?? null;
   const scenes = Array.isArray(payload.scenes) ? payload.scenes : [];
+  const timestampDisplay = formatTimestampDisplay(item.timestamp);
+  const updatedDisplay = formatTimestampDisplay(updatedAt ?? undefined);
 
   const headerCard: Card = {
     type: "Card",
@@ -48,11 +50,11 @@ const streamGetSceneRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
             gap: 4,
             children: [
               { type: "Title", value: "Current Stream Scene", size: "md" },
-              item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
+              timestampDisplay ? { type: "Caption", value: timestampDisplay, size: "xs" } : undefined,
             ].filter(Boolean) as ChatKitWidgetComponent[],
           },
-          updatedAt
-            ? ({ type: "Badge", label: `Updated ${new Date(updatedAt).toLocaleTimeString()}`, color: "secondary", variant: "outline" } as Badge)
+          updatedDisplay
+            ? ({ type: "Badge", label: `Updated ${updatedDisplay}`, color: "secondary", variant: "outline" } as Badge)
             : undefined,
         ].filter(Boolean) as ChatKitWidgetComponent[],
       },
@@ -119,6 +121,8 @@ const streamSetSceneRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
   const requestedScene = args?.scene ?? null;
   const updatedScene = result.scene ?? null;
   const updatedAt = result.updatedAt ?? null;
+  const timestampDisplay = formatTimestampDisplay(item.timestamp);
+  const updatedDisplay = formatTimestampDisplay(updatedAt ?? undefined);
 
   const statusLabel = updatedScene ? `Switched to ${updatedScene}` : "Scene update acknowledged";
 
@@ -136,7 +140,7 @@ const streamSetSceneRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
             gap: 4,
             children: [
               { type: "Title", value: "Set Stream Scene", size: "md" },
-              item.timestamp ? { type: "Caption", value: item.timestamp, size: "xs" } : undefined,
+              timestampDisplay ? { type: "Caption", value: timestampDisplay, size: "xs" } : undefined,
             ].filter(Boolean) as ChatKitWidgetComponent[],
           },
           { type: "Badge", label: statusLabel, color: "success", variant: "outline" } as Badge,
@@ -152,8 +156,8 @@ const streamSetSceneRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
   if (updatedScene) {
     rows.push(buildRow("Active", updatedScene));
   }
-  if (updatedAt) {
-    rows.push(buildRow("Updated", new Date(updatedAt).toLocaleTimeString()));
+  if (updatedDisplay) {
+    rows.push(buildRow("Updated", updatedDisplay));
   }
 
   const bodyCard: Card = {
