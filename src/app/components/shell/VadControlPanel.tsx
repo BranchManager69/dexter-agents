@@ -37,7 +37,7 @@ const PRESETS: VadPreset[] = [
     id: "balanced",
     label: "Balanced",
     description: "Our recommended everyday mix.",
-    values: { threshold: 0.75, prefixPaddingMs: 320, silenceDurationMs: 520 },
+    values: { threshold: 0.95, prefixPaddingMs: 320, silenceDurationMs: 520 },
   },
   {
     id: "patient",
