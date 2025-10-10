@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
 import { TokenIcon } from "./solanaVisuals";
 
 type SearchResult = {
@@ -48,6 +48,8 @@ const searchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
     : null;
   const query = typeof args.query === "string" && args.query.trim().length > 0 ? args.query.trim() : undefined;
 
+  const timestamp = formatTimestampDisplay(item.timestamp);
+
   return (
     <div className={BASE_CARD_CLASS}>
       <section className="flex flex-col gap-6">
@@ -55,7 +57,7 @@ const searchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
           {query && <span className="text-xs uppercase tracking-[0.32em] text-slate-400">Search</span>}
           <div className="flex flex-col gap-1">
             {query && <h2 className="text-lg font-semibold text-slate-900">{query}</h2>}
-            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+            {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
           </div>
         </header>
 

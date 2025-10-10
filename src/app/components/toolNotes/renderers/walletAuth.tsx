@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge, formatTimestampDisplay } from "./helpers";
 import { MetricPill } from "./solanaVisuals";
 
 type Diagnostics = {
@@ -22,6 +22,7 @@ type AuthSummary = {
 const walletAuthRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const normalized = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
   const payload = unwrapStructured(normalized) as AuthSummary;
+  const timestamp = formatTimestampDisplay(item.timestamp);
 
   const diagnostics = payload.diagnostics ?? {};
 
@@ -38,7 +39,7 @@ const walletAuthRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
         <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-1">
             <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Auth Diagnostics</span>
-            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+            {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
           </div>
         </header>
 

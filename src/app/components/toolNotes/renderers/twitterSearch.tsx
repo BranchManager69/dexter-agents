@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
 import { MetricPill, TokenIcon } from "./solanaVisuals";
 
 type TwitterAuthor = {
@@ -129,6 +129,8 @@ const twitterSearchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, d
 
   const tweetCount = typeof payload.fetched === "number" ? payload.fetched : tweets.length;
 
+  const timestamp = formatTimestampDisplay(item.timestamp);
+
   return (
     <div className={BASE_CARD_CLASS}>
       <section className="flex flex-col gap-7">
@@ -139,7 +141,7 @@ const twitterSearchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, d
             {!primaryQuery && payload.queries && payload.queries.length > 0 && (
               <span className="text-xs text-slate-400">{payload.queries.join(" · ")}</span>
             )}
-            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+            {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
           </div>
           <div className="flex flex-wrap gap-2">
             <MetricPill label="Tweets" value={`${tweetCount}`} tone={tweetCount ? "positive" : "neutral"} />

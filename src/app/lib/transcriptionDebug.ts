@@ -9,17 +9,13 @@ export function sendTranscriptionDebug(payload: Record<string, any>) {
       ...payload,
     });
 
-    const blob = new Blob([body], { type: 'application/json' });
-    if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
-      navigator.sendBeacon('/api/transcription-debug', blob);
-    } else {
-      fetch('/api/transcription-debug', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
-        keepalive: true,
-      }).catch(() => {});
-    }
+    fetch('/api/transcription-debug', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body,
+      keepalive: true,
+    }).catch(() => {});
   } catch (error) {
     console.warn('[transcription-debug] failed to send', error);
   }
