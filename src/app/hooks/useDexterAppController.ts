@@ -35,6 +35,7 @@ import { useRealtimeSession } from "./useRealtimeSession";
 import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 import { useSignalData } from "./useSignalData";
 import { useAuth } from "../auth-context";
+import { sendTranscriptionDebug } from "@/app/lib/transcriptionDebug";
 
 type DexterSessionUser = {
   id?: string | null;
@@ -1704,6 +1705,12 @@ export function useDexterAppController(): DexterAppController {
           input: inputAudioUpdate,
         },
       },
+    });
+
+    sendTranscriptionDebug({
+      event: 'session.update',
+      inputAudio: inputAudioUpdate,
+      microphoneMuted: isVoiceMuted,
     });
 
     // Send an initial 'hi' message to trigger the agent to greet the user
