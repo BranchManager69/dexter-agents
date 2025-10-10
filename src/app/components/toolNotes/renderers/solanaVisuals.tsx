@@ -55,18 +55,18 @@ interface MetricPillProps {
 }
 
 const TONE_STYLES: Record<NonNullable<MetricPillProps["tone"]>, string> = {
-  neutral: "border-slate-200 text-slate-600",
-  positive: "border-emerald-200 text-emerald-600",
-  negative: "border-rose-200 text-rose-600",
-  notice: "border-indigo-200 text-indigo-600",
+  neutral: "bg-slate-100 text-slate-700",
+  positive: "bg-emerald-100 text-emerald-700",
+  negative: "bg-rose-100 text-rose-700",
+  notice: "bg-indigo-100 text-indigo-700",
 };
 
 export function MetricPill({ label, value, tone = "neutral" }: MetricPillProps) {
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold ${TONE_STYLES[tone] ?? TONE_STYLES.neutral}`}
+      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-semibold ${TONE_STYLES[tone] ?? TONE_STYLES.neutral}`}
     >
-      {label && <span className="text-[0.58rem] uppercase tracking-[0.28em] text-slate-300">{label}</span>}
+      {label && <span className="text-[0.58rem] uppercase tracking-[0.28em] text-slate-500">{label}</span>}
       <span>{value}</span>
     </span>
   );
@@ -78,7 +78,7 @@ export function LinkPill({ value, href }: { value: string; href: string }) {
       href={href}
       target="_blank"
       rel="noreferrer"
-      className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 transition hover:border-slate-300 hover:text-slate-900"
+      className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-200 hover:text-slate-900"
     >
       {value}
     </a>

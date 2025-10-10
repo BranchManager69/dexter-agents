@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
+import { sendTranscriptionDebug } from "@/app/lib/transcriptionDebug";
 
 export function useHandleSessionHistory() {
   const {
@@ -22,6 +23,7 @@ export function useHandleSessionHistory() {
   const messageLogStateRef = useRef(new Map<string, string>());
   const toolLogSetRef = useRef(new Set<string>());
   const toolNoteIdMapRef = useRef(new Map<string, string>());
+  const transcriptionLogSetRef = useRef(new Set<string>());
 
   useEffect(() => {
     transcriptItemsRef.current = transcriptItems;
@@ -277,6 +279,17 @@ export function useHandleSessionHistory() {
         ensureUserTranscriptMessage(itemId);
       }
       updateTranscriptMessage(itemId, deltaText, true);
+
+      const logKey = `${role}:${itemId}`;
+      if (deltaText && !transcriptionLogSetRef.current.has(logKey)) {
+        transcriptionLogSetRef.current.add(logKey);
+        sendTranscriptionDebug({
+          event: 'transcription_delta',
+          role,
+          itemId,
+          preview: deltaText.slice(0, 80),
+        });
+      }
     }
   }
 
@@ -310,6 +323,12 @@ export function useHandleSessionHistory() {
       updateTranscriptItem(itemId, { status: 'DONE' });
 
       logMessageToServer(itemId, role, finalTranscript);
+      sendTranscriptionDebug({
+        event: 'transcription_completed',
+        role,
+        itemId,
+        text: finalTranscript,
+      });
 
       // If guardrailResult still pending, mark PASS.
       if (transcriptItem?.guardrailResult?.status === 'IN_PROGRESS') {
