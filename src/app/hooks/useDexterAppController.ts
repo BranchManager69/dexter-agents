@@ -164,7 +164,7 @@ import type { AgentPersonaModalProps, PersonaPreset } from '@/app/components/Age
 import { usePromptProfiles, DEFAULT_TOOL_SLUGS } from './usePromptProfiles';
 
 const DEFAULT_GUEST_SESSION_INSTRUCTIONS =
-  'Operate using the shared Dexter demo wallet with limited funds. Avoid destructive actions and encourage the user to sign in for persistent access.';
+  'Operate using the shared Dexter demo wallet backed by house funds. Avoid destructive actions, note that balances are shared, and coordinate with the team before promising dedicated access.';
 
 const createGuestIdentity = (instructions: string = DEFAULT_GUEST_SESSION_INSTRUCTIONS): DexterSessionSummary => ({
   type: "guest",
@@ -1285,8 +1285,8 @@ export function useDexterAppController(): DexterAppController {
   const [pendingAutoConnect, setPendingAutoConnect] = useState<boolean>(false);
   const [isDebugModalOpen, setIsDebugModalOpen] = useState<boolean>(false);
   const [crestOrigin, setCrestOrigin] = useState<{
-    left: number;
-    top: number;
+    pageLeft: number;
+    pageTop: number;
     width: number;
     height: number;
   } | null>(null);
@@ -1878,19 +1878,28 @@ export function useDexterAppController(): DexterAppController {
 
     try {
       if (hasAttachments) {
+        const hasUserText = messageToSend.length > 0;
+        const synthesizedText = hasUserText
+          ? messageToSend
+          : 'Please inspect the attached image and describe any notable details, including visible text, people, objects, and overall context.';
+
         const content: Array<
           | { type: 'input_text'; text: string }
-          | { type: 'input_image'; image: string; providerData?: Record<string, any> }
-        > = [];
+          | { type: 'input_image'; image: string; providerData?: Record<string, any>; detail?: 'low' | 'high' }
+        > = [{ type: 'input_text', text: synthesizedText }];
 
-        if (messageToSend.length > 0) {
-          content.push({ type: 'input_text', text: messageToSend });
+        if (hasUserText) {
+          content.push({
+            type: 'input_text',
+            text: 'The user included image attachments—please consider them when forming your answer.',
+          });
         }
 
         composerAttachments.forEach((attachment) => {
           content.push({
             type: 'input_image',
             image: attachment.dataUrl,
+            detail: 'high',
             providerData: {
               filename: attachment.label,
               mimeType: attachment.mimeType,
@@ -1898,10 +1907,6 @@ export function useDexterAppController(): DexterAppController {
             },
           });
         });
-
-        if (!content.length) {
-          throw new Error('Attachment payload missing content');
-        }
 
         sendUserMessage({
           type: 'message',
@@ -1922,13 +1927,13 @@ export function useDexterAppController(): DexterAppController {
   };
 
   const resolveDisplayName = () => {
-    if (sessionIdentity.type !== 'user') {
-      return 'Dexter user';
-    }
-    const email = sessionIdentity.user?.email ?? '';
-    if (email.includes('@')) {
-      return email.split('@')[0] || email;
-    }
+  if (sessionIdentity.type !== 'user') {
+    return 'a Dexter demo guest';
+  }
+  const email = sessionIdentity.user?.email ?? '';
+  if (email.includes('@')) {
+    return email.split('@')[0] || email;
+  }
     return email || 'Dexter user';
   };
 
@@ -2478,7 +2483,7 @@ export function useDexterAppController(): DexterAppController {
     }
 
     if (sessionIdentity.type !== 'user') {
-      return 'I can jump into live Solana tools with you. Ask when you are ready.';
+      return 'You are currently using the Dexter demo wallet shared by all guests. You can check the live balance and place real trades as if it were your own. Log in to get your own Dexter wallet.';
     }
 
     if (nextConversationPrompt && nextConversationPrompt.length) {
@@ -2548,12 +2553,20 @@ export function useDexterAppController(): DexterAppController {
     onStartConversation: () => handleStartConversation(),
     onCaptureCrestOrigin: (rect) => {
       if (rect) {
-        setCrestOrigin({
-          left: rect.left,
-          top: rect.top,
-          width: rect.width,
-          height: rect.height,
-        });
+        if (typeof window !== 'undefined') {
+          const scrollX = typeof window.scrollX === 'number' ? window.scrollX : window.pageXOffset;
+          const scrollY = typeof window.scrollY === 'number' ? window.scrollY : window.pageYOffset;
+          const viewport = window.visualViewport;
+          const offsetLeft = viewport?.offsetLeft ?? 0;
+          const offsetTop = viewport?.offsetTop ?? 0;
+
+          setCrestOrigin({
+            pageLeft: rect.left + scrollX + offsetLeft,
+            pageTop: rect.top + scrollY + offsetTop,
+            width: rect.width,
+            height: rect.height,
+          });
+        }
       } else {
         setCrestOrigin(null);
       }

@@ -37,6 +37,23 @@ const DEFAULT_CONCIERGE_PROMPTS: ConciergePromptProfile = {
       slug: 'agent.concierge.instructions',
       fallback: '⚠️ Missing prompt module "agent.concierge.instructions". Update it in the Super Admin prompt editor.',
     },
+    {
+      slug: 'agent.concierge.instructions.link_handling',
+      fallback:
+        [
+          'When you provide external explorer links or confirmations, never read or spell out the raw URL.',
+          'Use a short descriptive label like "View on Solscan" and keep the voice response concise.',
+        ].join(' '),
+    },
+    {
+      slug: 'agent.concierge.instructions.image_handling',
+      fallback:
+        [
+          'When the user provides `input_image` content, always acknowledge that an image was received.',
+          'Describe the image in useful detail (people, objects, colors, visible text, context) and answer any explicit question they asked about it.',
+          'If they did not provide any text with the image, infer a helpful caption and then invite follow-up questions.',
+        ].join(' '),
+    },
   ],
   handoffDescription: {
     slug: 'agent.concierge.handoff',
