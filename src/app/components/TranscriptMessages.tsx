@@ -89,6 +89,8 @@ export function TranscriptMessages({
   const hasRealMessages = realMessageCount > 0;
   const showEmptyState = !hasActivatedSession && !hasRealMessages;
 
+  const POST_PROMPTS_ENABLED = false;
+
   const suggestedPrompts = [
     "What's trending on Pump.fun right now?",
     "Show me my wallet balance",
@@ -96,17 +98,21 @@ export function TranscriptMessages({
   ];
 
   useEffect(() => {
+    if (!POST_PROMPTS_ENABLED) return;
+
     if (!hasShownPostPromptsRef.current && hasActivatedSession && hasRealMessages) {
       setPostPromptsVisible(true);
       hasShownPostPromptsRef.current = true;
     }
-  }, [hasActivatedSession, hasRealMessages]);
+  }, [POST_PROMPTS_ENABLED, hasActivatedSession, hasRealMessages]);
 
   useEffect(() => {
+    if (!POST_PROMPTS_ENABLED) return;
+
     if (postPromptsVisible && realMessageCount > 1) {
       setPostPromptsVisible(false);
     }
-  }, [postPromptsVisible, realMessageCount]);
+  }, [POST_PROMPTS_ENABLED, postPromptsVisible, realMessageCount]);
 
   useEffect(() => {
     if (!showEmptyState) {
@@ -216,7 +222,7 @@ export function TranscriptMessages({
         )}
       </AnimatePresence>
 
-      {postPromptsVisible && (
+      {POST_PROMPTS_ENABLED && postPromptsVisible && (
         <div className="animate-in fade-in slide-in-from-top-2 mb-4 flex flex-wrap items-center justify-center gap-2 self-center rounded-full border border-neutral-800/60 bg-surface-glass/40 px-4 py-2 text-sm text-neutral-300 shadow-sm">
           {suggestedPrompts.map((prompt, index) => (
             <button

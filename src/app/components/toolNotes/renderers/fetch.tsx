@@ -2,7 +2,7 @@ import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
 import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
-import { MetricPill, TokenIcon } from "./solanaVisuals";
+import { TokenIcon } from "./solanaVisuals";
 
 type DocumentPayload = {
   title?: string;
@@ -37,26 +37,19 @@ const fetchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
         .map((paragraph) => paragraph.trim())
         .filter(Boolean)
     : [];
-  const imageCount = Array.isArray(doc.images) ? doc.images.length : 0;
-
   return (
     <div className={BASE_CARD_CLASS}>
       <section className="flex flex-col gap-6">
-        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Fetched document</span>
-            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {hostname && <MetricPill label="Domain" value={hostname} />}
-            {imageCount > 0 && <MetricPill label="Images" value={`${imageCount}`} />}
-          </div>
+        <header className="flex flex-col gap-1">
+          <span className="text-xs uppercase tracking-[0.32em] text-slate-400">Fetched page</span>
+          <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
         </header>
 
-        <article className="flex flex-col gap-4 rounded-2xl border border-slate-200/60 bg-white/70 p-4 shadow-sm">
+        <article className="flex flex-col gap-5">
           <header className="flex items-start gap-3">
             <TokenIcon label={(hostname ?? title).slice(0, 2).toUpperCase()} size={48} />
             <div className="flex flex-1 flex-col gap-1">
+              {hostname && <span className="text-xs uppercase tracking-[0.24em] text-slate-400">{hostname}</span>}
               {url ? (
                 <a
                   href={url}
@@ -69,13 +62,12 @@ const fetchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
               ) : (
                 <h3 className="text-base font-semibold text-slate-900">{title}</h3>
               )}
-              {hostname && <span className="text-xs uppercase tracking-[0.28em] text-slate-400">{hostname}</span>}
               {snippet && <p className="text-sm text-slate-600">{snippet}</p>}
             </div>
           </header>
 
           {paragraphs.length > 0 ? (
-            <div className="space-y-3 text-sm text-slate-600">
+            <div className="space-y-3 rounded-2xl border border-slate-200/70 p-4 text-sm leading-relaxed text-slate-700">
               {paragraphs.slice(0, 4).map((paragraph, index) => (
                 <p key={index}>{paragraph}</p>
               ))}
