@@ -33,7 +33,6 @@ const walletListRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
       ? (payload as WalletRecord[])
       : [];
 
-  const userId = (payload as WalletListPayload)?.user?.id;
   const visibleWallets = wallets.slice(0, 6);
   const hasMore = wallets.length > visibleWallets.length;
 
@@ -47,13 +46,6 @@ const walletListRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
           </div>
           <MetricPill label="Total" value={`${wallets.length}`} tone={wallets.length ? "neutral" : "notice"} />
         </header>
-
-        {userId && (
-          <div className="flex flex-col gap-2 text-sm text-slate-600">
-            <span className="text-[11px] uppercase tracking-[0.24em] text-slate-300">Supabase user</span>
-            <HashBadge value={userId} ariaLabel="Supabase user id" />
-          </div>
-        )}
 
         <div className="flex flex-col gap-4">
           {visibleWallets.map((wallet, index) => {

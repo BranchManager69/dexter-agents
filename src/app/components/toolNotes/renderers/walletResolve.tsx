@@ -2,7 +2,7 @@ import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
 import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge } from "./helpers";
-import { LinkPill, MetricPill } from "./solanaVisuals";
+import { LinkPill, TokenIcon } from "./solanaVisuals";
 
 type WalletResolvePayload = {
   wallet_address?: string;
@@ -67,41 +67,39 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
     extractAddress(normalized) ??
     extractAddress((item.data as any)?.output);
   const requestedAddress = typeof args.wallet_address === "string" ? args.wallet_address : null;
-  const userId = typeof (payload as any)?.user_id === "string" ? (payload as any).user_id : null;
   const source = typeof (payload as any)?.source === "string" ? (payload as any).source : resolvedAddress ? "resolver" : "unknown";
+  const showRequested = requestedAddress && requestedAddress !== resolvedAddress;
+  const sourceLabel = source ? source.replace(/_/g, " ") : "unknown";
+  const iconLabel = resolvedAddress ? resolvedAddress.slice(0, 2).toUpperCase() : "??";
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <section className="flex flex-col gap-7">
-        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Active Wallet</span>
-            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
-          </div>
-          <MetricPill label="Source" value={source ?? "Unknown"} />
+      <section className="flex flex-col gap-6">
+        <header className="flex flex-col gap-1">
+          <span className="text-xs uppercase tracking-[0.32em] text-slate-400">Session wallet</span>
+          <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
         </header>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2 text-sm text-slate-600">
-            <span className="text-[11px] uppercase tracking-[0.24em] text-slate-300">Resolved</span>
-            {resolvedAddress ? (
-              <HashBadge value={resolvedAddress} href={`https://solscan.io/account/${resolvedAddress}`} ariaLabel="Resolved wallet" />
-            ) : (
-              <span className="text-slate-500">No wallet currently resolved.</span>
-            )}
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-wrap items-center gap-4">
+            <TokenIcon label={iconLabel} size={56} />
+            <div className="flex flex-col">
+              <span className="text-[11px] uppercase tracking-[0.28em] text-slate-400">Active wallet</span>
+              {resolvedAddress ? (
+                <HashBadge value={resolvedAddress} href={`https://solscan.io/account/${resolvedAddress}`} ariaLabel="Resolved wallet" />
+              ) : (
+                <span className="text-sm text-slate-500">Resolver did not return a wallet.</span>
+              )}
+            </div>
+            <span className="ml-auto rounded-full border border-slate-200 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-slate-500">
+              {sourceLabel}
+            </span>
           </div>
 
-          {requestedAddress && (
+          {showRequested && (
             <div className="flex flex-col gap-2 text-sm text-slate-600">
-              <span className="text-[11px] uppercase tracking-[0.24em] text-slate-300">Requested</span>
-              <HashBadge value={requestedAddress} ariaLabel="Requested wallet" />
-            </div>
-          )}
-
-          {userId && (
-            <div className="flex flex-col gap-2 text-sm text-slate-600">
-              <span className="text-[11px] uppercase tracking-[0.24em] text-slate-300">Supabase user</span>
-              <HashBadge value={userId} ariaLabel="Supabase user id" />
+              <span className="text-[11px] uppercase tracking-[0.28em] text-slate-400">Last requested</span>
+              <HashBadge value={requestedAddress!} ariaLabel="Requested wallet" />
             </div>
           )}
 
