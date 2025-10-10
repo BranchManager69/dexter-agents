@@ -65,6 +65,7 @@ export function VadControlPanel({
     const match = PRESETS.find((preset) => isPresetMatch(settings, preset));
     return match?.id ?? "custom";
   }, [settings]);
+  const [openMobileSection, setOpenMobileSection] = React.useState<string>("threshold");
 
   React.useEffect(() => {
     setMounted(true);
@@ -168,42 +169,121 @@ export function VadControlPanel({
                   </div>
                 </div>
 
-                <VSlider
-                  id="vad-threshold"
-                  label="Sensitivity"
-                  description="How loud you need to be before Dexter starts listening."
-                  value={settings.threshold}
-                  unit={formatThreshold(settings.threshold)}
-                  min={VAD_LIMITS.threshold.min}
-                  max={VAD_LIMITS.threshold.max}
-                  step={VAD_LIMITS.threshold.step}
-                  onChange={(value) => handleUpdate("threshold", value)}
-                  type="float"
-                />
+                <div className="hidden divide-y divide-white/5 rounded-2xl border border-white/8 bg-white/[0.02] sm:block">
+                  <div className="p-4">
+                    <VSlider
+                      id="vad-threshold"
+                      label="Sensitivity"
+                      description="How loud you need to be before Dexter starts listening."
+                      value={settings.threshold}
+                      unit={formatThreshold(settings.threshold)}
+                      min={VAD_LIMITS.threshold.min}
+                      max={VAD_LIMITS.threshold.max}
+                      step={VAD_LIMITS.threshold.step}
+                      onChange={(value) => handleUpdate("threshold", value)}
+                      type="float"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <VSlider
+                      id="vad-prefix"
+                      label="Lead-in padding"
+                      description="Audio captured just before you speak so we don’t miss the first word."
+                      value={settings.prefixPaddingMs}
+                      unit={formatMs(settings.prefixPaddingMs)}
+                      min={VAD_LIMITS.prefixPaddingMs.min}
+                      max={VAD_LIMITS.prefixPaddingMs.max}
+                      step={VAD_LIMITS.prefixPaddingMs.step}
+                      onChange={(value) => handleUpdate("prefixPaddingMs", value)}
+                    />
+                  </div>
+                  <div className="p-4">
+                    <VSlider
+                      id="vad-silence"
+                      label="Silence timeout"
+                      description="How long Dexter waits after you stop before replying."
+                      value={settings.silenceDurationMs}
+                      unit={formatMs(settings.silenceDurationMs)}
+                      min={VAD_LIMITS.silenceDurationMs.min}
+                      max={VAD_LIMITS.silenceDurationMs.max}
+                      step={VAD_LIMITS.silenceDurationMs.step}
+                      onChange={(value) => handleUpdate("silenceDurationMs", value)}
+                    />
+                  </div>
+                </div>
 
-                <VSlider
-                  id="vad-prefix"
-                  label="Lead-in padding"
-                  description="Audio captured just before you speak so we don’t miss the first word."
-                  value={settings.prefixPaddingMs}
-                  unit={formatMs(settings.prefixPaddingMs)}
-                  min={VAD_LIMITS.prefixPaddingMs.min}
-                  max={VAD_LIMITS.prefixPaddingMs.max}
-                  step={VAD_LIMITS.prefixPaddingMs.step}
-                  onChange={(value) => handleUpdate("prefixPaddingMs", value)}
-                />
-
-                <VSlider
-                  id="vad-silence"
-                  label="Silence timeout"
-                  description="How long Dexter waits after you stop before replying."
-                  value={settings.silenceDurationMs}
-                  unit={formatMs(settings.silenceDurationMs)}
-                  min={VAD_LIMITS.silenceDurationMs.min}
-                  max={VAD_LIMITS.silenceDurationMs.max}
-                  step={VAD_LIMITS.silenceDurationMs.step}
-                  onChange={(value) => handleUpdate("silenceDurationMs", value)}
-                />
+                <div className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/8 bg-white/[0.02] sm:hidden">
+                  <MobileSliderSection
+                    id="threshold"
+                    label="Sensitivity"
+                    summary={formatThreshold(settings.threshold)}
+                    description="How loud you need to be before Dexter starts listening."
+                    isOpen={openMobileSection === "threshold"}
+                    onToggle={() =>
+                      setOpenMobileSection((prev) => (prev === "threshold" ? "" : "threshold"))
+                    }
+                  >
+                    <VSlider
+                      id="vad-threshold-mobile"
+                      label="Sensitivity"
+                      description="How loud you need to be before Dexter starts listening."
+                      value={settings.threshold}
+                      unit={formatThreshold(settings.threshold)}
+                      min={VAD_LIMITS.threshold.min}
+                      max={VAD_LIMITS.threshold.max}
+                      step={VAD_LIMITS.threshold.step}
+                      onChange={(value) => handleUpdate("threshold", value)}
+                      type="float"
+                      compact
+                    />
+                  </MobileSliderSection>
+                  <MobileSliderSection
+                    id="prefix"
+                    label="Lead-in padding"
+                    summary={formatMs(settings.prefixPaddingMs)}
+                    description="Audio captured just before you speak so we don’t miss the first word."
+                    isOpen={openMobileSection === "prefix"}
+                    onToggle={() =>
+                      setOpenMobileSection((prev) => (prev === "prefix" ? "" : "prefix"))
+                    }
+                  >
+                    <VSlider
+                      id="vad-prefix-mobile"
+                      label="Lead-in padding"
+                      description="Audio captured just before you speak so we don’t miss the first word."
+                      value={settings.prefixPaddingMs}
+                      unit={formatMs(settings.prefixPaddingMs)}
+                      min={VAD_LIMITS.prefixPaddingMs.min}
+                      max={VAD_LIMITS.prefixPaddingMs.max}
+                      step={VAD_LIMITS.prefixPaddingMs.step}
+                      onChange={(value) => handleUpdate("prefixPaddingMs", value)}
+                      compact
+                    />
+                  </MobileSliderSection>
+                  <MobileSliderSection
+                    id="silence"
+                    label="Silence timeout"
+                    summary={formatMs(settings.silenceDurationMs)}
+                    description="How long Dexter waits after you stop before replying."
+                    isOpen={openMobileSection === "silence"}
+                    onToggle={() =>
+                      setOpenMobileSection((prev) => (prev === "silence" ? "" : "silence"))
+                    }
+                  >
+                    <VSlider
+                      id="vad-silence-mobile"
+                      label="Silence timeout"
+                      description="How long Dexter waits after you stop before replying."
+                      value={settings.silenceDurationMs}
+                      unit={formatMs(settings.silenceDurationMs)}
+                      min={VAD_LIMITS.silenceDurationMs.min}
+                      max={VAD_LIMITS.silenceDurationMs.max}
+                      step={VAD_LIMITS.silenceDurationMs.step}
+                      onChange={(value) => handleUpdate("silenceDurationMs", value)}
+                      compact
+                    />
+                  </MobileSliderSection>
+                </div>
 
                 <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
                   <div>
@@ -281,6 +361,7 @@ type SliderProps =
       step: number;
       onChange: (value: number) => void;
       type?: "int";
+      compact?: boolean;
     }
   | {
       id: string;
@@ -293,6 +374,7 @@ type SliderProps =
       step: number;
       onChange: (value: number) => void;
       type: "float";
+      compact?: boolean;
     };
 
 function VSlider({
@@ -306,6 +388,7 @@ function VSlider({
   step,
   onChange,
   type,
+  compact,
 }: SliderProps) {
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const next = type === "float" ? parseFloat(event.target.value) : parseInt(event.target.value, 10);
@@ -350,8 +433,79 @@ function VSlider({
         step={step}
         value={value}
         onChange={handleSliderChange}
-        className="h-1 w-full appearance-none rounded-full bg-neutral-800 accent-flux focus:outline-none"
+        className={`w-full appearance-none rounded-full bg-neutral-800 accent-flux focus:outline-none ${
+          compact ? "h-1.5" : "h-1"
+        }`}
       />
+    </div>
+  );
+}
+
+type MobileSliderSectionProps = {
+  id: string;
+  label: string;
+  summary: string;
+  description: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+};
+
+function MobileSliderSection({
+  id,
+  label,
+  summary,
+  description,
+  isOpen,
+  onToggle,
+  children,
+}: MobileSliderSectionProps) {
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="flex w-full items-center justify-between px-4 py-3 text-left text-neutral-200 transition hover:text-flux"
+        aria-expanded={isOpen}
+        aria-controls={`${id}-panel`}
+      >
+        <div className="pr-4">
+          <p className="font-display text-[11px] uppercase tracking-[0.18em] text-neutral-300">{label}</p>
+          <span className="text-[11px] text-neutral-500">{description}</span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-neutral-400">
+          <span>{summary}</span>
+          <svg
+            className={`h-3 w-3 transition-transform ${isOpen ? "rotate-90 text-flux" : ""}`}
+            viewBox="0 0 12 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path
+              d="M4 2l4 4-4 4"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+      </button>
+      <AnimatePresence initial={false}>
+        {isOpen ? (
+          <motion.div
+            id={`${id}-panel`}
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.24, 0.7, 0.3, 1.12] }}
+            className="overflow-hidden px-4 pb-4"
+          >
+            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">{children}</div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
