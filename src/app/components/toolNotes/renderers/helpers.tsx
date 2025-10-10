@@ -193,3 +193,15 @@ export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
     </div>
   );
 }
+
+export function formatTimestampDisplay(value?: string) {
+  if (!value) return undefined;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}

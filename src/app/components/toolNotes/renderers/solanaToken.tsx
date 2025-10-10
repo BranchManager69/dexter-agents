@@ -1,8 +1,8 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge } from "./helpers";
-import { LinkPill, MetricPill, TokenIcon } from "./solanaVisuals";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge, formatTimestampDisplay } from "./helpers";
+import { LinkPill, MetricPill, TokenIcon, TokenResearchLinks } from "./solanaVisuals";
 
 type TokenResult = {
   address?: string;
@@ -104,6 +104,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
       : [];
 
   const visibleTokens = results.slice(0, 5);
+  const timestamp = formatTimestampDisplay(item.timestamp);
 
   if (item.status === "IN_PROGRESS" && results.length === 0) {
     return (
@@ -112,6 +113,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
           <header className="flex flex-col gap-1">
             <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token lookup</span>
             {query && <span className="text-sm text-slate-500">Query · {query}</span>}
+            {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
           </header>
           <p className="text-sm text-slate-500">Searching for tokens…</p>
         </section>
@@ -125,6 +127,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
         <header className="flex flex-col gap-1">
           <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token lookup</span>
           {query && <span className="text-sm text-slate-500">Query · {query}</span>}
+          {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
           {results.length > 0 && (
             <span className="text-xs text-slate-400">{results.length} candidate{results.length === 1 ? "" : "s"}</span>
           )}
@@ -188,10 +191,9 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  {marketCap && <MetricPill label="Market Cap" value={marketCap} />}
+                  {marketCap && <MetricPill label="MCAP" value={marketCap} />}
                   {priceChange && (
                     <MetricPill
-                      label="Change"
                       value={priceChange}
                       tone={priceChangeRaw !== undefined && priceChangeRaw < 0 ? "negative" : "positive"}
                     />
@@ -199,6 +201,8 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
                   {liquidity && <MetricPill label="Liquidity" value={liquidity} />}
                   {volume && <MetricPill label="24h Volume" value={volume} />}
                 </div>
+
+                {address && <TokenResearchLinks mint={address} />}
 
                 {pairs.length > 0 && (
                   <div className="flex flex-col gap-2 text-sm text-slate-600">
@@ -209,7 +213,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
                         const url = pickString(pair.url);
                         const liq = formatUsd(
                           pickNumber(
-                            pair.liquidity && typeof pair.liquidity === "object" ? (pair.liquidity as Record<string, unknown>).usd as number | string | null | undefined : undefined,
+                            pair.liquidity && typeof pair.liquidity === "object" ? ((pair.liquidity as Record<string, unknown>).usd as number | string | null | undefined) : undefined,
                             pair.liquidityUsd,
                             pair.liquidity_usd,
                           ),
@@ -219,12 +223,8 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
                         ) : (
                           <MetricPill key={`${dexLabel}-${idx}`} label={dexLabel} value={liq ?? "On-chain"} />
                         );
-          })}
-
-          {visibleTokens.length === 0 && (
-            <p className="text-sm text-slate-500">No tokens matched this query.</p>
-          )}
-        </div>
+                      })}
+                    </div>
                   </div>
                 )}
               </article>
@@ -232,7 +232,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
           })}
 
           {visibleTokens.length === 0 && (
-            <p className="text-sm text-slate-500">No tokens returned for this query.</p>
+            <p className="text-sm text-slate-500">No tokens matched this query.</p>
           )}
         </div>
       </section>

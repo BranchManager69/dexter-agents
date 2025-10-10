@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge, formatTimestampDisplay } from "./helpers";
 import { MetricPill, LinkPill } from "./solanaVisuals";
 
 type WalletRecord = {
@@ -36,13 +36,15 @@ const walletListRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const visibleWallets = wallets.slice(0, 6);
   const hasMore = wallets.length > visibleWallets.length;
 
+  const timestamp = formatTimestampDisplay(item.timestamp);
+
   return (
     <div className={BASE_CARD_CLASS}>
       <section className="flex flex-col gap-7">
         <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-1">
             <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Linked Wallets</span>
-            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+            {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
           </div>
           <MetricPill label="Total" value={`${wallets.length}`} tone={wallets.length ? "neutral" : "notice"} />
         </header>

@@ -88,6 +88,34 @@ export function LinkPill({ value, href }: { value: string; href: string }) {
   );
 }
 
+export function TokenResearchLinks({ mint }: { mint?: string | null }) {
+  if (!mint) return null;
+  const links = [
+    { label: "Solscan", href: `https://solscan.io/token/${mint}` },
+    { label: "Dexscreener", href: `https://dexscreener.com/solana/${mint}` },
+    { label: "Birdeye", href: `https://birdeye.so/token/${mint}?chain=solana` },
+  ];
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
+      {links.map((link) => (
+        <a
+          key={link.label}
+          href={link.href}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 underline decoration-slate-300 decoration-dotted underline-offset-4 transition hover:text-slate-900 hover:decoration-slate-500"
+        >
+          {link.label}
+          <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M7 17 17 7M9 7h8v8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </a>
+      ))}
+    </div>
+  );
+}
+
 export type TokenSide = {
   heading: string;
   amount?: string;

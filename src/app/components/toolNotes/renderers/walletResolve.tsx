@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge, formatTimestampDisplay } from "./helpers";
 import { LinkPill, TokenIcon } from "./solanaVisuals";
 
 type WalletResolvePayload = {
@@ -72,12 +72,14 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const sourceLabel = source ? source.replace(/_/g, " ") : null;
   const iconLabel = resolvedAddress ? resolvedAddress.slice(0, 2).toUpperCase() : "??";
 
+  const timestamp = formatTimestampDisplay(item.timestamp);
+
   return (
     <div className={BASE_CARD_CLASS}>
       <section className="flex flex-col gap-6">
         <header className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-[0.32em] text-slate-400">Session wallet</span>
-          <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+          {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
         </header>
 
         <div className="flex flex-col gap-5">

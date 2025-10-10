@@ -1,8 +1,8 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge } from "./helpers";
-import { LinkPill, MetricPill, TokenIcon } from "./solanaVisuals";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge, formatTimestampDisplay } from "./helpers";
+import { MetricPill, TokenIcon, TokenResearchLinks } from "./solanaVisuals";
 
 type BalanceEntry = {
   mint?: string;
@@ -78,6 +78,7 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
     : Array.isArray(payload)
       ? (payload as BalanceEntry[])
       : [];
+  const timestamp = formatTimestampDisplay(item.timestamp);
 
   if (item.status === "IN_PROGRESS" && balances.length === 0) {
     return (
@@ -85,7 +86,7 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
         <section className="flex flex-col gap-4">
           <header className="flex flex-col gap-1">
             <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token Balances</span>
-            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+            {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
           </header>
           <p className="text-sm text-slate-500">Fetching balances…</p>
         </section>
@@ -101,7 +102,7 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
       <section className="flex flex-col gap-7">
         <header className="flex flex-col gap-1">
           <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token Balances</span>
-          <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+          {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
         </header>
 
         <div className="flex flex-col gap-4">
@@ -171,15 +172,14 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  {marketCap && <MetricPill label="Market Cap" value={marketCap} />}
+                  {marketCap && <MetricPill label="MCAP" value={marketCap} />}
                   {priceChange && (
                     <MetricPill
-                      label="Change"
                       value={priceChange}
                       tone={priceChangeRaw !== undefined && priceChangeRaw < 0 ? "negative" : "positive"}
                     />
                   )}
-                  {mint && <LinkPill value="View on Solscan" href={`https://solscan.io/token/${mint}`} />}
+                  {mint && <TokenResearchLinks mint={mint} />}
                 </div>
               </article>
             );

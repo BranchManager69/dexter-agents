@@ -1,7 +1,7 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
 import { TokenIcon } from "./solanaVisuals";
 
 type DocumentPayload = {
@@ -37,12 +37,14 @@ const fetchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
         .map((paragraph) => paragraph.trim())
         .filter(Boolean)
     : [];
+  const timestamp = formatTimestampDisplay(item.timestamp);
+
   return (
     <div className={BASE_CARD_CLASS}>
       <section className="flex flex-col gap-6">
         <header className="flex flex-col gap-1">
           <span className="text-xs uppercase tracking-[0.32em] text-slate-400">Fetched page</span>
-          <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+          {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
         </header>
 
         <article className="flex flex-col gap-5">
