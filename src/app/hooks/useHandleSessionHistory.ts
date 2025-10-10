@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
-import { sendTranscriptionDebug } from "@/app/lib/transcriptionDebug";
 
 export function useHandleSessionHistory() {
   const {
@@ -283,12 +282,15 @@ export function useHandleSessionHistory() {
       const logKey = `${role}:${itemId}`;
       if (deltaText && !transcriptionLogSetRef.current.has(logKey)) {
         transcriptionLogSetRef.current.add(logKey);
-        sendTranscriptionDebug({
-          event: 'transcription_delta',
-          role,
-          itemId,
-          preview: deltaText.slice(0, 80),
-        });
+        logServerEvent(
+          {
+            type: 'transcription.delta',
+            role,
+            itemId,
+            preview: deltaText.slice(0, 80),
+          },
+          '(voice streaming)'
+        );
       }
     }
   }
@@ -323,12 +325,15 @@ export function useHandleSessionHistory() {
       updateTranscriptItem(itemId, { status: 'DONE' });
 
       logMessageToServer(itemId, role, finalTranscript);
-      sendTranscriptionDebug({
-        event: 'transcription_completed',
-        role,
-        itemId,
-        text: finalTranscript,
-      });
+      logServerEvent(
+        {
+          type: 'transcription.completed',
+          role,
+          itemId,
+          text: finalTranscript,
+        },
+        '(voice streaming)'
+      );
 
       // If guardrailResult still pending, mark PASS.
       if (transcriptItem?.guardrailResult?.status === 'IN_PROGRESS') {
