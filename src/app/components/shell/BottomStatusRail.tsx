@@ -72,12 +72,12 @@ export function BottomStatusRail({
             type="button"
             onClick={vadControl.onToggle}
             className={`transition ${
-              vadControl.isOpen ? 'text-flux' : 'text-neutral-500 hover:text-flux'
+              vadControl.isOpen ? 'text-flux' : 'text-neutral-300 hover:text-flux'
             }`}
             aria-pressed={vadControl.isOpen}
             title="Voice settings"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.33 1.82l-.01.01a2 2 0 1 1-3.32 0l-.01-.01A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82-.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.01-.01a2 2 0 1 1 0-3.32l.01-.01A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.6-1 1.65 1.65 0 0 0-1.82-.33l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6 1.65 1.65 0 0 0 .33-1.82l.01-.01a2 2 0 1 1 3.32 0l.01.01a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.6 1c0 .39.14.76.4 1.06a1.65 1.65 0 0 0 1 .6 1.65 1.65 0 0 0 1.82-.33l.01.01a2 2 0 1 1 0 3.32l-.01.01a1.65 1.65 0 0 0-1 .6 1.65 1.65 0 0 0-.4 1.06z" />
             </svg>
