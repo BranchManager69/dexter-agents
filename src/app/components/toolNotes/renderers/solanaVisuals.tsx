@@ -124,6 +124,13 @@ export type TokenSide = {
   explorerUrl?: string;
   imageUrl?: string;
   accent?: TokenAccent;
+  meta?: {
+    name?: string | null;
+    priceChange24h?: number | null;
+    priceUsd?: number | null;
+    marketCap?: number | null;
+    liquidityUsd?: number | null;
+  };
 };
 
 interface TokenBadgeProps {
@@ -144,6 +151,7 @@ export function TokenBadge({ side, size = 48, compact = false }: TokenBadgeProps
           </span>
         )}
         {!side.amount && side.asset && <span className="text-lg font-semibold text-slate-900">{side.asset}</span>}
+        {side.meta?.name && <span className="text-xs text-slate-500">{side.meta.name}</span>}
         {side.mintAddress && (
           <HashBadge value={side.mintAddress} href={side.explorerUrl} ariaLabel={`${side.asset ?? "Token"} mint`} />
         )}

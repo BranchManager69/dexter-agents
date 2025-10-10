@@ -124,12 +124,42 @@ function resolveTokenImage(structured: any, kind: "input" | "output"): string | 
   return undefined;
 }
 
-function toTokenSide(kind: "from" | "to", amountRaw: unknown, amountLamports: unknown, mint: string | undefined, imageUrl?: string): TokenSide {
+function toTokenSide(
+  kind: "from" | "to",
+  amountRaw: unknown,
+  amountLamports: unknown,
+  mint: string | undefined,
+  tokenMeta?: any,
+  fallbackImageUrl?: string,
+): TokenSide {
   const display =
     parseAmountDisplay(amountRaw, mint) ??
     (amountLamports ? parseAmountDisplay(formatSolDisplay(amountLamports, { fromLamports: true }), "So11111111111111111111111111111111111111112") : null);
-  const asset = display?.asset ?? symbolFromMint(mint) ?? "TOKEN";
+  const metaSymbol = typeof tokenMeta?.symbol === "string" ? tokenMeta.symbol : undefined;
+  const asset = normalizeAssetSymbol(metaSymbol, mint) ?? display?.asset ?? symbolFromMint(mint) ?? "TOKEN";
   const explorerUrl = mint ? `https://solscan.io/token/${mint}` : undefined;
+  const imageUrl =
+    typeof tokenMeta?.imageUrl === "string" && tokenMeta.imageUrl.trim().length
+      ? tokenMeta.imageUrl
+      : fallbackImageUrl;
+
+  const enrichedMeta = tokenMeta
+    ? {
+        name: typeof tokenMeta?.name === "string" ? tokenMeta.name : null,
+        priceChange24h:
+          typeof tokenMeta?.priceChange24h === "number" && Number.isFinite(tokenMeta.priceChange24h)
+            ? tokenMeta.priceChange24h
+            : null,
+        priceUsd:
+          typeof tokenMeta?.priceUsd === "number" && Number.isFinite(tokenMeta.priceUsd) ? tokenMeta.priceUsd : null,
+        marketCap:
+          typeof tokenMeta?.marketCap === "number" && Number.isFinite(tokenMeta.marketCap) ? tokenMeta.marketCap : null,
+        liquidityUsd:
+          typeof tokenMeta?.liquidityUsd === "number" && Number.isFinite(tokenMeta.liquidityUsd)
+            ? tokenMeta.liquidityUsd
+            : null,
+      }
+    : undefined;
 
   return {
     heading: kind === "from" ? "You give" : "You receive",
@@ -139,6 +169,7 @@ function toTokenSide(kind: "from" | "to", amountRaw: unknown, amountLamports: un
     explorerUrl,
     imageUrl,
     accent: kind,
+    meta: enrichedMeta,
   };
 }
 
@@ -201,8 +232,25 @@ function buildSwapViewModel(label: string, item: any, structured: any, args: Swa
   const amountInLamports = pick(structured?.inputAmountLamports, structured?.amountInLamports, args?.amount_in_lamports);
   const amountOutLamports = pick(structured?.outputAmountLamports, structured?.amountOutLamports, structured?.expected_output_lamports);
 
-  const heroFrom = toTokenSide("from", amountIn, amountInLamports, fromMint, resolveTokenImage(structured, "input"));
-  const heroTo = toTokenSide("to", amountOut, amountOutLamports, toMint, resolveTokenImage(structured, "output"));
+  const inputTokenMeta = (structured as any)?.inputToken;
+  const outputTokenMeta = (structured as any)?.outputToken;
+
+  const heroFrom = toTokenSide(
+    "from",
+    amountIn,
+    amountInLamports,
+    fromMint,
+    inputTokenMeta,
+    resolveTokenImage(structured, "input"),
+  );
+  const heroTo = toTokenSide(
+    "to",
+    amountOut,
+    amountOutLamports,
+    toMint,
+    outputTokenMeta,
+    resolveTokenImage(structured, "output"),
+  );
 
   const { metrics, meta, priceImpact } = buildMetrics(structured, variant);
 
