@@ -156,9 +156,73 @@ export function TopRibbon({
 
   const crestTargetRef = React.useRef<HTMLDivElement | null>(null);
   const [initialTransform, setInitialTransform] = React.useState<{ x: number; y: number; scale: number } | null>(null);
+  const [headerRect, setHeaderRect] = React.useState<DOMRect | null>(null);
+  const [isHeaderSettled, setIsHeaderSettled] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!showHeaderCrest || !crestOrigin) {
+      setIsHeaderSettled(false);
+      setHeaderRect(null);
+      return;
+    }
+
+    setIsHeaderSettled(false);
+    setHeaderRect(null);
+
+    let rafId: number;
+    let lastRect: DOMRect | null = null;
+    let stableCount = 0;
+    let cancelled = false;
+    const threshold = 0.75;
+
+    const resolveHeader = () =>
+      crestTargetRef.current?.closest<HTMLElement>(".dexter-header") ??
+      document.querySelector<HTMLElement>(".dexter-header");
+
+    const tick = () => {
+      if (cancelled) {
+        return;
+      }
+      const headerEl = resolveHeader();
+      if (!headerEl) {
+        stableCount = 0;
+        lastRect = null;
+        rafId = window.requestAnimationFrame(tick);
+        return;
+      }
+
+      const rect = headerEl.getBoundingClientRect();
+      if (lastRect) {
+        const deltaX = Math.abs(rect.left - lastRect.left);
+        const deltaY = Math.abs(rect.top - lastRect.top);
+        if (deltaX < threshold && deltaY < threshold) {
+          stableCount += 1;
+          if (stableCount >= 4) {
+            setHeaderRect(rect);
+            setIsHeaderSettled(true);
+            return;
+          }
+        } else {
+          stableCount = 0;
+        }
+      }
+
+      lastRect = rect;
+      rafId = window.requestAnimationFrame(tick);
+    };
+
+    rafId = window.requestAnimationFrame(tick);
+
+    return () => {
+      cancelled = true;
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
+  }, [showHeaderCrest, crestOrigin]);
 
   React.useLayoutEffect(() => {
-    if (!showHeaderCrest || !crestOrigin) {
+    if (!showHeaderCrest || !crestOrigin || !headerRect || !isHeaderSettled) {
       setInitialTransform(null);
       return;
     }
@@ -169,17 +233,24 @@ export function TopRibbon({
       return;
     }
 
-    const originCenterX = crestOrigin.left + crestOrigin.width / 2;
-    const originCenterY = crestOrigin.top + crestOrigin.height / 2;
-    const targetCenterX = targetRect.left + targetRect.width / 2;
-    const targetCenterY = targetRect.top + targetRect.height / 2;
+    const normalizePoint = (rect: { left: number; top: number; width: number; height: number }) => ({
+      x: rect.left + rect.width / 2 - headerRect.left,
+      y: rect.top + rect.height / 2 - headerRect.top,
+    });
+
+    const originCenter = normalizePoint(crestOrigin);
+    const targetCenter = normalizePoint(targetRect);
+
+    const safeOriginWidth = crestOrigin.width > 0 ? crestOrigin.width : 1;
+    const safeTargetWidth = targetRect.width > 0 ? targetRect.width : 1;
+    const scale = safeOriginWidth / safeTargetWidth;
 
     setInitialTransform({
-      x: originCenterX - targetCenterX,
-      y: originCenterY - targetCenterY,
-      scale: crestOrigin.width / targetRect.width,
+      x: originCenter.x - targetCenter.x,
+      y: originCenter.y - targetCenter.y,
+      scale: scale || 1,
     });
-  }, [showHeaderCrest, crestOrigin]);
+  }, [showHeaderCrest, crestOrigin, headerRect, isHeaderSettled]);
 
   return (
     <>
@@ -234,7 +305,7 @@ export function TopRibbon({
           </div>
 
           <AnimatePresence>
-            {showHeaderCrest ? (
+            {showHeaderCrest && (!crestOrigin || isHeaderSettled) ? (
               <motion.div
                 key="dexter-crest-header"
                 layoutId="dexter-crest"
