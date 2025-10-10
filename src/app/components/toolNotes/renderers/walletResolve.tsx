@@ -69,7 +69,7 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const requestedAddress = typeof args.wallet_address === "string" ? args.wallet_address : null;
   const source = typeof (payload as any)?.source === "string" ? (payload as any).source : resolvedAddress ? "resolver" : "unknown";
   const showRequested = requestedAddress && requestedAddress !== resolvedAddress;
-  const sourceLabel = source ? source.replace(/_/g, " ") : "unknown";
+  const sourceLabel = source ? source.replace(/_/g, " ") : null;
   const iconLabel = resolvedAddress ? resolvedAddress.slice(0, 2).toUpperCase() : "??";
 
   return (
@@ -91,9 +91,11 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
                 <span className="text-sm text-slate-500">Resolver did not return a wallet.</span>
               )}
             </div>
-            <span className="ml-auto rounded-full border border-slate-200 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-slate-500">
-              {sourceLabel}
-            </span>
+            {sourceLabel && (
+              <span className="ml-auto rounded-full border border-slate-200 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-slate-500">
+                {sourceLabel}
+              </span>
+            )}
           </div>
 
           {showRequested && (
