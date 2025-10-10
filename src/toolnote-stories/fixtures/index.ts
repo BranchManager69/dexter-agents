@@ -207,6 +207,95 @@ export const toolFixtures: FixtureRecord = {
     },
   },
 
+  twitter_search: {
+    structuredContent: {
+      query: "dexter agents",
+      queries: ["dexter agents", "dexter ai"],
+      ticker: null,
+      include_replies: false,
+      fetched: 3,
+      tweets: [
+        {
+          id: "1862100000000000000",
+          url: "https://x.com/dexter_cash/status/1862100000000000000",
+          timestamp: "2025-10-09T17:21:00Z",
+          text: "Dexter Agents now ship with live Tavily search and pumpstream visual overlays. Shipping thread below ⤵️",
+          source_queries: ["dexter agents"],
+          author: {
+            handle: "dexter_cash",
+            display_name: "Dexter Labs",
+            avatar_url: "https://placehold.co/96x96/0f172a/fff?text=DX",
+            is_verified: true,
+            followers: 18200,
+          },
+          stats: {
+            likes: 840,
+            retweets: 210,
+            replies: 34,
+            views: 48000,
+          },
+          media: {
+            photos: [
+              "https://placehold.co/640x360/6366f1/fff?text=Ladle+Preview",
+            ],
+          },
+        },
+        {
+          id: "1862090000000000000",
+          url: "https://x.com/solbuild/status/1862090000000000000",
+          timestamp: "2025-10-09T15:04:00Z",
+          text: "Tried the new Dexter swap preview UI today—animated token flow is a massive upgrade over raw tables.",
+          source_queries: ["dexter agents"],
+          author: {
+            handle: "solbuild",
+            display_name: "SolBuild",
+            avatar_url: "https://placehold.co/96x96/f97316/fff?text=SB",
+            is_verified: false,
+            followers: 5600,
+          },
+          stats: {
+            likes: 120,
+            retweets: 22,
+            replies: 4,
+            views: 8900,
+          },
+          media: {
+            photos: [],
+          },
+        },
+        {
+          id: "1862080000000000000",
+          url: "https://x.com/solanalabs/status/1862080000000000000",
+          timestamp: "2025-10-09T13:47:00Z",
+          text: "Great to see teams like Dexter Agents building polished operator tooling on Solana. Looking forward to their MPC rollout.",
+          source_queries: ["dexter ai"],
+          author: {
+            handle: "solanalabs",
+            display_name: "Solana Labs",
+            avatar_url: "https://placehold.co/96x96/22c55e/fff?text=SL",
+            is_verified: true,
+            followers: 1250000,
+          },
+          stats: {
+            likes: 2300,
+            retweets: 640,
+            replies: 180,
+            views: 480000,
+          },
+          media: {
+            photos: [],
+          },
+        },
+      ],
+    },
+    arguments: {
+      query: "dexter agents",
+      include_replies: false,
+      max_results: 15,
+      media_only: false,
+    },
+  },
+
   codex_start: {
     output: {
       conversationId: "codex_c1a7d7e8",

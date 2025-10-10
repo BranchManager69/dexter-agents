@@ -14,6 +14,7 @@ import fetchRenderer from "../app/components/toolNotes/renderers/fetch";
 import { codexStartRenderer, codexReplyRenderer, codexExecRenderer } from "../app/components/toolNotes/renderers/codex";
 import { streamGetSceneRenderer, streamSetSceneRenderer } from "../app/components/toolNotes/renderers/streamScene";
 import { solanaSwapPreviewRenderer, solanaSwapExecuteRenderer } from "../app/components/toolNotes/renderers/solanaSwap";
+import twitterSearchRenderer from "../app/components/toolNotes/renderers/twitterSearch";
 
 import { ToolNoteStoryWrapper } from "./ToolNoteStoryWrapper";
 import { makeToolNoteItem } from "./makeTranscriptItem";
@@ -96,10 +97,17 @@ const stories: StoryConfig[] = [
     renderer: searchRenderer,
   },
   {
-    exportName: "FetchDocument",
-    storyName: "Fetch Document",
+    exportName: "FetchWebPage",
+    storyName: "Fetch – Web Page",
     toolName: "fetch",
     renderer: fetchRenderer,
+  },
+  {
+    exportName: "TwitterSearch",
+    storyName: "Twitter Search",
+    toolName: "twitter_search",
+    renderer: twitterSearchRenderer,
+    expanded: true,
   },
   {
     exportName: "CodexStart",
@@ -182,7 +190,8 @@ export const SolanaExecuteBuy = storyExports.SolanaExecuteBuy;
 export const SolanaExecuteSell = storyExports.SolanaExecuteSell;
 export const SolanaToken = storyExports.SolanaToken;
 export const SearchResults = storyExports.SearchResults;
-export const FetchDocument = storyExports.FetchDocument;
+export const FetchWebPage = storyExports.FetchWebPage;
+export const TwitterSearch = storyExports.TwitterSearch;
 export const CodexStart = storyExports.CodexStart;
 export const CodexReply = storyExports.CodexReply;
 export const CodexExec = storyExports.CodexExec;
