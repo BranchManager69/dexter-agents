@@ -65,7 +65,6 @@ export function VadControlPanel({
     const match = PRESETS.find((preset) => isPresetMatch(settings, preset));
     return match?.id ?? "custom";
   }, [settings]);
-  const [openMobileSection, setOpenMobileSection] = React.useState<string>("threshold");
 
   React.useEffect(() => {
     setMounted(true);
@@ -93,7 +92,7 @@ export function VadControlPanel({
             exit={{ opacity: 0 }}
           />
           <motion.div
-            className="fixed inset-x-0 bottom-6 z-50 flex justify-center px-4 pb-6"
+            className="fixed inset-x-0 bottom-3 z-50 flex justify-center px-4 pb-4 sm:bottom-6 sm:pb-6"
             initial={{ opacity: 0, y: 32, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 32, scale: 0.96 }}
@@ -102,10 +101,11 @@ export function VadControlPanel({
             aria-modal="true"
           >
             <div
-              className="w-full max-w-xl rounded-3xl border border-white/10 bg-neutral-950/90 p-6 shadow-2xl backdrop-blur-xl ring-1 ring-white/5"
+              className="flex w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/90 p-5 shadow-2xl backdrop-blur-xl ring-1 ring-white/5"
+              style={{ maxHeight: "min(520px, calc(100vh - 4.5rem))" }}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="mb-6 flex items-start justify-between gap-4">
+              <div className="mb-5 flex items-start justify-between gap-4">
                 <div>
                   <h2 className="font-display text-sm uppercase tracking-[0.22em] text-flux/80">
                     Voice Responsiveness
@@ -128,10 +128,10 @@ export function VadControlPanel({
                 </button>
               </div>
 
-              <div className="space-y-5">
+              <div className="flex-1 overflow-y-auto space-y-5 pr-1">
                 <div className="space-y-3">
                   <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">Presets</p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="grid grid-cols-3 gap-2">
                     {PRESETS.map((preset) => {
                       const isActive = activePreset === preset.id;
                       return (
@@ -146,143 +146,66 @@ export function VadControlPanel({
                               silenceDurationMs: preset.values.silenceDurationMs,
                             })
                           }
-                          className={`flex flex-col rounded-2xl border px-4 py-2 text-left transition ${
+                          className={`flex flex-col items-start rounded-2xl border px-3 py-2 text-left transition ${
                             isActive
                               ? "border-flux/70 bg-flux/10 text-flux"
                               : "border-white/10 bg-white/[0.02] text-neutral-200 hover:border-flux/40 hover:text-flux"
                           }`}
                         >
-                          <span className="font-display text-xs font-semibold tracking-[0.12em]">
+                          <span className="font-display text-[11px] font-semibold tracking-[0.12em]">
                             {preset.label}
                           </span>
-                          <span className="text-[11px] text-neutral-400">{preset.description}</span>
+                          <span className="text-[10px] text-neutral-400">{preset.description}</span>
                         </button>
                       );
                     })}
-                    <span
-                      className={`flex items-center rounded-2xl border border-dashed px-4 py-2 text-[11px] tracking-[0.12em] ${
-                        activePreset === "custom" ? "border-flux/40 text-flux" : "border-white/10 text-neutral-500"
-                      }`}
-                    >
-                      Custom
-                    </span>
                   </div>
+                  <span
+                    className={`inline-flex rounded-full border border-dashed px-3 py-1 text-[11px] tracking-[0.12em] ${
+                      activePreset === "custom" ? "border-flux/40 text-flux" : "border-white/10 text-neutral-500"
+                    }`}
+                  >
+                    {activePreset === "custom" ? "Custom settings" : "Custom"}
+                  </span>
                 </div>
 
-                <div className="hidden divide-y divide-white/5 rounded-2xl border border-white/8 bg-white/[0.02] sm:block">
-                  <div className="p-4">
-                    <VSlider
-                      id="vad-threshold"
-                      label="Sensitivity"
-                      description="How loud you need to be before Dexter starts listening."
-                      value={settings.threshold}
-                      unit={formatThreshold(settings.threshold)}
-                      min={VAD_LIMITS.threshold.min}
-                      max={VAD_LIMITS.threshold.max}
-                      step={VAD_LIMITS.threshold.step}
-                      onChange={(value) => handleUpdate("threshold", value)}
-                      type="float"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <VSlider
-                      id="vad-prefix"
-                      label="Lead-in padding"
-                      description="Audio captured just before you speak so we don’t miss the first word."
-                      value={settings.prefixPaddingMs}
-                      unit={formatMs(settings.prefixPaddingMs)}
-                      min={VAD_LIMITS.prefixPaddingMs.min}
-                      max={VAD_LIMITS.prefixPaddingMs.max}
-                      step={VAD_LIMITS.prefixPaddingMs.step}
-                      onChange={(value) => handleUpdate("prefixPaddingMs", value)}
-                    />
-                  </div>
-                  <div className="p-4">
-                    <VSlider
-                      id="vad-silence"
-                      label="Silence timeout"
-                      description="How long Dexter waits after you stop before replying."
-                      value={settings.silenceDurationMs}
-                      unit={formatMs(settings.silenceDurationMs)}
-                      min={VAD_LIMITS.silenceDurationMs.min}
-                      max={VAD_LIMITS.silenceDurationMs.max}
-                      step={VAD_LIMITS.silenceDurationMs.step}
-                      onChange={(value) => handleUpdate("silenceDurationMs", value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="divide-y divide-white/5 overflow-hidden rounded-2xl border border-white/8 bg-white/[0.02] sm:hidden">
-                  <MobileSliderSection
-                    id="threshold"
+                <div className="space-y-4">
+                  <VSlider
+                    id="vad-threshold"
                     label="Sensitivity"
-                    summary={formatThreshold(settings.threshold)}
                     description="How loud you need to be before Dexter starts listening."
-                    isOpen={openMobileSection === "threshold"}
-                    onToggle={() =>
-                      setOpenMobileSection((prev) => (prev === "threshold" ? "" : "threshold"))
-                    }
-                  >
-                    <VSlider
-                      id="vad-threshold-mobile"
-                      label="Sensitivity"
-                      description="How loud you need to be before Dexter starts listening."
-                      value={settings.threshold}
-                      unit={formatThreshold(settings.threshold)}
-                      min={VAD_LIMITS.threshold.min}
-                      max={VAD_LIMITS.threshold.max}
-                      step={VAD_LIMITS.threshold.step}
-                      onChange={(value) => handleUpdate("threshold", value)}
-                      type="float"
-                      compact
-                    />
-                  </MobileSliderSection>
-                  <MobileSliderSection
-                    id="prefix"
+                    value={settings.threshold}
+                    unit={formatThreshold(settings.threshold)}
+                    min={VAD_LIMITS.threshold.min}
+                    max={VAD_LIMITS.threshold.max}
+                    step={VAD_LIMITS.threshold.step}
+                    onChange={(value) => handleUpdate("threshold", value)}
+                    type="float"
+                  />
+
+                  <VSlider
+                    id="vad-prefix"
                     label="Lead-in padding"
-                    summary={formatMs(settings.prefixPaddingMs)}
                     description="Audio captured just before you speak so we don’t miss the first word."
-                    isOpen={openMobileSection === "prefix"}
-                    onToggle={() =>
-                      setOpenMobileSection((prev) => (prev === "prefix" ? "" : "prefix"))
-                    }
-                  >
-                    <VSlider
-                      id="vad-prefix-mobile"
-                      label="Lead-in padding"
-                      description="Audio captured just before you speak so we don’t miss the first word."
-                      value={settings.prefixPaddingMs}
-                      unit={formatMs(settings.prefixPaddingMs)}
-                      min={VAD_LIMITS.prefixPaddingMs.min}
-                      max={VAD_LIMITS.prefixPaddingMs.max}
-                      step={VAD_LIMITS.prefixPaddingMs.step}
-                      onChange={(value) => handleUpdate("prefixPaddingMs", value)}
-                      compact
-                    />
-                  </MobileSliderSection>
-                  <MobileSliderSection
-                    id="silence"
+                    value={settings.prefixPaddingMs}
+                    unit={formatMs(settings.prefixPaddingMs)}
+                    min={VAD_LIMITS.prefixPaddingMs.min}
+                    max={VAD_LIMITS.prefixPaddingMs.max}
+                    step={VAD_LIMITS.prefixPaddingMs.step}
+                    onChange={(value) => handleUpdate("prefixPaddingMs", value)}
+                  />
+
+                  <VSlider
+                    id="vad-silence"
                     label="Silence timeout"
-                    summary={formatMs(settings.silenceDurationMs)}
                     description="How long Dexter waits after you stop before replying."
-                    isOpen={openMobileSection === "silence"}
-                    onToggle={() =>
-                      setOpenMobileSection((prev) => (prev === "silence" ? "" : "silence"))
-                    }
-                  >
-                    <VSlider
-                      id="vad-silence-mobile"
-                      label="Silence timeout"
-                      description="How long Dexter waits after you stop before replying."
-                      value={settings.silenceDurationMs}
-                      unit={formatMs(settings.silenceDurationMs)}
-                      min={VAD_LIMITS.silenceDurationMs.min}
-                      max={VAD_LIMITS.silenceDurationMs.max}
-                      step={VAD_LIMITS.silenceDurationMs.step}
-                      onChange={(value) => handleUpdate("silenceDurationMs", value)}
-                      compact
-                    />
-                  </MobileSliderSection>
+                    value={settings.silenceDurationMs}
+                    unit={formatMs(settings.silenceDurationMs)}
+                    min={VAD_LIMITS.silenceDurationMs.min}
+                    max={VAD_LIMITS.silenceDurationMs.max}
+                    step={VAD_LIMITS.silenceDurationMs.step}
+                    onChange={(value) => handleUpdate("silenceDurationMs", value)}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
@@ -361,7 +284,6 @@ type SliderProps =
       step: number;
       onChange: (value: number) => void;
       type?: "int";
-      compact?: boolean;
     }
   | {
       id: string;
@@ -374,7 +296,6 @@ type SliderProps =
       step: number;
       onChange: (value: number) => void;
       type: "float";
-      compact?: boolean;
     };
 
 function VSlider({
@@ -388,7 +309,6 @@ function VSlider({
   step,
   onChange,
   type,
-  compact,
 }: SliderProps) {
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const next = type === "float" ? parseFloat(event.target.value) : parseInt(event.target.value, 10);
@@ -433,79 +353,8 @@ function VSlider({
         step={step}
         value={value}
         onChange={handleSliderChange}
-        className={`w-full appearance-none rounded-full bg-neutral-800 accent-flux focus:outline-none ${
-          compact ? "h-1.5" : "h-1"
-        }`}
+        className="h-1 w-full appearance-none rounded-full bg-neutral-800 accent-flux focus:outline-none"
       />
-    </div>
-  );
-}
-
-type MobileSliderSectionProps = {
-  id: string;
-  label: string;
-  summary: string;
-  description: string;
-  isOpen: boolean;
-  onToggle: () => void;
-  children: React.ReactNode;
-};
-
-function MobileSliderSection({
-  id,
-  label,
-  summary,
-  description,
-  isOpen,
-  onToggle,
-  children,
-}: MobileSliderSectionProps) {
-  return (
-    <div>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between px-4 py-3 text-left text-neutral-200 transition hover:text-flux"
-        aria-expanded={isOpen}
-        aria-controls={`${id}-panel`}
-      >
-        <div className="pr-4">
-          <p className="font-display text-[11px] uppercase tracking-[0.18em] text-neutral-300">{label}</p>
-          <span className="text-[11px] text-neutral-500">{description}</span>
-        </div>
-        <div className="flex items-center gap-2 text-xs text-neutral-400">
-          <span>{summary}</span>
-          <svg
-            className={`h-3 w-3 transition-transform ${isOpen ? "rotate-90 text-flux" : ""}`}
-            viewBox="0 0 12 12"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-          >
-            <path
-              d="M4 2l4 4-4 4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
-      </button>
-      <AnimatePresence initial={false}>
-        {isOpen ? (
-          <motion.div
-            id={`${id}-panel`}
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.24, 0.7, 0.3, 1.12] }}
-            className="overflow-hidden px-4 pb-4"
-          >
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">{children}</div>
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
     </div>
   );
 }
