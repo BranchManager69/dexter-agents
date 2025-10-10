@@ -79,6 +79,20 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
       ? (payload as BalanceEntry[])
       : [];
 
+  if (item.status === "IN_PROGRESS" && balances.length === 0) {
+    return (
+      <div className={BASE_CARD_CLASS}>
+        <section className="flex flex-col gap-4">
+          <header className="flex flex-col gap-1">
+            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token Balances</span>
+            <span className="text-xs text-slate-400">{new Date(item.timestamp).toLocaleString()}</span>
+          </header>
+          <p className="text-sm text-slate-500">Fetching balances…</p>
+        </section>
+      </div>
+    );
+  }
+
   const visibleBalances = isExpanded ? balances : balances.slice(0, 6);
   const hasMore = balances.length > visibleBalances.length;
 
@@ -110,7 +124,6 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
 
             const amountUi = pickNumber(entry.amountUi, entry.amount_ui);
             const amountDisplay = formatAmount(amountUi, entry.decimals);
-            const price = formatUsd(pickNumber((tokenMeta as any)?.priceUsd, (tokenMeta as any)?.price_usd), true);
             const marketCap = formatUsd(
               pickNumber(
                 (tokenMeta as any)?.marketCap,
@@ -128,6 +141,11 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
               priceChangeRaw !== undefined
                 ? `${priceChangeRaw >= 0 ? "+" : ""}${priceChangeRaw.toFixed(2)}%`
                 : undefined;
+            const priceUsd = pickNumber((tokenMeta as any)?.priceUsd, (tokenMeta as any)?.price_usd);
+            const holdingUsdRaw =
+              pickNumber((tokenMeta as any)?.holdingUsd, (tokenMeta as any)?.balanceUsd, (tokenMeta as any)?.balance_usd) ??
+              (priceUsd !== undefined && amountUi !== undefined ? priceUsd * amountUi : undefined);
+            const holdingUsd = formatUsd(holdingUsdRaw);
 
             return (
               <article key={mint ?? ata ?? `balance-${index}`} className="flex flex-col gap-3 border-b border-slate-200/60 pb-4 last:border-0 last:pb-0">
@@ -140,22 +158,23 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
                         {name && <span className="text-xs text-slate-500">{name}</span>}
                       </div>
                       {amountDisplay && (
-                        <span className="text-sm font-semibold text-slate-900">{amountDisplay}</span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-sm font-semibold text-slate-900">{amountDisplay}</span>
+                          {holdingUsd && <span className="text-xs text-slate-500">{holdingUsd}</span>}
+                        </div>
                       )}
                     </div>
                     <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
                       {mint && <HashBadge value={mint} href={`https://solscan.io/token/${mint}`} ariaLabel={`${symbol} mint`} />}
-                      {ata && <HashBadge value={ata} href={`https://solscan.io/account/${ata}`} ariaLabel={`${symbol} associated token account`} />}
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  {price && <MetricPill label="Price" value={price} />}
-                  {marketCap && <MetricPill label="MCap" value={marketCap} />}
+                  {marketCap && <MetricPill label="Market Cap" value={marketCap} />}
                   {priceChange && (
                     <MetricPill
-                      label="24h"
+                      label="Change"
                       value={priceChange}
                       tone={priceChangeRaw !== undefined && priceChangeRaw < 0 ? "negative" : "positive"}
                     />
@@ -166,6 +185,10 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
             );
           })}
         </div>
+
+        {visibleBalances.length === 0 && (
+          <p className="text-sm text-slate-500">No balances detected for this wallet.</p>
+        )}
 
         {hasMore && (
           <button

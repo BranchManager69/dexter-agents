@@ -185,7 +185,7 @@ export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
           target="_blank"
           rel="noreferrer"
           aria-label={ariaLabel ? `Open ${ariaLabel}` : "Open in new tab"}
-          className="rounded-full bg-slate-100 px-2 py-[2px] font-display text-[10px] font-semibold tracking-[0.08em] text-[#1F2937] transition hover:bg-slate-200 hover:text-[#0F172A]"
+          className="font-display text-[10px] font-semibold tracking-[0.08em] text-[#1F2937] underline decoration-slate-300 decoration-dotted underline-offset-4 transition hover:text-[#0F172A] hover:decoration-slate-500"
         >
           ↗
         </a>
