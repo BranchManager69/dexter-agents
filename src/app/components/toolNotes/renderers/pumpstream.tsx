@@ -1,9 +1,8 @@
 import React from "react";
 
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput } from "./helpers";
-import { MetricPill, TokenIcon } from "./solanaVisuals";
-import { HashBadge } from "./helpers";
+import { BASE_CARD_CLASS, normalizeOutput, formatTimestampDisplay, HashBadge } from "./helpers";
+import { MetricPill, TokenIcon, TokenResearchLinks } from "./solanaVisuals";
 
 type StreamEntry = {
   name?: string;
@@ -49,17 +48,18 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
   const payload = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
   const streams: StreamEntry[] = Array.isArray((payload as any).streams) ? (payload as any).streams : [];
   const generatedAt = typeof (payload as any).generatedAt === "string" ? (payload as any).generatedAt : null;
+  const updatedDisplay = formatTimestampDisplay(generatedAt ?? item.timestamp);
 
   const visibleStreams = isExpanded ? streams : streams.slice(0, 6);
   const hasMore = streams.length > visibleStreams.length;
 
   return (
     <div className={BASE_CARD_CLASS}>
-      <section className="flex flex-col gap-7">
+      <section className="flex flex-col gap-6">
         <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-1">
             <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Pump.fun Streams</span>
-            {generatedAt && <span className="text-xs text-slate-400">Updated {new Date(generatedAt).toLocaleTimeString()}</span>}
+            {updatedDisplay && <span className="text-xs text-slate-400">{updatedDisplay}</span>}
           </div>
           <MetricPill label="Live" value={`${streams.length}`} tone={streams.length ? "positive" : "neutral"} />
         </header>
@@ -77,7 +77,7 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
             const body = (
               <div className="flex items-start gap-4">
                 {stream.thumbnail ? (
-                  <div className="relative h-[72px] w-[120px] overflow-hidden rounded-xl shadow-[0_14px_28px_rgba(15,23,42,0.18)]">
+                  <div className="relative h-[72px] w-[120px] overflow-hidden rounded-xl shadow-[0_12px_24px_rgba(15,23,42,0.12)]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={stream.thumbnail} alt={title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]" />
                   </div>
@@ -90,31 +90,25 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
                     {viewers && <span className="text-xs uppercase tracking-[0.22em] text-slate-400">{viewers}</span>}
                   </div>
                   <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                    {marketCap && (
-                      <span className="inline-flex items-center gap-1 font-semibold text-slate-900">
-                        <span className="text-[0.58rem] uppercase tracking-[0.28em] text-slate-400">MC</span>
-                        {marketCap}
-                        {momentumDisplay && (
-                          <span className={momentumTone === "negative" ? "text-rose-500" : "text-emerald-500"}>{momentumDisplay}</span>
-                        )}
-                      </span>
-                    )}
+                    {marketCap && <MetricPill label="MCAP" value={marketCap} />}
+                    {momentumDisplay && <MetricPill value={momentumDisplay} tone={momentumTone} />}
                     {stream.mintId && (
                       <HashBadge value={stream.mintId} href={`https://solscan.io/token/${stream.mintId}`} ariaLabel={`${title} mint`} />
                     )}
                   </div>
+                  {stream.mintId && <TokenResearchLinks mint={stream.mintId} />}
                 </div>
               </div>
             );
 
             return (
-              <article key={stream.mintId ?? href ?? `${title}-${index}`} className="group flex flex-col gap-3 border-b border-slate-200/60 pb-5 last:border-0 last:pb-0">
+              <article key={stream.mintId ?? href ?? `${title}-${index}`} className="group flex flex-col gap-3 rounded-3xl px-4 py-4 transition hover:bg-white/70">
                 {href ? (
                   <a
                     href={href}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex flex-col gap-2 transition hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-flux/40"
+                    className="flex flex-col gap-2 focus:outline-none focus:ring-2 focus:ring-flux/40"
                   >
                     {body}
                   </a>
