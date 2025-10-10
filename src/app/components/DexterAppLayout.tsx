@@ -138,7 +138,7 @@ function FloatingConnectionStatus({
     if (target instanceof HTMLElement) {
       const rect = target.getBoundingClientRect();
       const nextTop = Math.max(rect.top - 10, 60);
-      const nextLeft = Math.max(rect.left + 8, 16);
+      const nextLeft = Math.max(rect.left + 20, 16);
 
       setPosition((prev) => {
         const diffTop = Math.abs(prev.top - nextTop);
