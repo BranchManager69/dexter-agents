@@ -6,7 +6,6 @@ import walletListRenderer from "../app/components/toolNotes/renderers/walletList
 import walletOverrideRenderer from "../app/components/toolNotes/renderers/walletOverride";
 import walletAuthRenderer from "../app/components/toolNotes/renderers/walletAuth";
 import solanaBalancesRenderer from "../app/components/toolNotes/renderers/solanaBalances";
-import solanaPreviewSellRenderer from "../app/components/toolNotes/renderers/solanaPreviewSell";
 import solanaTokenRenderer from "../app/components/toolNotes/renderers/solanaToken";
 import searchRenderer from "../app/components/toolNotes/renderers/search";
 import fetchRenderer from "../app/components/toolNotes/renderers/fetch";
@@ -64,12 +63,6 @@ const stories: StoryConfig[] = [
     storyName: "Solana – Balances",
     toolName: "solana_list_balances",
     renderer: solanaBalancesRenderer,
-  },
-  {
-    exportName: "SolanaPreviewSell",
-    storyName: "Solana – Preview Sell All",
-    toolName: "solana_preview_sell_all",
-    renderer: solanaPreviewSellRenderer,
   },
   {
     exportName: "SolanaToken",
@@ -172,7 +165,6 @@ export const ListWallets = storyExports.ListWallets;
 export const WalletOverride = storyExports.WalletOverride;
 export const WalletAuth = storyExports.WalletAuth;
 export const SolanaBalances = storyExports.SolanaBalances;
-export const SolanaPreviewSell = storyExports.SolanaPreviewSell;
 export const SolanaToken = storyExports.SolanaToken;
 export const SearchResults = storyExports.SearchResults;
 export const FetchWebPage = storyExports.FetchWebPage;

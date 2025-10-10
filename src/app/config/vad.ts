@@ -6,7 +6,7 @@ export type VadSettings = {
 };
 
 export const DEFAULT_VAD_SETTINGS: VadSettings = {
-  threshold: 0.75,
+  threshold: 0.95,
   prefixPaddingMs: 320,
   silenceDurationMs: 520,
   autoRespond: true,

@@ -126,17 +126,6 @@ export const toolFixtures: FixtureRecord = {
     },
   },
 
-  solana_preview_sell_all: {
-    output: {
-      expected_sol: 1_650_000_000,
-      warnings: ["Dexter noticed elevated volatility on this pair."],
-    },
-    arguments: {
-      amount_raw: "2500000000",
-      mint: TOKEN_MINT,
-    },
-  },
-
   solana_resolve_token: solanaToken,
   solana_list_balances: solanaBalances,
 

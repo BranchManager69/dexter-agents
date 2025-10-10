@@ -5,7 +5,6 @@ import walletListRenderer from "./walletList";
 import walletOverrideRenderer from "./walletOverride";
 import walletAuthRenderer from "./walletAuth";
 import solanaBalancesRenderer from "./solanaBalances";
-import solanaPreviewSellRenderer from "./solanaPreviewSell";
 import solanaResolveTokenRenderer from "./solanaToken";
 import searchRenderer from "./search";
 import fetchRenderer from "./fetch";
@@ -21,7 +20,6 @@ const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   set_session_wallet_override: walletOverrideRenderer,
   auth_info: walletAuthRenderer,
   solana_list_balances: solanaBalancesRenderer,
-  solana_preview_sell_all: solanaPreviewSellRenderer,
   solana_resolve_token: solanaResolveTokenRenderer,
   search: searchRenderer,
   fetch: fetchRenderer,
