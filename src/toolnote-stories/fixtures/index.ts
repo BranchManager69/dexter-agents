@@ -131,19 +131,38 @@ export const toolFixtures: FixtureRecord = {
 
   search: {
     output: {
+      answer:
+        "Dexter Agents broker web search with clickable cards that surface favicons, snippets, and summaries so operators can jump into the referenced docs quickly.",
+      response_time: 1432,
       results: [
         {
           id: "dexter-docs",
           title: "Dexter Agents – Toolchain Overview",
           url: "https://docs.dexter.cash/agents/toolchain",
           snippet: "Review how Dexchat brokers MCP calls between the realtime voice session and hosted tools.",
+          favicon: "https://docs.dexter.cash/favicon.ico",
+          score: 0.87,
+          published_at: "2025-09-15T18:40:00Z",
         },
         {
           id: "wallet-safety",
           title: "Wallet safety checklist",
           url: "https://docs.dexter.cash/agents/wallet-safety",
           snippet: "Steps we take before allowing unattended swaps on customer wallets.",
+          favicon: "https://docs.dexter.cash/favicon.ico",
+          score: 0.79,
+          published_at: "2025-08-21T13:12:00Z",
         }
+      ],
+      images: [
+        {
+          url: "https://placehold.co/640x360/0f172a/fff?text=Dexter+Doc+Preview",
+          description: "Screenshot of the Dexter Agents documentation landing page.",
+        },
+        {
+          url: "https://placehold.co/640x360/312e81/fff?text=Wallet+Checklist",
+          description: "Checklist highlights from the wallet safety guide.",
+        },
       ],
     },
     arguments: {
@@ -171,7 +190,7 @@ export const toolFixtures: FixtureRecord = {
           id: "1862100000000000000",
           url: "https://x.com/dexter_cash/status/1862100000000000000",
           timestamp: "2025-10-09T17:21:00Z",
-          text: "Dexter Agents now ship with live Tavily search and pumpstream visual overlays. Shipping thread below ⤵️",
+          text: "Dexter Agents now ship with live search and pumpstream visual overlays. Shipping thread below ⤵️",
           source_queries: ["dexter agents"],
           author: {
             handle: "dexter_cash",
