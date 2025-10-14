@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: 'authentication_required' }, { status: 401 });
     }
 
-    const endpoint = new URL(getDexterApiRoute('/dossier'));
+    const endpoint = new URL(getDexterApiRoute('/api/dossier'));
     if (supabaseUserId) {
       endpoint.searchParams.set('supabaseUserId', supabaseUserId);
     }

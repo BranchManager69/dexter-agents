@@ -269,6 +269,15 @@ export function useHandleSessionHistory() {
 
       const text = extractMessageText(content);
 
+      if (process.env.NODE_ENV !== 'production') {
+        console.info('[dexter transcript] history_updated', {
+          itemId,
+          role: item.role,
+          content,
+          text,
+        });
+      }
+
       emitTranscriptionDebug('history_updated', {
         itemId,
         role: item.role ?? 'assistant',

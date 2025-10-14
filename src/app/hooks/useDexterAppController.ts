@@ -1157,6 +1157,7 @@ export function useDexterAppController(): DexterAppController {
     sendUserMessage,
     sendUserText,
     sendEvent,
+    updateTranscriptionSession,
     updateSessionConfig,
     interrupt,
     mute,
@@ -1694,15 +1695,21 @@ export function useDexterAppController(): DexterAppController {
       },
       transcription: {
         model: MODEL_IDS.transcription,
-        partial_results: true,
-        response_format: {
-          type: 'text',
-        },
       },
       turn_detection: turnDetection,
     };
 
-    const includeKeys = ['item.input_audio_transcription', 'item.input_audio_transcription.logprobs'];
+    const includeKeys = ['item.input_audio_transcription.logprobs'];
+
+    updateTranscriptionSession({
+      audioFormat: 'pcm16',
+      transcriptionModel: MODEL_IDS.transcription,
+      turnDetection: {
+        threshold: activeVadSettings.threshold,
+        prefixPaddingMs: activeVadSettings.prefixPaddingMs,
+        silenceDurationMs: activeVadSettings.silenceDurationMs,
+      },
+    });
 
     updateSessionConfig({
       inputAudioFormat: 'pcm16',
