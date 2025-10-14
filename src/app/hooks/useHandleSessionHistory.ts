@@ -127,14 +127,38 @@ export function useHandleSessionHistory() {
     return synthesizedId;
   };
 
-  const ensureUserTranscriptMessage = (itemId: string, initialText = "") => {
+  const ensureTranscriptMessage = (
+    itemId: string,
+    role: "user" | "assistant",
+    initialText = "",
+  ) => {
     const existing = transcriptItemsRef.current.find(
-      (item) => item.itemId === itemId && item.type === "MESSAGE",
+      (item) =>
+        item.itemId === itemId &&
+        item.type === "MESSAGE" &&
+        item.role === role,
     );
 
     if (!existing) {
-      addTranscriptMessage(itemId, "user", initialText);
+      addTranscriptMessage(itemId, role, initialText);
     }
+  };
+
+  const ensureUserTranscriptMessage = (itemId: string, initialText = "") => {
+    ensureTranscriptMessage(itemId, "user", initialText);
+  };
+
+  const resolveTranscriptRole = (
+    itemId: string | null | undefined,
+  ): "user" | "assistant" | undefined => {
+    if (!itemId) return undefined;
+    const entry = transcriptItemsRef.current.find(
+      (item) => item.itemId === itemId && item.type === "MESSAGE",
+    );
+    if (entry?.role === "user" || entry?.role === "assistant") {
+      return entry.role;
+    }
+    return undefined;
   };
 
   /* ----------------------- helpers ------------------------- */
@@ -335,7 +359,7 @@ export function useHandleSessionHistory() {
 
   function handleTranscriptionDelta(
     item: any,
-    role: 'user' | 'assistant' = 'assistant',
+    roleHint: 'user' | 'assistant' | 'auto' = 'assistant',
   ) {
     const itemId =
       item?.item_id ??
@@ -370,7 +394,7 @@ export function useHandleSessionHistory() {
         logServerEvent(
           {
             type: 'transcription.delta_unmatched_item',
-            role,
+            role: roleHint,
             receivedKeys: Object.keys(item || {}),
             fallbackItemId: targetItemId,
           },
@@ -378,7 +402,7 @@ export function useHandleSessionHistory() {
         );
       }
       emitTranscriptionDebug('delta_unmatched_item', {
-        role,
+        role: roleHint,
         keys: Object.keys(item || {}),
         item,
         fallbackItemId: targetItemId,
@@ -387,19 +411,32 @@ export function useHandleSessionHistory() {
 
     if (!targetItemId) {
       emitTranscriptionDebug('delta_no_target', {
-        role,
+        role: roleHint,
         item,
       });
       return;
     }
 
-    if (role === 'user') {
+    const autoFallback =
+      typeof item?.response_id === 'string' || typeof item?.output_index === 'number'
+        ? 'assistant'
+        : 'user';
+    const resolvedRole =
+      roleHint === 'auto'
+        ? item?.role === 'user' || item?.role === 'assistant'
+          ? item.role
+          : resolveTranscriptRole(targetItemId) ?? autoFallback
+        : roleHint;
+
+    if (resolvedRole === 'user') {
       ensureUserTranscriptMessage(targetItemId);
+    } else {
+      ensureTranscriptMessage(targetItemId, 'assistant');
     }
 
     if (!deltaText) {
       emitTranscriptionDebug('delta_empty', {
-        role,
+        role: resolvedRole,
         itemId: targetItemId,
         item,
       });
@@ -408,18 +445,18 @@ export function useHandleSessionHistory() {
 
     updateTranscriptMessage(targetItemId, deltaText, true);
     emitTranscriptionDebug('delta_update', {
-      role,
+      role: resolvedRole,
       itemId: targetItemId,
       deltaText,
     });
 
-    const logKey = `${role}:${targetItemId}`;
+    const logKey = `${resolvedRole}:${targetItemId}`;
     if (transcriptionDebugEnabled && !transcriptionLogSetRef.current.has(logKey)) {
       transcriptionLogSetRef.current.add(logKey);
       logServerEvent(
         {
           type: 'transcription.delta',
-          role,
+          role: resolvedRole,
           itemId: targetItemId,
           preview: deltaText.slice(0, 80),
         },
@@ -430,7 +467,7 @@ export function useHandleSessionHistory() {
 
   function handleTranscriptionCompleted(
     item: any,
-    role: 'user' | 'assistant' = 'assistant',
+    roleHint: 'user' | 'assistant' | 'auto' = 'assistant',
   ) {
     // History updates don't reliably end in a completed item, 
     // so we need to handle finishing up when the transcription is completed.
@@ -456,7 +493,7 @@ export function useHandleSessionHistory() {
         logServerEvent(
           {
             type: 'transcription.completed_unmatched_item',
-            role,
+            role: roleHint,
             receivedKeys: Object.keys(item || {}),
             fallbackItemId: itemId,
           },
@@ -464,31 +501,44 @@ export function useHandleSessionHistory() {
         );
       }
       emitTranscriptionDebug('completed_unmatched_item', {
-        role,
+        role: roleHint,
         keys: Object.keys(item || {}),
         item,
         fallbackItemId: itemId,
       });
     }
     if (itemId) {
-      if (role === 'user') {
+      const autoFallback =
+        typeof item?.response_id === 'string' || typeof item?.output_index === 'number'
+          ? 'assistant'
+          : 'user';
+      const resolvedRole =
+        roleHint === 'auto'
+          ? item?.role === 'user' || item?.role === 'assistant'
+            ? item.role
+            : resolveTranscriptRole(itemId) ?? autoFallback
+          : roleHint;
+
+      if (resolvedRole === 'user') {
         ensureUserTranscriptMessage(itemId);
+      } else {
+        ensureTranscriptMessage(itemId, 'assistant');
       }
       updateTranscriptMessage(itemId, finalTranscript, false);
       emitTranscriptionDebug('completed_update', {
-        role,
+        role: resolvedRole,
         itemId,
         finalTranscript,
       });
       const transcriptItem = transcriptItemsRef.current.find((i) => i.itemId === itemId);
       updateTranscriptItem(itemId, { status: 'DONE' });
 
-      logMessageToServer(itemId, role, finalTranscript);
+      logMessageToServer(itemId, resolvedRole, finalTranscript);
       if (transcriptionDebugEnabled) {
         logServerEvent(
           {
             type: 'transcription.completed',
-            role,
+            role: resolvedRole,
             itemId,
             text: finalTranscript,
           },

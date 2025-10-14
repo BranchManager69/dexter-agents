@@ -33,7 +33,7 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
   >('DISCONNECTED');
   const { logClientEvent } = useEvent();
   const transcriptionDebugEnabled =
-    process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT !== 'false';
+    process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
 
   const emitTranscriptionDebug = useCallback((tag: string, payload: Record<string, any>) => {
     if (!transcriptionDebugEnabled) return;
@@ -111,11 +111,11 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         break;
       }
       case "response.audio_transcript.done": {
-        historyHandlersRef.current.handleTranscriptionCompleted(event, 'assistant');
+        historyHandlersRef.current.handleTranscriptionCompleted(event, 'auto');
         break;
       }
       case "response.audio_transcript.delta": {
-        historyHandlersRef.current.handleTranscriptionDelta(event, 'assistant');
+        historyHandlersRef.current.handleTranscriptionDelta(event, 'auto');
         break;
       }
       // Some runtimes emit user ASR without the conversation.item.* prefix
@@ -183,6 +183,22 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
             historyHandlersRef.current.handleHistoryAdded(mapped);
             if (transcriptionDebugEnabled) {
               console.info('[dexter transcription] conversation.item.created', mapped);
+            }
+          }
+        } catch {}
+        if (transcriptionDebugEnabled) {
+          logServerEvent(event);
+        }
+        break;
+      }
+      case "conversation.item.retrieved": {
+        try {
+          const item = event?.item;
+          if (item && item.type === 'message') {
+            const mapped = { ...item, itemId: item.id };
+            historyHandlersRef.current.handleHistoryUpdated([mapped]);
+            if (transcriptionDebugEnabled) {
+              console.info('[dexter transcription] conversation.item.retrieved', mapped);
             }
           }
         } catch {}
@@ -424,7 +440,13 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
             ? ({ type: 'audio/pcmu' } as const)
             : ({ type: 'audio/pcma' } as const);
 
-      const includeKeys = ['item.input_audio_transcription', 'item.input_audio_transcription.logprobs'];
+      const includeKeys = [
+        'input_audio_transcription',
+        'conversation.item.input_audio_transcription',
+        'item.input_audio_transcription',
+        'item.input_audio_transcription.logprobs',
+        'response.audio_transcript',
+      ];
 
       sessionRef.current = new RealtimeSession(rootAgent, {
         transport: new OpenAIRealtimeWebRTC({
@@ -465,6 +487,44 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       });
 
       await sessionRef.current.connect({ apiKey: ek });
+
+      try {
+        const sessionUpdatePayload: Record<string, any> = {
+          type: 'session.update',
+          session: {
+            input_audio_transcription: {
+              model: MODEL_IDS.transcription,
+            },
+            input_audio_format:
+              audioFormat === 'pcm16'
+                ? 'pcm16'
+                : audioFormat === 'g711_ulaw'
+                  ? 'g711_ulaw'
+                  : 'g711_alaw',
+            turn_detection: {
+              type: 'server_vad',
+              threshold: 0.5,
+              prefix_padding_ms: 300,
+              silence_duration_ms: 500,
+            },
+            modalities: ['text', 'audio'],
+            response: {
+              modalities: ['text'],
+            },
+          },
+        };
+        sessionRef.current?.transport.sendEvent(sessionUpdatePayload as any);
+        emitTranscriptionDebug('session_update_bootstrap', sessionUpdatePayload);
+      } catch (err) {
+        logClientEvent(
+          {
+            type: 'client.session_update_failed',
+            error: err instanceof Error ? err.message : String(err),
+          },
+          '(initial session.update)'
+        );
+      }
+
       updateStatus('CONNECTED');
     },
     [callbacks, updateStatus],
