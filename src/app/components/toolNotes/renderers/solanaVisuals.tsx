@@ -62,12 +62,11 @@ const TONE_TEXT: Record<NonNullable<MetricPillProps["tone"]>, string> = {
 };
 
 export function MetricPill({ label, value, tone = "neutral" }: MetricPillProps) {
+  const toneClass = TONE_TEXT[tone] ?? TONE_TEXT.neutral;
   return (
-    <span
-      className={`inline-flex items-baseline gap-2 text-sm font-semibold ${TONE_TEXT[tone] ?? TONE_TEXT.neutral}`}
-    >
-      {label && <span className="text-[0.58rem] uppercase tracking-[0.28em] text-slate-500">{label}</span>}
-      <span className="text-slate-900">{value}</span>
+    <span className={`inline-flex items-baseline gap-2 text-sm font-semibold ${toneClass}`}>
+      {label && <span className="text-[0.58rem] uppercase tracking-[0.28em] text-current opacity-70">{label}</span>}
+      <span className="text-current">{value}</span>
     </span>
   );
 }

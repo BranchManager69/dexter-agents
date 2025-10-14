@@ -40,6 +40,7 @@ export const DEFAULT_TOOL_SLUGS: PromptToolSlugMap = {
   auth_info: 'agent.concierge.tool.auth_info',
   pumpstream_live_summary: 'agent.concierge.tool.pumpstream_live_summary',
   search: 'agent.concierge.tool.search',
+  twitter_search: 'agent.concierge.tool.twitter_search',
   fetch: 'agent.concierge.tool.fetch',
   codex_start: 'agent.concierge.tool.codex_start',
   codex_reply: 'agent.concierge.tool.codex_reply',

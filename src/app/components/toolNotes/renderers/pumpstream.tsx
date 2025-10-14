@@ -36,9 +36,22 @@ function formatCurrency(value: unknown) {
   return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(numeric);
 }
 
+function parseMomentumNumeric(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const cleaned = trimmed.replace(/%/g, "");
+    const numeric = Number(cleaned);
+    if (Number.isFinite(numeric)) return numeric;
+  }
+  return undefined;
+}
+
 function formatMomentum(value: unknown) {
-  if (typeof value === "number" && Number.isFinite(value)) {
-    return `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
+  const numeric = parseMomentumNumeric(value);
+  if (numeric !== undefined) {
+    return `${numeric >= 0 ? "+" : ""}${numeric.toFixed(2)}%`;
   }
   if (typeof value === "string" && value.trim().length > 0) return value.trim();
   return undefined;
@@ -70,8 +83,10 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
             const viewers = formatViewerCount(stream.currentViewers ?? stream.viewer_count ?? stream.viewers);
             const marketCap = formatCurrency(stream.marketCapUsd ?? stream.market_cap_usd ?? stream.marketCap);
             const momentumValue = stream.momentum ?? stream.signal;
+            const momentumNumeric = parseMomentumNumeric(momentumValue);
             const momentumDisplay = formatMomentum(momentumValue);
-            const momentumTone = typeof momentumValue === "number" && momentumValue < 0 ? "negative" : "positive";
+            const momentumTone =
+              momentumNumeric !== undefined ? (momentumNumeric < 0 ? "negative" : "positive") : "neutral";
             const href = stream.url || stream.streamUrl || (stream.mintId ? `https://pump.fun/${stream.mintId}` : undefined);
 
             const body = (

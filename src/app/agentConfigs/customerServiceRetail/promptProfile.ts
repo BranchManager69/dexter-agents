@@ -89,6 +89,10 @@ const DEFAULT_CONCIERGE_PROMPTS: ConciergePromptProfile = {
       slug: 'agent.concierge.tool.search',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.search". Update the tool description.',
     },
+    twitter_search: {
+      slug: 'agent.concierge.tool.twitter_search',
+      fallback: '⚠️ Missing prompt module "agent.concierge.tool.twitter_search". Update the tool description.',
+    },
     fetch: {
       slug: 'agent.concierge.tool.fetch',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.fetch". Update the tool description.',

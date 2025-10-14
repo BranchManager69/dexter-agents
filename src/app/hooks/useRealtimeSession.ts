@@ -433,12 +433,7 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       //  simulate how the voice agent sounds over a PSTN/SIP phone call.
       const codecParam = codecParamRef.current;
       const audioFormat = audioFormatForCodec(codecParam);
-      const audioFormatConfig =
-        audioFormat === 'pcm16'
-          ? ({ type: 'audio/pcm', rate: 24000 } as const)
-          : audioFormat === 'g711_ulaw'
-            ? ({ type: 'audio/pcmu' } as const)
-            : ({ type: 'audio/pcma' } as const);
+      const transcriptionModelId = MODEL_IDS.transcription;
 
       const includeKeys = [
         'input_audio_transcription',
@@ -463,21 +458,14 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         }),
         model: MODEL_IDS.realtime,
         config: {
-          audio: {
-            input: {
-              format: audioFormatConfig,
-              transcription: {
-                model: MODEL_IDS.transcription,
-              },
-            },
-            output: {
-              format: audioFormatConfig,
-            },
-          },
           include: includeKeys,
-          inputAudioFormat: audioFormat === 'pcm16' ? 'pcm16' : audioFormat === 'g711_ulaw' ? 'g711_ulaw' : 'g711_alaw',
+          inputAudioFormat: audioFormat,
+          input_audio_format: audioFormat,
           inputAudioTranscription: {
-            model: MODEL_IDS.transcription,
+            model: transcriptionModelId,
+          },
+          input_audio_transcription: {
+            model: transcriptionModelId,
           },
         } as any,
         outputGuardrails: outputGuardrails ?? [],
@@ -493,7 +481,7 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
           type: 'session.update',
           session: {
             input_audio_transcription: {
-              model: MODEL_IDS.transcription,
+              model: transcriptionModelId,
             },
             input_audio_format:
               audioFormat === 'pcm16'

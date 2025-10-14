@@ -9,6 +9,13 @@ const pickEnv = (
   return fallback;
 };
 
+const normalizeTranscriptionModel = (value: string): string => {
+  const trimmed = value?.trim() ?? '';
+  if (!trimmed) return 'gpt-4o-transcribe';
+  if (trimmed === 'gpt-4o-transcribe-latest') return 'gpt-4o-transcribe';
+  return trimmed;
+};
+
 export const MODEL_IDS = {
   general: pickEnv(
     ['NEXT_PUBLIC_OPENAI_GENERAL_MODEL', 'OPENAI_GENERAL_MODEL'],
@@ -18,9 +25,11 @@ export const MODEL_IDS = {
     ['NEXT_PUBLIC_OPENAI_REALTIME_MODEL', 'OPENAI_REALTIME_MODEL'],
     'gpt-realtime',
   ),
-  transcription: pickEnv(
-    ['NEXT_PUBLIC_OPENAI_TRANSCRIPTION_MODEL', 'OPENAI_TRANSCRIPTION_MODEL'],
-    'gpt-4o-transcribe-latest',
+  transcription: normalizeTranscriptionModel(
+    pickEnv(
+      ['NEXT_PUBLIC_OPENAI_TRANSCRIPTION_MODEL', 'OPENAI_TRANSCRIPTION_MODEL'],
+      'gpt-4o-transcribe',
+    ),
   ),
   supervisor: pickEnv(
     ['NEXT_PUBLIC_OPENAI_SUPERVISOR_MODEL', 'OPENAI_SUPERVISOR_MODEL'],

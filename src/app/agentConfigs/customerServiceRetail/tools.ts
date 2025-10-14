@@ -211,6 +211,52 @@ export function createConciergeToolset(toolDescriptions: Record<string, string> 
       strict: true,
       execute: async (input) => normalizeResult(await callMcp('fetch', input as ToolCallArgs)),
     }),
+    twitter_search: tool({
+      name: 'twitter_search',
+      description: describeTool('twitter_search', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'Primary search query (ticker, hashtag, keyword).',
+          },
+          queries: {
+            type: 'array',
+            description: 'Additional queries to merge into the result set.',
+            items: { type: 'string' },
+          },
+          ticker: {
+            type: 'string',
+            description: 'Ticker shorthand to expand into multiple search presets.',
+          },
+          max_results: {
+            type: 'number',
+            description: 'Maximum tweets to return (1-100).',
+          },
+          include_replies: {
+            type: 'boolean',
+            description: 'Whether to include replies (default true).',
+          },
+          language: {
+            type: 'string',
+            description: 'Filter results to a language code (e.g. en, es).',
+          },
+          media_only: {
+            type: 'boolean',
+            description: 'Only return tweets that contain media.',
+          },
+          verified_only: {
+            type: 'boolean',
+            description: 'Only return tweets from verified accounts.',
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('twitter_search', input as ToolCallArgs)),
+    }),
     codex_start: tool({
       name: 'codex_start',
       description: describeTool('codex_start', toolDescriptions),
