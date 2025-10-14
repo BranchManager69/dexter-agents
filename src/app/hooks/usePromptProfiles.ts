@@ -45,6 +45,8 @@ export const DEFAULT_TOOL_SLUGS: PromptToolSlugMap = {
   codex_start: 'agent.concierge.tool.codex_start',
   codex_reply: 'agent.concierge.tool.codex_reply',
   codex_exec: 'agent.concierge.tool.codex_exec',
+  stream_public_shout: 'agent.concierge.tool.stream_public_shout',
+  stream_shout_feed: 'agent.concierge.tool.stream_shout_feed',
 };
 
 export type PromptProfileManager = {

@@ -12,6 +12,7 @@ import { codexStartRenderer, codexReplyRenderer, codexExecRenderer } from "./cod
 import { streamGetSceneRenderer, streamSetSceneRenderer } from "./streamScene";
 import { solanaSwapPreviewRenderer, solanaSwapExecuteRenderer } from "./solanaSwap";
 import twitterSearchRenderer from "./twitterSearch";
+import streamPublicShoutRenderer from "./streamPublicShout";
 
 const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   pumpstream_live_summary: pumpstreamRenderer,
@@ -31,6 +32,8 @@ const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   solana_swap_preview: solanaSwapPreviewRenderer,
   solana_swap_execute: solanaSwapExecuteRenderer,
   twitter_search: twitterSearchRenderer,
+  stream_public_shout: streamPublicShoutRenderer,
+  stream_shout_feed: streamPublicShoutRenderer,
 };
 
 export function getToolNoteRenderer(toolName?: string | null): ToolNoteRenderer | undefined {

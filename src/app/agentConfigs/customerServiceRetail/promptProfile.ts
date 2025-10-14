@@ -109,6 +109,14 @@ const DEFAULT_CONCIERGE_PROMPTS: ConciergePromptProfile = {
       slug: 'agent.concierge.tool.codex_exec',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.codex_exec". Update the tool description.',
     },
+    stream_public_shout: {
+      slug: 'agent.concierge.tool.stream_public_shout',
+      fallback: '⚠️ Missing prompt module "agent.concierge.tool.stream_public_shout". Update the tool description.',
+    },
+    stream_shout_feed: {
+      slug: 'agent.concierge.tool.stream_shout_feed',
+      fallback: '⚠️ Missing prompt module "agent.concierge.tool.stream_shout_feed". Update the tool description.',
+    },
   },
 };
 

@@ -103,7 +103,7 @@ All `✓` means the tool is wired everywhere. Use it before/after refactors.
 | Pumpstream | `pumpstream_live_summary` |
 | Twitter | `twitter_search` |
 | Codex | `codex_start`, `codex_reply`, `codex_exec` |
-| Stream | `stream_get_scene`, `stream_set_scene` |
+| Stream | `stream_get_scene`, `stream_set_scene`, `stream_public_shout`, `stream_shout_feed` |
 | General web | `search`, `fetch` |
 
 Keep this table as the baseline when adding more tooling.

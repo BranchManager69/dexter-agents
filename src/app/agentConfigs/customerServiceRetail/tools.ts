@@ -321,6 +321,44 @@ export function createConciergeToolset(toolDescriptions: Record<string, string> 
       strict: false,
       execute: async (input) => normalizeResult(await callMcp('codex_exec', input as ToolCallArgs)),
     }),
+    stream_public_shout: tool({
+      name: 'stream_public_shout',
+      description: describeTool('stream_public_shout', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          message: {
+            type: 'string',
+            description: 'Send a short shout (5-280 characters) for Dexter to highlight on stream.',
+          },
+          alias: {
+            type: 'string',
+            description: 'Optional display name (2-32 characters).',
+          },
+        },
+        required: ['message'],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('stream_public_shout', input as ToolCallArgs)),
+    }),
+    stream_shout_feed: tool({
+      name: 'stream_shout_feed',
+      description: describeTool('stream_shout_feed', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          limit: {
+            type: 'number',
+            description: 'Maximum number of recent shouts to fetch (1-50).',
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('stream_shout_feed', input as ToolCallArgs)),
+    }),
   };
 }
 
