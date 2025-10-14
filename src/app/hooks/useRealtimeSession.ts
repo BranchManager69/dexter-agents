@@ -32,6 +32,31 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
     SessionStatus
   >('DISCONNECTED');
   const { logClientEvent } = useEvent();
+  const transcriptionDebugEnabled =
+    process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
+
+  const emitTranscriptionDebug = useCallback((tag: string, payload: Record<string, any>) => {
+    if (!transcriptionDebugEnabled) return;
+    if (typeof window === 'undefined') return;
+    const body = JSON.stringify({ tag, payload, ts: Date.now() });
+    try {
+      if (navigator?.sendBeacon) {
+        const blob = new Blob([body], { type: 'application/json' });
+        navigator.sendBeacon('/api/transcription-debug', blob);
+      } else {
+        void fetch('/api/transcription-debug', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body,
+          keepalive: true,
+        });
+      }
+    } catch (err) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('transcription debug beacon failed', err);
+      }
+    }
+  }, []);
 
   const updateStatus = useCallback(
     (s: SessionStatus) => {
@@ -74,6 +99,17 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
 
   function handleTransportEvent(event: any) {
     logDebug(event);
+    if (
+      event &&
+      typeof event.type === 'string' &&
+      (event.type.includes('input_audio') || event.type.startsWith('conversation.item'))
+    ) {
+      emitTranscriptionDebug('transport_event', {
+        type: event.type,
+        keys: Object.keys(event),
+        event,
+      });
+    }
     // Handle additional server events that aren't managed by the session
     switch (event.type) {
       case "conversation.item.input_audio_transcription.delta": {
@@ -109,6 +145,44 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
         break;
       }
+      case "input_audio_buffer.speech_started": {
+        historyHandlersRef.current.handleTranscriptionDelta(
+          {
+            item_id: event?.item_id,
+            delta: '',
+          },
+          'user'
+        );
+        break;
+      }
+      case "input_audio_buffer.committed": {
+        const itemId = event?.item_id;
+        if (itemId) {
+          historyHandlersRef.current.handleTranscriptionDelta(
+            {
+              item_id: itemId,
+              delta: '',
+            },
+            'user'
+          );
+          try {
+            (sessionRef.current as any)?.sendEvent?.({
+              type: 'conversation.item.retrieve',
+              item_id: itemId,
+            });
+          } catch (err) {
+            emitTranscriptionDebug('conversation_item_retrieve_failed', {
+              itemId,
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+        }
+        break;
+      }
+      case "input_audio_buffer.speech_stopped": {
+        // No-op for now; retrieval happens on commit.
+        break;
+      }
       case "conversation.item.created": {
         // Ensure user voice messages show up immediately when items are created
         try {
@@ -128,12 +202,14 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         currentResponseIdRef.current = typeof rid === 'string' ? rid : null;
         pendingMcpCallsRef.current.clear();
         stepActiveRef.current = true;
+      if (transcriptionDebugEnabled) {
         logServerEvent(event);
-        break;
       }
-      case "response.output_item.added": {
-        // Collect MCP calls for this step
-        const item = event?.item;
+      break;
+    }
+    case "response.output_item.added": {
+      // Collect MCP calls for this step
+      const item = event?.item;
         if (item && item.type === 'mcp_call' && item.id) {
           pendingMcpCallsRef.current.add(item.id);
           try {
@@ -144,7 +220,9 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
             });
           } catch {}
         }
-        logServerEvent(event);
+        if (transcriptionDebugEnabled) {
+          logServerEvent(event);
+        }
         break;
       }
       case "response.mcp_call.completed": {
@@ -154,7 +232,9 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
           pendingMcpCallsRef.current.delete(itemId);
           tryAdvanceAfterMcp();
         }
-        logServerEvent(event);
+        if (transcriptionDebugEnabled) {
+          logServerEvent(event);
+        }
         break;
       }
       case "response.mcp_call_arguments.done": {
@@ -163,7 +243,9 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         try {
           historyHandlersRef.current.handleMcpToolArgumentsDone(itemId, args);
         } catch {}
-        logServerEvent(event);
+        if (transcriptionDebugEnabled) {
+          logServerEvent(event);
+        }
         break;
       }
       case "response.output_item.done": {
@@ -187,7 +269,9 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
             tryAdvanceAfterMcp();
           }
         }
-        logServerEvent(event);
+        if (transcriptionDebugEnabled) {
+          logServerEvent(event);
+        }
         break;
       }
       case "response.done": {
@@ -215,11 +299,15 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         if (resp?.usage) {
           callbacks.onUsage?.(resp.usage);
         }
-        logServerEvent(event);
+        if (transcriptionDebugEnabled) {
+          logServerEvent(event);
+        }
         break;
       }
       default: {
-        logServerEvent(event);
+        if (transcriptionDebugEnabled) {
+          logServerEvent(event);
+        }
         break;
       } 
     }
@@ -340,6 +428,8 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
             ? ({ type: 'audio/pcmu' } as const)
             : ({ type: 'audio/pcma' } as const);
 
+      const includeKeys = ['item.input_audio_transcription', 'item.input_audio_transcription.logprobs'];
+
       sessionRef.current = new RealtimeSession(rootAgent, {
         transport: new OpenAIRealtimeWebRTC({
           audioElement,
@@ -366,7 +456,12 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
               format: audioFormatConfig,
             },
           },
-        },
+          include: includeKeys,
+          inputAudioFormat: audioFormat === 'pcm16' ? 'pcm16' : audioFormat === 'g711_ulaw' ? 'g711_ulaw' : 'g711_alaw',
+          inputAudioTranscription: {
+            model: MODEL_IDS.transcription,
+          },
+        } as any,
         outputGuardrails: outputGuardrails ?? [],
         // The OpenAI Realtime API no longer accepts an arbitrary `context` payload,
         // so we avoid attaching it to prevent 400 Unknown parameter errors.
@@ -433,6 +528,21 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
     sessionRef.current?.transport.sendEvent(ev);
   }, [logClientEvent]);
 
+  const updateSessionConfig = useCallback((config: any) => {
+    try {
+      emitTranscriptionDebug('session_update_send', { config });
+      (sessionRef.current as any)?.updateSessionConfig?.(config);
+    } catch (err) {
+      logClientEvent(
+        {
+          type: 'client.session_update_failed',
+          error: err instanceof Error ? err.message : String(err),
+        },
+        '(updateSessionConfig)'
+      );
+    }
+  }, [logClientEvent]);
+
   const mute = useCallback((m: boolean) => {
     sessionRef.current?.mute(m);
   }, []);
@@ -444,6 +554,7 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
     sendUserMessage,
     sendUserText,
     sendEvent,
+    updateSessionConfig,
     mute,
     interrupt,
   } as const;

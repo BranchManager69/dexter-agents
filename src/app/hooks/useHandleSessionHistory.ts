@@ -19,6 +19,7 @@ export function useHandleSessionHistory() {
   const transcriptItemsRef = useRef(transcriptItems);
   const shouldLogServerSide = process.env.NEXT_PUBLIC_LOG_TRANSCRIPTS === 'true';
   const showDebugTranscript = process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true';
+  const transcriptionDebugEnabled = showDebugTranscript;
   const messageLogStateRef = useRef(new Map<string, string>());
   const toolLogSetRef = useRef(new Set<string>());
   const toolNoteIdMapRef = useRef(new Map<string, string>());
@@ -229,7 +230,6 @@ export function useHandleSessionHistory() {
   }
 
   function handleHistoryAdded(item: any) {
-    console.log("[handleHistoryAdded] ", item);
     if (!item || item.type !== 'message') return;
 
     const { itemId, role, content = [] } = item;
@@ -240,6 +240,13 @@ export function useHandleSessionHistory() {
       if (isUser && !text) {
         text = "[Transcribing...]";
       }
+
+      emitTranscriptionDebug('history_added', {
+        itemId,
+        role,
+        text,
+        rawContent: content,
+      });
 
       // If the guardrail has been tripped, this message is a message that gets sent to the 
       // assistant to correct it, so we add it as a breadcrumb instead of a message.
@@ -255,13 +262,19 @@ export function useHandleSessionHistory() {
   }
 
   function handleHistoryUpdated(items: any[]) {
-    console.log("[handleHistoryUpdated] ", items);
     items.forEach((item: any) => {
       if (!item || item.type !== 'message') return;
 
       const { itemId, content = [] } = item;
 
       const text = extractMessageText(content);
+
+      emitTranscriptionDebug('history_updated', {
+        itemId,
+        role: item.role ?? 'assistant',
+        text,
+        content,
+      });
 
       if (text) {
         updateTranscriptMessage(itemId, text, false);
@@ -270,31 +283,139 @@ export function useHandleSessionHistory() {
     });
   }
 
+  const emitTranscriptionDebug = (() => {
+    let sent = 0;
+    const MAX_EVENTS = 40;
+    return (tag: string, payload: Record<string, any>) => {
+      if (!transcriptionDebugEnabled) return;
+      if (typeof window === 'undefined') return;
+      if (sent >= MAX_EVENTS) return;
+      sent += 1;
+      const body = JSON.stringify({ tag, payload, ts: Date.now() });
+      try {
+        if (navigator?.sendBeacon) {
+          const blob = new Blob([body], { type: 'application/json' });
+          navigator.sendBeacon('/api/transcription-debug', blob);
+        } else {
+          void fetch('/api/transcription-debug', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body,
+            keepalive: true,
+          });
+        }
+      } catch (err) {
+        console.debug('transcription debug beacon failed', err);
+      }
+    };
+  })();
+
+  const findLatestUserTranscriptItem = (statuses: Array<'IN_PROGRESS' | 'DONE'> = ['IN_PROGRESS']) => {
+    for (let i = transcriptItemsRef.current.length - 1; i >= 0; i--) {
+      const entry = transcriptItemsRef.current[i];
+      if (
+        entry.type === 'MESSAGE' &&
+        entry.role === 'user' &&
+        statuses.includes(entry.status as 'IN_PROGRESS' | 'DONE')
+      ) {
+        return entry;
+      }
+    }
+    return undefined;
+  };
+
   function handleTranscriptionDelta(
     item: any,
     role: 'user' | 'assistant' = 'assistant',
   ) {
-    const itemId = item.item_id;
-    const deltaText = item.delta || "";
-    if (itemId) {
-      if (role === 'user') {
-        ensureUserTranscriptMessage(itemId);
-      }
-      updateTranscriptMessage(itemId, deltaText, true);
+    const itemId =
+      item?.item_id ??
+      item?.item?.id ??
+      item?.id ??
+      item?.message_id ??
+      item?.response_id ??
+      null;
 
-      const logKey = `${role}:${itemId}`;
-      if (deltaText && !transcriptionLogSetRef.current.has(logKey)) {
-        transcriptionLogSetRef.current.add(logKey);
+    const deltaText = (() => {
+      if (typeof item?.delta === 'string') return item.delta;
+      if (typeof item?.transcript === 'string') return item.transcript;
+      if (typeof item?.item?.delta === 'string') return item.item.delta;
+      if (typeof item?.item?.transcript === 'string') return item.item.transcript;
+
+      const content = Array.isArray(item?.content) ? item.content : [];
+      for (const c of content) {
+        if (c && typeof c === 'object') {
+          if (typeof c.delta === 'string') return c.delta;
+          if (typeof c.text === 'string') return c.text;
+          if (typeof c.transcript === 'string') return c.transcript;
+        }
+      }
+      return '';
+    })();
+
+    let targetItemId = itemId;
+    if (!targetItemId) {
+      const fallback = findLatestUserTranscriptItem(['IN_PROGRESS']);
+      targetItemId = fallback?.itemId ?? null;
+      if (transcriptionDebugEnabled) {
         logServerEvent(
           {
-            type: 'transcription.delta',
+            type: 'transcription.delta_unmatched_item',
             role,
-            itemId,
-            preview: deltaText.slice(0, 80),
+            receivedKeys: Object.keys(item || {}),
+            fallbackItemId: targetItemId,
           },
           '(voice streaming)'
         );
       }
+      emitTranscriptionDebug('delta_unmatched_item', {
+        role,
+        keys: Object.keys(item || {}),
+        item,
+        fallbackItemId: targetItemId,
+      });
+    }
+
+    if (!targetItemId) {
+      emitTranscriptionDebug('delta_no_target', {
+        role,
+        item,
+      });
+      return;
+    }
+
+    if (role === 'user') {
+      ensureUserTranscriptMessage(targetItemId);
+    }
+
+    if (!deltaText) {
+      emitTranscriptionDebug('delta_empty', {
+        role,
+        itemId: targetItemId,
+        item,
+      });
+      return;
+    }
+
+    updateTranscriptMessage(targetItemId, deltaText, true);
+    emitTranscriptionDebug('delta_update', {
+      role,
+      itemId: targetItemId,
+      deltaText,
+    });
+
+    const logKey = `${role}:${targetItemId}`;
+    if (transcriptionDebugEnabled && !transcriptionLogSetRef.current.has(logKey)) {
+      transcriptionLogSetRef.current.add(logKey);
+      logServerEvent(
+        {
+          type: 'transcription.delta',
+          role,
+          itemId: targetItemId,
+          preview: deltaText.slice(0, 80),
+        },
+        '(voice streaming)'
+      );
     }
   }
 
@@ -304,7 +425,7 @@ export function useHandleSessionHistory() {
   ) {
     // History updates don't reliably end in a completed item, 
     // so we need to handle finishing up when the transcription is completed.
-    const itemId = item.item_id || item.id || item?.message_id;
+    let itemId = item.item_id || item.id || item?.message_id;
     const finalTranscript =
       typeof item.transcript === 'string' && item.transcript.trim().length > 0
         ? item.transcript
@@ -319,24 +440,52 @@ export function useHandleSessionHistory() {
             }
             return "[inaudible]";
           })();
+    if (!itemId) {
+      const fallback = findLatestUserTranscriptItem(['IN_PROGRESS', 'DONE']);
+      itemId = fallback?.itemId;
+      if (transcriptionDebugEnabled) {
+        logServerEvent(
+          {
+            type: 'transcription.completed_unmatched_item',
+            role,
+            receivedKeys: Object.keys(item || {}),
+            fallbackItemId: itemId,
+          },
+          '(voice streaming)'
+        );
+      }
+      emitTranscriptionDebug('completed_unmatched_item', {
+        role,
+        keys: Object.keys(item || {}),
+        item,
+        fallbackItemId: itemId,
+      });
+    }
     if (itemId) {
       if (role === 'user') {
         ensureUserTranscriptMessage(itemId);
       }
       updateTranscriptMessage(itemId, finalTranscript, false);
+      emitTranscriptionDebug('completed_update', {
+        role,
+        itemId,
+        finalTranscript,
+      });
       const transcriptItem = transcriptItemsRef.current.find((i) => i.itemId === itemId);
       updateTranscriptItem(itemId, { status: 'DONE' });
 
       logMessageToServer(itemId, role, finalTranscript);
-      logServerEvent(
-        {
-          type: 'transcription.completed',
-          role,
-          itemId,
-          text: finalTranscript,
-        },
-        '(voice streaming)'
-      );
+      if (transcriptionDebugEnabled) {
+        logServerEvent(
+          {
+            type: 'transcription.completed',
+            role,
+            itemId,
+            text: finalTranscript,
+          },
+          '(voice streaming)'
+        );
+      }
 
       // If guardrailResult still pending, mark PASS.
       if (transcriptItem?.guardrailResult?.status === 'IN_PROGRESS') {
@@ -352,7 +501,6 @@ export function useHandleSessionHistory() {
   }
 
   function handleGuardrailTripped(details: any, _agent: any, guardrail: any) {
-    console.log("[guardrail tripped]", details, _agent, guardrail);
     const moderation = extractModeration(guardrail.result.output.outputInfo);
     logServerEvent({ type: 'guardrail_tripped', payload: moderation });
 

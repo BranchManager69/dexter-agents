@@ -304,7 +304,7 @@ export function AuthMenu({
                   Open {providerInfo?.label ?? "inbox"} ↗
                 </a>
               ) : (
-                <span className={styles.messageHint}>Try Gmail, Outlook, Proton, or check Spam</span>
+                <span className={styles.messageHint}>Check Spam?</span>
               )}
             </span>
           )}
