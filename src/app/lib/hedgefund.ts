@@ -21,6 +21,7 @@ export type HedgefundStatus = {
   riskBudgetSol: number;
   watchlistCount: number;
   pumpfunTargets: number;
+  autoStart: boolean;
 };
 
 export type HedgefundSignalConfig = {
@@ -43,6 +44,7 @@ export type HedgefundTradingConfig = {
   dryRun: boolean;
   pollIntervalMs: number;
   confirmTimeoutMs: number;
+  autoStart: boolean;
 };
 
 export type HedgefundConfig = {

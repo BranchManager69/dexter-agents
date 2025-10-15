@@ -18,6 +18,7 @@ function formatTimestamp(date: Date | null): string {
 export function HedgefundStatusCard({ status, loading, lastUpdated, busy, onRefresh }: HedgefundStatusCardProps) {
   const dryRun = status?.dryRun ?? null;
   const riskBudget = status?.riskBudgetSol ?? null;
+  const autoStart = status?.autoStart ?? null;
 
   return (
     <section className="flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-surface-base/80 p-6 shadow-inner">
@@ -39,7 +40,7 @@ export function HedgefundStatusCard({ status, loading, lastUpdated, busy, onRefr
       <dl className="mt-6 grid grid-cols-2 gap-4 text-sm">
         <div className="rounded-lg border border-border-subtle/60 bg-surface-raised/50 p-4">
           <dt className="text-xs uppercase tracking-wide text-neutral-500">Dry Run</dt>
-          <dd className={`mt-2 text-base font-medium ${dryRun ? "text-amber-300" : "text-emerald-300"}`}>
+          <dd className={`mt-2 text-base font-medium ${dryRun === null ? "text-neutral-300" : dryRun ? "text-amber-300" : "text-emerald-300"}`}>
             {dryRun === null ? "—" : dryRun ? "Simulated" : "Live"}
           </dd>
         </div>
@@ -47,6 +48,12 @@ export function HedgefundStatusCard({ status, loading, lastUpdated, busy, onRefr
           <dt className="text-xs uppercase tracking-wide text-neutral-500">Risk Budget</dt>
           <dd className="mt-2 text-base font-medium text-foreground">
             {riskBudget == null ? "—" : `${riskBudget.toFixed(2)} SOL`}
+          </dd>
+        </div>
+        <div className="rounded-lg border border-border-subtle/60 bg-surface-raised/50 p-4">
+          <dt className="text-xs uppercase tracking-wide text-neutral-500">Auto Start</dt>
+          <dd className="mt-2 text-base font-medium text-foreground">
+            {autoStart === null ? "—" : autoStart ? "Enabled" : "Standby"}
           </dd>
         </div>
         <div className="rounded-lg border border-border-subtle/60 bg-surface-raised/50 p-4">

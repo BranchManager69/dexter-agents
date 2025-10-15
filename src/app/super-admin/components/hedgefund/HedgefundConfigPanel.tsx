@@ -20,6 +20,7 @@ type FormState = {
   targetSol: string;
   priorityLamports: string;
   confirmTimeoutMs: string;
+  autoStart: boolean;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -31,6 +32,7 @@ const DEFAULT_FORM: FormState = {
   targetSol: "0.15",
   priorityLamports: "0",
   confirmTimeoutMs: "45000",
+  autoStart: true,
 };
 
 export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: HedgefundConfigPanelProps) {
@@ -49,6 +51,7 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
       targetSol: String(config.pumpfun.targetSol ?? DEFAULT_FORM.targetSol),
       priorityLamports: String(config.pumpfun.priorityLamports ?? DEFAULT_FORM.priorityLamports),
       confirmTimeoutMs: String(config.trading.confirmTimeoutMs ?? DEFAULT_FORM.confirmTimeoutMs),
+      autoStart: Boolean(config.trading.autoStart ?? DEFAULT_FORM.autoStart),
     });
   }, [config]);
 
@@ -61,6 +64,7 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
       Number(form.slippageBps) !== config.trading.slippageBps ||
       Number(form.pollIntervalMs) !== config.trading.pollIntervalMs ||
       Number(form.confirmTimeoutMs) !== config.trading.confirmTimeoutMs ||
+      form.autoStart !== config.trading.autoStart ||
       Number(form.targetSol) !== config.pumpfun.targetSol ||
       Number(form.priorityLamports) !== config.pumpfun.priorityLamports
     );
@@ -81,6 +85,7 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
         confirmTimeoutMs: String(config.trading.confirmTimeoutMs),
         targetSol: String(config.pumpfun.targetSol),
         priorityLamports: String(config.pumpfun.priorityLamports),
+        autoStart: Boolean(config.trading.autoStart),
       });
     } else {
       setForm(DEFAULT_FORM);
@@ -101,6 +106,7 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
           slippageBps: Number(form.slippageBps),
           pollIntervalMs: Number(form.pollIntervalMs),
           confirmTimeoutMs: Number(form.confirmTimeoutMs),
+          autoStart: form.autoStart,
         },
         pumpfun: {
           targetSol: Number(form.targetSol),
@@ -141,6 +147,23 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
               type="checkbox"
               checked={form.dryRun}
               onChange={(event) => handleChange("dryRun", event.target.checked)}
+              className="h-4 w-4 accent-emerald-500"
+            />
+            Enabled
+          </label>
+        </fieldset>
+
+        <fieldset className="flex items-center justify-between rounded-md border border-border-subtle/60 bg-surface-raised/60 px-4 py-3">
+          <legend className="sr-only">Auto start toggle</legend>
+          <div>
+            <p className="text-sm font-medium text-foreground">Auto Start Worker</p>
+            <p className="text-xs text-neutral-500">When disabled, the PM2 process stays idle until manually triggered.</p>
+          </div>
+          <label className="flex items-center gap-2 text-xs text-neutral-400">
+            <input
+              type="checkbox"
+              checked={form.autoStart}
+              onChange={(event) => handleChange("autoStart", event.target.checked)}
               className="h-4 w-4 accent-emerald-500"
             />
             Enabled
