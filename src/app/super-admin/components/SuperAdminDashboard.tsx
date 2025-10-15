@@ -166,8 +166,8 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
   }, [prefetchedSignals, status, signalsLoading, handleLoadSignals]);
 
   return (
-    <div className="flex min-h-screen bg-slate-950/95 text-foreground">
-      <div className="mx-auto flex w-full max-w-6xl flex-col overflow-y-auto px-6 py-12 pb-24">
+    <div className="flex h-[100dvh] w-full overflow-y-auto bg-slate-950/95 text-foreground">
+      <div className="mx-auto flex w-full max-w-6xl flex-col px-6 py-12 pb-24">
         <header className="mb-10">
           <div className="text-xs uppercase tracking-widest text-neutral-400">Super Admin</div>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight text-foreground">Dexter Control Room</h1>
