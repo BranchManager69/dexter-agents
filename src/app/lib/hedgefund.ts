@@ -62,29 +62,24 @@ export type HedgefundWalletSummary = {
 
 export type HedgefundPortfolioToken = {
   mint: string;
-  symbol: string | null;
-  label?: string | null;
-  decimals?: number | null;
+  decimals: number;
+  amountRaw: string;
   amountUi: number;
-  usdValue?: number | null;
 };
 
 export type HedgefundPortfolioSnapshot = {
   alias: string;
-  publicKey?: string;
-  solBalance?: number | null;
-  solBalanceFormatted?: string | null;
-  totalUsd?: number | null;
-  totalUsdFormatted?: string | null;
-  tokenCount?: number;
+  publicKey: string;
+  solLamports: string;
+  sol: number;
   fetchedAt: string;
   tokens: HedgefundPortfolioToken[];
 };
 
 export type HedgefundPortfolio = {
   snapshots: HedgefundPortfolioSnapshot[];
-  totalSol?: number | null;
-  totalUsd?: number | null;
+  totalSolLamports: string;
+  totalSol: number;
 };
 
 export type HedgefundSignal = Record<string, unknown>;
