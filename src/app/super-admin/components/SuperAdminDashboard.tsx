@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import {
   HedgefundApi,
@@ -46,9 +46,6 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [banner, setBanner] = useState<Banner | null>(null);
   const [prefetchedSignals, setPrefetchedSignals] = useState(false);
-  const [showDextervisionTip, setShowDextervisionTip] = useState(false);
-  const tipScheduleRef = useRef<number | null>(null);
-  const tipHideRef = useRef<number | null>(null);
 
   const displayName = email || "Super Admin";
 
@@ -103,30 +100,6 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
     }, REFRESH_INTERVAL_MS);
     return () => window.clearInterval(interval);
   }, [loadAll]);
-
-  useEffect(() => {
-    const scheduleTip = () => {
-      const nextDelay = 45_000 + Math.random() * 120_000;
-      tipScheduleRef.current = window.setTimeout(() => {
-        setShowDextervisionTip(true);
-        tipHideRef.current = window.setTimeout(() => {
-          setShowDextervisionTip(false);
-          scheduleTip();
-        }, 12_000);
-      }, nextDelay);
-    };
-
-    scheduleTip();
-
-    return () => {
-      if (tipScheduleRef.current) {
-        window.clearTimeout(tipScheduleRef.current);
-      }
-      if (tipHideRef.current) {
-        window.clearTimeout(tipHideRef.current);
-      }
-    };
-  }, []);
 
   const handleTradeSettled = useCallback(
     async (result: HedgefundTradeResult, action: "buy" | "sell") => {
@@ -203,13 +176,6 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
             trigger trades directly when needed.
           </p>
         </header>
-
-        {showDextervisionTip ? (
-          <div className="mb-6 rounded-lg border border-sky-600/40 bg-sky-900/20 px-4 py-3 text-sm text-sky-100 shadow-sm">
-            <strong className="mr-1 font-semibold text-sky-200">DexterVision Tip:</strong>
-            To post a public message on Dextervision, just tell your Dexter Voice agent what you want to shout.
-          </div>
-        ) : null}
 
         {banner ? (
           <div
