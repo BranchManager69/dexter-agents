@@ -77,19 +77,32 @@ export function MessageMarkdown({ children, className }: MessageMarkdownProps) {
          * When introducing new artifact node types, register them here so they render.
          */
         solanaArtifact: ({ node }: { node: any }) => {
+          const artifactData = node?.data ?? {};
+          const hProperties = artifactData?.hProperties ?? {};
+          const artifactProps = node?.properties ?? hProperties;
+
           const artifactValue =
             typeof node?.value === "string"
               ? node.value
-              : typeof node?.properties?.value === "string"
-                ? node.properties.value
-                : Array.isArray(node?.children) && typeof node.children[0]?.value === "string"
-                  ? node.children[0].value
-                  : undefined;
+              : typeof artifactProps?.value === "string"
+                ? artifactProps.value
+                : typeof artifactData?.value === "string"
+                  ? artifactData.value
+                  : Array.isArray(node?.children) && typeof node.children[0]?.value === "string"
+                    ? node.children[0].value
+                    : typeof hProperties?.value === "string"
+                      ? hProperties.value
+                      : undefined;
 
-          const artifactType = node?.data?.artifactType ?? node?.properties?.artifactType;
+          const artifactType =
+            artifactProps?.artifactType ?? artifactData?.artifactType ?? hProperties?.artifactType;
 
-          if (!artifactValue || !artifactType) {
-            return <>{artifactValue ?? ""}</>;
+          if (!artifactValue) {
+            return null;
+          }
+
+          if (!artifactType) {
+            return <>{artifactValue}</>;
           }
 
           return <SolanaArtifactBadge value={artifactValue} type={artifactType} />;
