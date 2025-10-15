@@ -45,6 +45,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
   const [busy, setBusy] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [banner, setBanner] = useState<Banner | null>(null);
+  const [prefetchedSignals, setPrefetchedSignals] = useState(false);
 
   const displayName = email || "Super Admin";
 
@@ -56,7 +57,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
     }, 5000);
   }, []);
 
-  const normalizeError = (error: unknown): string => {
+  const normalizeError = useCallback((error: unknown): string => {
     if (error instanceof HedgefundApiError) {
       return error.message;
     }
@@ -64,7 +65,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
       return error.message;
     }
     return "Unexpected error";
-  };
+  }, []);
 
   const loadAll = useCallback(async () => {
     setBusy(true);
@@ -87,7 +88,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
       setLoading(false);
       setBusy(false);
     }
-  }, [accessToken]);
+  }, [accessToken, normalizeError, showBanner]);
 
   useEffect(() => {
     loadAll();
@@ -112,7 +113,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
       }
       await loadAll();
     },
-    [loadAll]
+    [loadAll, showBanner]
   );
 
   const handleConfigSaved = useCallback(
@@ -121,7 +122,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
       await loadAll();
       showBanner("success", "Hedgefund config saved.");
     },
-    [loadAll]
+    [loadAll, showBanner]
   );
 
   const handleLoadSignals = useCallback(async () => {
@@ -134,7 +135,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
     } finally {
       setSignalsLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, normalizeError, showBanner]);
 
   const handleTick = useCallback(
     async (options: { dryRun?: boolean; riskBudgetSol?: number }) => {
@@ -149,7 +150,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
         throw error;
       }
     },
-    [accessToken, loadAll]
+    [accessToken, loadAll, normalizeError, showBanner]
   );
 
   const dryRun = status?.dryRun ?? config?.trading?.dryRun ?? true;
@@ -157,9 +158,16 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
 
   const hasData = Boolean(status && config && portfolio && wallets.length);
 
+  useEffect(() => {
+    if (!prefetchedSignals && status && !signalsLoading) {
+      setPrefetchedSignals(true);
+      handleLoadSignals();
+    }
+  }, [prefetchedSignals, status, signalsLoading, handleLoadSignals]);
+
   return (
-    <div className="min-h-screen bg-surface-base/90 text-foreground">
-      <div className="mx-auto max-w-6xl px-6 py-12">
+    <div className="min-h-screen overflow-y-auto bg-slate-950/95 text-foreground">
+      <div className="mx-auto max-w-6xl px-6 py-12 pb-24">
         <header className="mb-10">
           <div className="text-xs uppercase tracking-widest text-neutral-400">Super Admin</div>
           <h1 className="mt-2 text-4xl font-semibold tracking-tight text-foreground">Dexter Control Room</h1>
@@ -226,7 +234,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
         </div>
 
         {!hasData && !loading ? (
-          <div className="mt-10 rounded-lg border border-border-subtle/70 bg-surface-base/80 p-6 text-sm text-neutral-300">
+          <div className="mt-10 rounded-lg border border-slate-800/70 bg-slate-900/70 p-6 text-sm text-neutral-300">
             <p>Data not available yet. Verify the hedgefund API is reachable and refresh.</p>
           </div>
         ) : null}

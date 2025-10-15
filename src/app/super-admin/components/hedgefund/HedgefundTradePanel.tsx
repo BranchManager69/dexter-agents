@@ -161,13 +161,13 @@ export function HedgefundTradePanel({
   };
 
   return (
-    <section className="rounded-xl border border-border-subtle/70 bg-surface-base/80 p-6 shadow-inner">
+    <section className="rounded-xl border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
       <header className="mb-4 flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-wide text-neutral-500">Trades</p>
+          <p className="text-xs uppercase tracking-wide text-neutral-400">Trades</p>
           <h2 className="mt-1 text-lg font-semibold text-foreground">Manual Pump.fun Execution</h2>
         </div>
-        <div className="flex items-center gap-2 text-xs text-neutral-400">
+        <div className="flex items-center gap-2 text-xs text-neutral-300">
           <label className="flex items-center gap-2">
             <span>Simulate</span>
             <input
@@ -182,21 +182,21 @@ export function HedgefundTradePanel({
 
       <div className="grid gap-4 text-sm">
         <div className="grid gap-2">
-          <label className="text-xs uppercase tracking-wide text-neutral-500">Mint</label>
+          <label className="text-xs uppercase tracking-wide text-neutral-400">Mint</label>
           <input
             value={mint}
             onChange={(event) => setMint(event.target.value)}
             placeholder="Pump.fun mint address"
-            className="rounded-md border border-border-subtle/60 bg-surface-raised/60 px-3 py-2 text-sm text-foreground placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </div>
 
         <div className="grid gap-2">
-          <label className="text-xs uppercase tracking-wide text-neutral-500">Wallet</label>
+          <label className="text-xs uppercase tracking-wide text-neutral-400">Wallet</label>
           <select
             value={resolvedWalletAlias}
             onChange={(event) => setWalletAlias(event.target.value)}
-            className="rounded-md border border-border-subtle/60 bg-surface-raised/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
           >
             {wallets.map((wallet) => (
               <option key={wallet.alias} value={wallet.alias}>
@@ -208,34 +208,34 @@ export function HedgefundTradePanel({
 
         <div className="grid gap-2 lg:grid-cols-2">
           <div className="grid gap-2">
-            <label className="text-xs uppercase tracking-wide text-neutral-500">Buy Amount (SOL)</label>
+            <label className="text-xs uppercase tracking-wide text-neutral-400">Buy Amount (SOL)</label>
             <input
               type="number"
               min={MIN_SOL}
               step="0.01"
               value={amountSol}
               onChange={(event) => setAmountSol(event.target.value)}
-              className="rounded-md border border-border-subtle/60 bg-surface-raised/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           </div>
 
           <div className="grid gap-2">
-            <label className="text-xs uppercase tracking-wide text-neutral-500">Slippage (BPS)</label>
+            <label className="text-xs uppercase tracking-wide text-neutral-400">Slippage (BPS)</label>
             <input
               type="number"
               min={10}
               step="10"
               value={slippageBps}
               onChange={(event) => setSlippageBps(event.target.value)}
-              className="rounded-md border border-border-subtle/60 bg-surface-raised/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           </div>
         </div>
 
-        <div className="rounded-lg border border-border-subtle/60 bg-surface-raised/50 p-4">
+        <div className="rounded-lg border border-slate-800/60 bg-slate-900/60 p-4">
           <div className="flex items-center justify-between gap-3">
-            <p className="text-xs uppercase tracking-wide text-neutral-500">Sell Amount</p>
-            <label className="flex items-center gap-2 text-xs text-neutral-400">
+            <p className="text-xs uppercase tracking-wide text-neutral-400">Sell Amount</p>
+            <label className="flex items-center gap-2 text-xs text-neutral-300">
               <input
                 type="checkbox"
                 checked={sellUseFullBalance}
@@ -253,7 +253,7 @@ export function HedgefundTradePanel({
               value={sellAmount}
               onChange={(event) => setSellAmount(event.target.value)}
               placeholder="Token amount to sell"
-              className="mt-3 w-full rounded-md border border-border-subtle/60 bg-surface-base/70 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="mt-3 w-full rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           ) : (
             <p className="mt-3 text-xs text-neutral-400">
@@ -263,7 +263,7 @@ export function HedgefundTradePanel({
         </div>
 
         {error ? (
-          <div className="rounded-md border border-red-600/50 bg-red-900/30 px-3 py-2 text-xs text-red-100">
+          <div className="rounded-md border border-red-600/40 bg-red-900/30 px-3 py-2 text-xs text-red-100">
             {error}
           </div>
         ) : null}
@@ -287,7 +287,7 @@ export function HedgefundTradePanel({
           </button>
         </div>
 
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-neutral-400">
           All trades call the live `/api/hedgefund/trade/*` endpoints. Leave the simulate checkbox on if you want a
           dry run first.
         </p>

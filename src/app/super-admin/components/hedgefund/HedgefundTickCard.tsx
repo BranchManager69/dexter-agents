@@ -38,26 +38,26 @@ export function HedgefundTickCard({ dryRunDefault, riskBudgetDefault, onTick }: 
   };
 
   return (
-    <section className="flex flex-col rounded-xl border border-border-subtle/70 bg-surface-base/80 p-6 shadow-inner">
+    <section className="flex flex-col rounded-xl border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
       <header className="mb-4">
-        <p className="text-xs uppercase tracking-wide text-neutral-500">Worker</p>
+        <p className="text-xs uppercase tracking-wide text-neutral-400">Worker</p>
         <h2 className="mt-1 text-lg font-semibold text-foreground">Manual Tick</h2>
       </header>
 
       <div className="grid gap-3 text-sm">
         <label className="grid gap-2">
-          <span className="text-xs uppercase tracking-wide text-neutral-500">Risk Budget Override (SOL)</span>
+          <span className="text-xs uppercase tracking-wide text-neutral-400">Risk Budget Override (SOL)</span>
           <input
             type="number"
             min="0"
             step="0.1"
             value={riskBudget}
             onChange={(event) => setRiskBudget(event.target.value)}
-            className="rounded-md border border-border-subtle/60 bg-surface-raised/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </label>
 
-        <label className="flex items-center justify-between rounded-md border border-border-subtle/60 bg-surface-raised/60 px-3 py-2 text-xs text-neutral-400">
+        <label className="flex items-center justify-between rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-xs text-neutral-300">
           <span>Dry Run</span>
           <input
             type="checkbox"
@@ -68,7 +68,7 @@ export function HedgefundTickCard({ dryRunDefault, riskBudgetDefault, onTick }: 
         </label>
 
         {error ? (
-          <div className="rounded-md border border-red-600/50 bg-red-900/30 px-3 py-2 text-xs text-red-100">{error}</div>
+          <div className="rounded-md border border-red-600/40 bg-red-900/30 px-3 py-2 text-xs text-red-100">{error}</div>
         ) : null}
 
         <button

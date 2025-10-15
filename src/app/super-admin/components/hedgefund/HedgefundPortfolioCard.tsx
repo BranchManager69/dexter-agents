@@ -17,15 +17,15 @@ export function HedgefundPortfolioCard({ portfolio, loading }: HedgefundPortfoli
   const totalSol = portfolio?.totalSol ?? null;
 
   return (
-    <section className="rounded-xl border border-border-subtle/70 bg-surface-base/80 p-6 shadow-inner">
+    <section className="rounded-xl border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
       <header className="mb-4">
-        <p className="text-xs uppercase tracking-wide text-neutral-500">Portfolio</p>
+        <p className="text-xs uppercase tracking-wide text-neutral-400">Portfolio</p>
         <h2 className="mt-1 text-lg font-semibold text-foreground">Wallet Balances</h2>
         <p className="text-xs text-neutral-500">Total: <span className="text-neutral-300">{totalSol == null ? "—" : `${formatNumber(totalSol, 3)} SOL`}</span></p>
       </header>
 
       {snapshots.length === 0 ? (
-        <div className="rounded-lg border border-border-subtle/60 bg-surface-raised/40 p-6 text-sm text-neutral-400">
+        <div className="rounded-lg border border-slate-800/60 bg-slate-900/60 p-6 text-sm text-neutral-400">
           {loading ? "Fetching token balances…" : "No snapshots available yet."}
         </div>
       ) : (
@@ -33,7 +33,7 @@ export function HedgefundPortfolioCard({ portfolio, loading }: HedgefundPortfoli
           {snapshots.map((snapshot) => (
             <div
               key={snapshot.alias}
-              className="rounded-lg border border-border-subtle/60 bg-surface-raised/50 p-4 shadow-inner"
+              className="rounded-lg border border-slate-800/60 bg-slate-950/40 p-4 shadow-lg shadow-black/20"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
@@ -54,15 +54,15 @@ export function HedgefundPortfolioCard({ portfolio, loading }: HedgefundPortfoli
                 </div>
               </div>
 
-              <div className="mt-4 overflow-hidden rounded-md border border-border-subtle/50">
-                <table className="min-w-full divide-y divide-border-subtle/40 text-sm">
-                  <thead className="bg-surface-base/70 text-xs uppercase tracking-wide text-neutral-500">
+              <div className="mt-4 overflow-hidden rounded-md border border-slate-800/60">
+                <table className="min-w-full divide-y divide-slate-800/60 text-sm">
+                  <thead className="bg-slate-900/80 text-xs uppercase tracking-wide text-neutral-400">
                     <tr>
                       <th scope="col" className="px-3 py-2 text-left">Mint</th>
                       <th scope="col" className="px-3 py-2 text-right">Amount</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border-subtle/40 bg-surface-base/60 text-neutral-200">
+                  <tbody className="divide-y divide-slate-800/60 bg-slate-950/40 text-neutral-200">
                     {snapshot.tokens.length === 0 ? (
                       <tr>
                         <td colSpan={2} className="px-3 py-4 text-center text-neutral-500">

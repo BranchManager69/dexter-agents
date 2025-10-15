@@ -129,20 +129,20 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
   };
 
   return (
-    <section className="rounded-xl border border-border-subtle/70 bg-surface-base/80 p-6 shadow-inner">
+    <section className="rounded-xl border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
       <header className="mb-4">
-        <p className="text-xs uppercase tracking-wide text-neutral-500">Config</p>
+        <p className="text-xs uppercase tracking-wide text-neutral-400">Config</p>
         <h2 className="mt-1 text-lg font-semibold text-foreground">Risk & Runtime Controls</h2>
       </header>
 
       <div className="grid gap-4 text-sm">
-        <fieldset className="flex items-center justify-between rounded-md border border-border-subtle/60 bg-surface-raised/60 px-4 py-3">
+        <fieldset className="flex items-center justify-between rounded-md border border-slate-700/70 bg-slate-900/60 px-4 py-3">
           <legend className="sr-only">Dry run toggle</legend>
           <div>
             <p className="text-sm font-medium text-foreground">Dry Run</p>
-            <p className="text-xs text-neutral-500">When enabled, buys/sells will only simulate.</p>
+            <p className="text-xs text-neutral-400">When enabled, buys/sells will only simulate.</p>
           </div>
-          <label className="flex items-center gap-2 text-xs text-neutral-400">
+          <label className="flex items-center gap-2 text-xs text-neutral-300">
             <input
               type="checkbox"
               checked={form.dryRun}
@@ -153,13 +153,13 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
           </label>
         </fieldset>
 
-        <fieldset className="flex items-center justify-between rounded-md border border-border-subtle/60 bg-surface-raised/60 px-4 py-3">
+        <fieldset className="flex items-center justify-between rounded-md border border-slate-700/70 bg-slate-900/60 px-4 py-3">
           <legend className="sr-only">Auto start toggle</legend>
           <div>
             <p className="text-sm font-medium text-foreground">Auto Start Worker</p>
-            <p className="text-xs text-neutral-500">When disabled, the PM2 process stays idle until manually triggered.</p>
+            <p className="text-xs text-neutral-400">When disabled, the PM2 process stays idle until manually triggered.</p>
           </div>
-          <label className="flex items-center gap-2 text-xs text-neutral-400">
+          <label className="flex items-center gap-2 text-xs text-neutral-300">
             <input
               type="checkbox"
               checked={form.autoStart}
@@ -209,7 +209,7 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
         </div>
 
         {error ? (
-          <div className="rounded-md border border-red-600/50 bg-red-900/30 px-3 py-2 text-xs text-red-100">
+          <div className="rounded-md border border-red-600/40 bg-red-900/30 px-3 py-2 text-xs text-red-100">
             {error}
           </div>
         ) : null}
@@ -227,13 +227,13 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
             type="button"
             onClick={handleReset}
             disabled={saving || loading || !config}
-            className="rounded-md border border-border-subtle/60 px-4 py-2 text-sm text-neutral-300 transition hover:bg-surface-raised/60 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-md border border-slate-700/70 bg-slate-900/60 px-4 py-2 text-sm text-neutral-200 transition hover:bg-slate-800/60 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Reset
           </button>
         </div>
 
-        <p className="text-xs text-neutral-500">
+        <p className="text-xs text-neutral-400">
           Changes persist to <code className="font-mono text-xs">hedgefund.config.json</code>. The worker loop reads
           updates on the next tick; restart the PM2 process if you change poll timing or dry-run mode while it is
           running.
@@ -252,12 +252,12 @@ interface ConfigNumberInputProps {
 function ConfigNumberInput({ label, value, onChange }: ConfigNumberInputProps) {
   return (
     <label className="grid gap-2">
-      <span className="text-xs uppercase tracking-wide text-neutral-500">{label}</span>
+      <span className="text-xs uppercase tracking-wide text-neutral-400">{label}</span>
       <input
         type="number"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-md border border-border-subtle/60 bg-surface-raised/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+        className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
       />
     </label>
   );
