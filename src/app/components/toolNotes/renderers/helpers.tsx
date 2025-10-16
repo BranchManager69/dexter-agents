@@ -23,6 +23,14 @@ export const countCompactFormatter = new Intl.NumberFormat("en-US", {
 
 export function normalizeOutput(data: Record<string, any> | undefined) {
   if (!data) return undefined;
+  if (typeof data.output === "string") {
+    const trimmed = data.output.trim();
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+      try {
+        return JSON.parse(trimmed);
+      } catch {}
+    }
+  }
   if (data.output && typeof data.output === "object") return data.output;
   return data;
 }

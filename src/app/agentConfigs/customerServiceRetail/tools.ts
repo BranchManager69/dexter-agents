@@ -177,6 +177,52 @@ export function createConciergeToolset(toolDescriptions: Record<string, string> 
       strict: true,
       execute: async (input) => normalizeResult(await callMcp('pumpstream_live_summary', input as ToolCallArgs)),
     }),
+    gmgn_fetch_token_snapshot: tool({
+      name: 'gmgn_fetch_token_snapshot',
+      description: describeTool('gmgn_fetch_token_snapshot', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          token_address: {
+            type: 'string',
+            description:
+              'Token identifier accepted by GMGN (raw Solana mint or prefixed slug such as solscan_<mint>).',
+          },
+          chain: {
+            type: 'string',
+            description: 'Optional GMGN chain key; defaults to sol.',
+          },
+          resolution: {
+            type: 'string',
+            description: 'Candle resolution string (e.g. 1m, 5m, 1H).',
+          },
+          candle_limit: {
+            type: 'number',
+            description: 'Maximum candles to request (10-500).',
+          },
+          include_trades: {
+            type: 'boolean',
+            description: 'Include recent trade listings in the response.',
+          },
+          include_security: {
+            type: 'boolean',
+            description: 'Include security/launchpad diagnostics in the response.',
+          },
+          include_candles: {
+            type: 'boolean',
+            description: 'Include OHLCV candle data in the response.',
+          },
+          timeout_ms: {
+            type: 'number',
+            description: 'Override the headless request timeout (5000-120000 ms).',
+          },
+        },
+        required: ['token_address'],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('gmgn_fetch_token_snapshot', input as ToolCallArgs)),
+    }),
     search: tool({
       name: 'search',
       description: describeTool('search', toolDescriptions),

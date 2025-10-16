@@ -85,6 +85,10 @@ const DEFAULT_CONCIERGE_PROMPTS: ConciergePromptProfile = {
       slug: 'agent.concierge.tool.pumpstream_live_summary',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.pumpstream_live_summary". Update the tool description.',
     },
+    gmgn_fetch_token_snapshot: {
+      slug: 'agent.concierge.tool.gmgn_fetch_token_snapshot',
+      fallback: '⚠️ Missing prompt module "agent.concierge.tool.gmgn_fetch_token_snapshot". Update the tool description.',
+    },
     search: {
       slug: 'agent.concierge.tool.search',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.search". Update the tool description.',

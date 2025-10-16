@@ -711,11 +711,34 @@ export function useDexterAppController(): DexterAppController {
 
     const loadProfile = async () => {
       try {
+        if (!authSession) {
+          const defaultResponse = await fetch('/api/prompt-profiles/default', {
+            method: 'GET',
+            signal: controller.signal,
+          });
+          if (defaultResponse.ok) {
+            const defaultData = await defaultResponse.json();
+            const defaultProfile: ResolvedConciergeProfile | null = defaultData?.profile ?? null;
+            if (!cancelled && defaultProfile) {
+              setActiveConciergeProfile(defaultProfile);
+              if (defaultProfile.guestInstructions) {
+                setGuestInstructions((current) =>
+                  current === defaultProfile.guestInstructions ? current : defaultProfile.guestInstructions,
+                );
+              }
+              return;
+            }
+          }
+          throw new Error('prompt_profile_guest_load_failed');
+        }
         const response = await fetch('/api/prompt-profiles/active', {
           method: 'GET',
           credentials: 'include',
           signal: controller.signal,
         });
+        if (response.status === 401) {
+          throw new Error('prompt_profile_unauthenticated');
+        }
         if (!response.ok) {
           throw new Error(`Active profile request failed (${response.status})`);
         }

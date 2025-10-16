@@ -187,15 +187,25 @@ export function useHandleSessionHistory() {
   };
 
   const maybeParseJson = (val: any) => {
-    if (typeof val === 'string') {
-      try {
-        return JSON.parse(val);
-      } catch {
-        console.warn('Failed to parse JSON:', val);
-        return val;
-      }
+    if (typeof val !== 'string') return val;
+
+    const trimmed = val.trim();
+    if (!trimmed) {
+      return undefined;
     }
-    return val;
+
+    const looksJsonLike = trimmed.startsWith('{') || trimmed.startsWith('[');
+    if (!looksJsonLike) {
+      return val;
+    }
+
+    try {
+      return JSON.parse(trimmed);
+    } catch (error) {
+      const preview = trimmed.length > 160 ? `${trimmed.slice(0, 157)}…` : trimmed;
+      console.warn('Failed to parse JSON payload', { preview, error: error instanceof Error ? error.message : String(error) });
+      return val;
+    }
   };
 
   const extractLastAssistantMessage = (history: any[] = []): any => {

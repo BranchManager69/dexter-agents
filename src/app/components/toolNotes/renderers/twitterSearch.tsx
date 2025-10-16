@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 import type { ToolNoteRenderer } from "./types";
 import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
@@ -109,25 +109,111 @@ function ensureTweetUrl(tweet: TwitterTweet) {
   return null;
 }
 
-const twitterSearchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug = false }) => {
-  const normalized = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+function coerceArguments(value: unknown): Record<string, unknown> | null {
+  if (!value) return null;
+  if (typeof value === "object" && value !== null && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  if (typeof value !== "string") return null;
+
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+const TwitterSearchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug = false }) => {
+  return <TwitterSearchContent item={item} isExpanded={isExpanded} onToggle={onToggle} debug={debug} />;
+};
+
+function TwitterSearchContent({ item, isExpanded, onToggle, debug = false }: Parameters<ToolNoteRenderer>[0]) {
+  const originalData = (item.data as Record<string, unknown> | undefined) || {};
+  const normalized = normalizeOutput(originalData) || {};
   const payload = unwrapStructured(normalized) as TwitterSearchPayload;
 
-  const tweets = Array.isArray(payload?.tweets) ? payload.tweets : [];
+  const [hydratedPayload, setHydratedPayload] = useState<TwitterSearchPayload | null>(null);
+  const [hydrationState, setHydrationState] = useState<"idle" | "loading" | "done" | "error">("idle");
+
+  const effectivePayload = hydratedPayload ?? payload;
+  const tweets = Array.isArray(effectivePayload?.tweets) ? effectivePayload.tweets : [];
   const visibleTweets = isExpanded ? tweets : tweets.slice(0, 5);
   const hasMore = tweets.length > visibleTweets.length;
 
-  const primaryQuery = resolvePrimaryQuery(payload);
+  useEffect(() => {
+    if (tweets.length > 0) return;
+    if (hydrationState === "loading" || hydrationState === "done") return;
+
+    const baseArgs = coerceArguments(originalData?.arguments);
+    if (!baseArgs) return;
+
+    const args: Record<string, unknown> = { ...baseArgs };
+    delete args.__issuer;
+    delete args.__sub;
+    delete args.__email;
+    if (Object.keys(args).length === 0) return;
+
+    let cancelled = false;
+    const hydrate = async () => {
+      setHydrationState("loading");
+      try {
+        const response = await fetch("/api/mcp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ tool: "twitter_search", arguments: args }),
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        const body = await response.json();
+        const structured =
+          (body?.structuredContent as TwitterSearchPayload | undefined) ??
+          (body?.structured_content as TwitterSearchPayload | undefined) ??
+          (body?.result as TwitterSearchPayload | undefined) ??
+          (Array.isArray(body?.content) ? undefined : (body as TwitterSearchPayload));
+        if (!cancelled && structured) {
+          setHydratedPayload(structured);
+        }
+        if (!cancelled) {
+          setHydrationState("done");
+        }
+      } catch (error) {
+        console.warn("[twitter-search] hydration failed", error);
+        if (!cancelled) {
+          setHydrationState("error");
+        }
+      }
+    };
+
+    hydrate();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tweets.length, hydrationState, originalData]);
+
+  const primaryQuery = resolvePrimaryQuery(effectivePayload);
   const secondaryQueries =
-    payload.queries && payload.queries.length > 1 ? payload.queries.filter((q) => q !== primaryQuery) : [];
+    effectivePayload.queries && effectivePayload.queries.length > 1
+      ? effectivePayload.queries.filter((q) => q !== primaryQuery)
+      : [];
 
   const filters: string[] = [];
-  if (payload.include_replies === false) filters.push("Replies off");
-  if (payload.media_only) filters.push("Media only");
-  if (payload.verified_only) filters.push("Verified only");
-  if (payload.language) filters.push(`Lang ${payload.language.toUpperCase()}`);
+  if (effectivePayload.include_replies === false) filters.push("Replies off");
+  if (effectivePayload.media_only) filters.push("Media only");
+  if (effectivePayload.verified_only) filters.push("Verified only");
+  if (effectivePayload.language) filters.push(`Lang ${effectivePayload.language.toUpperCase()}`);
 
-  const tweetCount = typeof payload.fetched === "number" ? payload.fetched : tweets.length;
+  const tweetCount = typeof effectivePayload.fetched === "number" ? effectivePayload.fetched : tweets.length;
 
   const timestamp = formatTimestampDisplay(item.timestamp);
 
@@ -138,8 +224,8 @@ const twitterSearchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, d
           <div className="flex flex-col gap-1">
             <span className="text-[11px] uppercase tracking-[0.26em] text-sky-600">Twitter Search</span>
             {primaryQuery && <span className="text-sm text-slate-500">Focus · {primaryQuery}</span>}
-            {!primaryQuery && payload.queries && payload.queries.length > 0 && (
-              <span className="text-xs text-slate-400">{payload.queries.join(" · ")}</span>
+            {!primaryQuery && effectivePayload.queries && effectivePayload.queries.length > 0 && (
+              <span className="text-xs text-slate-400">{effectivePayload.queries.join(" · ")}</span>
             )}
             {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
           </div>
@@ -289,7 +375,11 @@ const twitterSearchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, d
             );
           })}
 
-          {visibleTweets.length === 0 && (
+          {visibleTweets.length === 0 && hydrationState === "loading" && (
+            <p className="pl-8 text-sm text-slate-500 sm:pl-12">Fetching live tweets…</p>
+          )}
+
+          {visibleTweets.length === 0 && hydrationState !== "loading" && (
             <p className="pl-8 text-sm text-slate-500 sm:pl-12">No tweets were captured for this search.</p>
           )}
         </div>
@@ -368,6 +458,6 @@ const twitterSearchRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, d
       `}</style>
     </div>
   );
-};
+}
 
-export default twitterSearchRenderer;
+export default TwitterSearchRenderer;

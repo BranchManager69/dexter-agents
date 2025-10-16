@@ -39,6 +39,7 @@ export const DEFAULT_TOOL_SLUGS: PromptToolSlugMap = {
   set_session_wallet_override: 'agent.concierge.tool.set_session_wallet_override',
   auth_info: 'agent.concierge.tool.auth_info',
   pumpstream_live_summary: 'agent.concierge.tool.pumpstream_live_summary',
+  gmgn_fetch_token_snapshot: 'agent.concierge.tool.gmgn_fetch_token_snapshot',
   search: 'agent.concierge.tool.search',
   twitter_search: 'agent.concierge.tool.twitter_search',
   fetch: 'agent.concierge.tool.fetch',
@@ -110,6 +111,12 @@ export function usePromptProfiles(): PromptProfileManager {
           credentials: "include",
         }),
       ]);
+
+      if (listRes.status === 401 || activeRes.status === 401) {
+        setProfiles([]);
+        setActiveResolvedProfile(null);
+        return;
+      }
 
       if (!listRes.ok) {
         throw await handleJson(listRes);

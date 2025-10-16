@@ -237,8 +237,6 @@ async function createRealtimeSession({ supabaseToken, guest, sessionUrl } = {}) 
     : {
         guestProfile: {
           label: 'Dexter Demo Wallet',
-          instructions:
-            'Operate using the shared Dexter demo wallet with limited funds. Disable irreversible actions when possible and direct the user to sign in for full access.',
         },
       };
   const headers = new Headers({ 'Content-Type': 'application/json' });

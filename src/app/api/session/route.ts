@@ -21,13 +21,14 @@ async function getGuestInstructions(): Promise<string> {
   }
 
   const profile = await resolveConciergeProfile();
-  const instructions = profile?.guestInstructions?.trim();
-  if (!instructions) {
+  const guestSegment = profile?.guestInstructions?.trim() || '';
+
+  if (!guestSegment) {
     throw new Error("guestInstructions missing from concierge profile");
   }
 
-  cachedGuestInstructions = { value: instructions, expiresAt: now + 60_000 };
-  return instructions;
+  cachedGuestInstructions = { value: guestSegment, expiresAt: now + 60_000 };
+  return guestSegment;
 }
 
 export async function GET(request: Request) {
