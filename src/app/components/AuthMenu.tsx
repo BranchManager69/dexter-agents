@@ -317,85 +317,113 @@ export function AuthMenu({
 
   const renderSignedInContent = () => {
     const badgeVariant = userBadge === "dev" ? "dev" : userBadge === "pro" ? "pro" : null;
+    const displayEmail = authenticatedEmail ?? "Dexter user";
+    const isWalletErrored = walletPortfolio?.status === "error";
+    const showWalletMetrics = Boolean(
+      walletPortfolio &&
+        !walletPortfolio.pending &&
+        !isWalletErrored &&
+        (walletPortfolio.solBalanceFormatted || walletPortfolio.totalUsdFormatted || walletPortfolio.tokenCount)
+    );
 
     return (
       <>
-        <div className={styles.section}>
-          <div className={styles.headline}>Signed in</div>
-          <div className={styles.value}>{authenticatedEmail ?? "Dexter user"}</div>
-          {roleLabel ? (
-            <div className={styles.pill}>
-              <span>Role</span>
-              {badgeVariant ? <UserBadge variant={badgeVariant} size="sm" /> : <span>{roleLabel}</span>}
+        <div className={styles.profileCard}>
+          <span className={styles.profileAvatar} aria-hidden="true">
+            {initials}
+          </span>
+          <div className={styles.profileSummary}>
+            <span className={styles.profileStatus}>Signed in</span>
+            <span className={styles.profileEmail}>{displayEmail}</span>
+            {roleLabel ? <span className={styles.profileRole}>{roleLabel}</span> : null}
+          </div>
+          {badgeVariant ? (
+            <div className={styles.profileBadge}>
+              <UserBadge variant={badgeVariant} size="sm" />
             </div>
           ) : null}
         </div>
 
+        <div className={styles.menuDivider} aria-hidden="true" />
+
         {activeWalletKey ? (
-          <div className={styles.walletSection}>
-            <div className={styles.walletRow}>
-              <span>Wallet</span>
+          <div className={styles.walletCard}>
+            <div className={styles.walletHeader}>
+              <div>
+                <span className={styles.walletTitle}>Wallet</span>
+                <span className={styles.walletSubtitle}>Connected to your session</span>
+              </div>
               <HashBadge value={activeWalletKey} ariaLabel="wallet address" />
             </div>
+
             {walletPortfolio ? (
-              <>
-                {walletPortfolio.pending ? (
-                  <div className={styles.walletRow}>
-                    <span>Status</span>
-                    <span className="inline-block animate-pulse">Refreshing…</span>
-                  </div>
-                ) : walletPortfolio.status === "error" ? (
-                  <div className={styles.walletRow}>
-                    <span>Status</span>
-                    <span>{walletPortfolio.error ?? "Unable to load balances"}</span>
-                  </div>
-                ) : (
-                  <>
-                    {walletPortfolio.solBalanceFormatted || walletPortfolio.totalUsdFormatted ? (
-                      <div className={styles.walletRow}>
-                        <span>SOL / USD</span>
-                        <span>
-                          {[walletPortfolio.solBalanceFormatted, walletPortfolio.totalUsdFormatted]
-                            .filter(Boolean)
-                            .join(" • ")}
-                        </span>
-                      </div>
-                    ) : null}
-                    {walletPortfolio.tokenCount ? (
-                      <div className={styles.walletRow}>
-                        <span>Tokens</span>
-                        <span>{walletPortfolio.tokenCount}</span>
-                      </div>
-                    ) : null}
-                    {walletPortfolio.lastUpdatedLabel ? (
-                      <div className={styles.walletRow}>
-                        <span>Updated</span>
-                        <span>{walletPortfolio.lastUpdatedLabel}</span>
-                      </div>
-                    ) : null}
-                  </>
-                )}
-              </>
+              walletPortfolio.pending ? (
+                <div className={`${styles.walletStatus} ${styles.walletStatusPending}`}>
+                  <span className={styles.statusDot} aria-hidden="true" />Refreshing…
+                </div>
+              ) : isWalletErrored ? (
+                <div className={`${styles.walletStatus} ${styles.walletStatusCritical}`}>
+                  <span className={styles.statusDot} aria-hidden="true" />
+                  {walletPortfolio.error ?? "Unable to load balances"}
+                </div>
+              ) : (
+                <>
+                  {showWalletMetrics ? (
+                    <div className={styles.metricGrid}>
+                      {walletPortfolio.solBalanceFormatted ? (
+                        <div className={styles.metric}>
+                          <span className={styles.metricLabel}>SOL</span>
+                          <span className={styles.metricValue}>{walletPortfolio.solBalanceFormatted}</span>
+                        </div>
+                      ) : null}
+                      {walletPortfolio.totalUsdFormatted ? (
+                        <div className={styles.metric}>
+                          <span className={styles.metricLabel}>USD</span>
+                          <span className={styles.metricValue}>{walletPortfolio.totalUsdFormatted}</span>
+                        </div>
+                      ) : null}
+                      {walletPortfolio.tokenCount ? (
+                        <div className={styles.metric}>
+                          <span className={styles.metricLabel}>Tokens</span>
+                          <span className={styles.metricValue}>{walletPortfolio.tokenCount}</span>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                  {walletPortfolio.lastUpdatedLabel ? (
+                    <div className={styles.walletHint}>Updated {walletPortfolio.lastUpdatedLabel}</div>
+                  ) : null}
+                </>
+              )
             ) : null}
 
-            <div className={styles.walletActions}>
+            <div className={styles.ctaRow}>
               <button
                 type="button"
-                className={styles.action}
+                className={`${styles.actionButton} ${styles.actionPrimary}`}
                 onClick={handleExportWallet}
                 disabled={exportBusy}
               >
                 {exportBusy ? "Exporting…" : "Export wallet"}
               </button>
-              <button type="button" className={`${styles.action} ${styles.actionDanger}`} onClick={handleSignOut}>
+              <button
+                type="button"
+                className={`${styles.actionButton} ${styles.actionDanger}`}
+                onClick={handleSignOut}
+              >
                 Sign out
               </button>
             </div>
-            {walletFeedback ? <div className={styles.walletFeedback}>{walletFeedback}</div> : null}
+
+            {walletFeedback ? <div className={styles.feedbackBar}>{walletFeedback}</div> : null}
           </div>
         ) : (
-          <div className={styles.section}>
-            <button type="button" className={`${styles.action} ${styles.actionDanger}`} onClick={handleSignOut}>
+          <div className={styles.ctaRowSolo}>
+            <button
+              type="button"
+              className={`${styles.actionButton} ${styles.actionDanger}`}
+              onClick={handleSignOut}
+            >
               Sign out
             </button>
           </div>
