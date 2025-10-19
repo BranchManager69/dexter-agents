@@ -101,6 +101,7 @@ All `✓` means the tool is wired everywhere. Use it before/after refactors.
 | Solana | `solana_resolve_token`, `solana_list_balances`, `solana_swap_preview`, `solana_swap_execute` |
 | Markets | `markets_fetch_ohlcv` |
 | Pumpstream | `pumpstream_live_summary` |
+| Kolscan | `kolscan_leaderboard`, `kolscan_wallet_detail`, `kolscan_trending_tokens`, `kolscan_token_detail`, `kolscan_resolve_wallet` |
 | Twitter | `twitter_search` |
 | Codex | `codex_start`, `codex_reply`, `codex_exec` |
 | Stream | `stream_get_scene`, `stream_set_scene`, `stream_public_shout`, `stream_shout_feed` |
