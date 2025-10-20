@@ -4,35 +4,34 @@
    flex: 0 0 auto;
  }
 
- .trigger {
-   display: inline-flex;
-   align-items: center;
-   gap: 10px;
-   padding: 6px 14px 6px 10px;
-   border-radius: 999px;
-   border: 1px solid rgb(var(--color-border-subtle) / 0.6);
-   background: linear-gradient(135deg, rgb(var(--color-surface-base) / 0.92), rgb(var(--color-surface-glass) / 0.78));
-   box-shadow: 0 14px 34px rgba(20, 8, 4, 0.24);
-   color: rgb(var(--color-neutral-100) / 0.8);
-   font-size: 0.7rem;
-   font-weight: 600;
-   letter-spacing: 0.16em;
-   text-transform: uppercase;
-   cursor: pointer;
-   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-   backdrop-filter: blur(8px);
- }
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 12px 26px rgba(18, 8, 4, 0.18);
+  color: rgba(20, 12, 8, 0.95);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
 
- .trigger:hover,
- .trigger:focus-visible {
-   border-color: rgb(var(--color-border-strong) / 0.65);
-   box-shadow: 0 18px 38px rgba(20, 8, 4, 0.32);
-   transform: translateY(-1px);
- }
+.trigger:hover,
+.trigger:focus-visible {
+  box-shadow: 0 18px 36px rgba(18, 8, 4, 0.24);
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.98);
+}
 
- .trigger:focus-visible {
-   outline: none;
- }
+.trigger:focus-visible {
+  outline: none;
+}
 
  .avatar {
    display: inline-flex;
@@ -49,33 +48,33 @@
    box-shadow: inset 0 0 0 1px rgb(var(--color-border-strong) / 0.35);
  }
 
- .label {
-   font-weight: 600;
-   letter-spacing: 0.14em;
-   text-transform: uppercase;
-   color: rgb(var(--color-neutral-200) / 0.82);
- }
+.label {
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(24, 14, 8, 0.98);
+}
 
- .triggerGuest {
-   gap: 10px;
-   padding: 8px 18px;
-   border-radius: 14px;
-   border: 1px solid rgb(var(--color-accent-success) / 0.55);
-   background: linear-gradient(140deg, rgb(var(--color-accent-success) / 0.9), rgb(var(--color-primary) / 0.8));
-   color: rgb(var(--color-primary-muted));
-   box-shadow: 0 18px 36px rgba(24, 128, 96, 0.28);
- }
+.triggerGuest {
+  gap: 10px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(24, 128, 96, 0.12);
+  color: rgba(14, 52, 36, 0.96);
+  box-shadow: 0 12px 26px rgba(24, 128, 96, 0.18);
+}
 
- .triggerGuest:hover,
- .triggerGuest:focus-visible {
-   border-color: rgb(var(--color-accent-success) / 0.7);
-   transform: translateY(-1px);
-   box-shadow: 0 22px 40px rgba(24, 128, 96, 0.32);
- }
+.triggerGuest:hover,
+.triggerGuest:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 34px rgba(24, 128, 96, 0.24);
+  background: rgba(24, 128, 96, 0.16);
+}
 
- .triggerGuestLabel {
-   color: rgb(var(--color-primary-muted));
- }
+.triggerGuestLabel {
+  color: rgba(14, 52, 36, 0.96);
+}
 
  .dropdown {
    position: absolute;
@@ -102,18 +101,18 @@
    pointer-events: none;
  }
 
- .profileCard {
-   position: relative;
-   display: grid;
-   grid-template-columns: auto 1fr auto;
-   align-items: center;
-   gap: 16px;
-   padding: 16px 18px;
-   border-radius: 16px;
-   border: 1px solid rgb(var(--color-border-subtle) / 0.45);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 255, 255, 0.88));
-  box-shadow: 0 16px 32px rgba(18, 8, 4, 0.24);
- }
+.profileCard {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+}
 
 .profileSummary {
   display: flex;
@@ -143,13 +142,19 @@
   display: inline-flex;
   align-items: center;
   flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(24, 16, 10, 0.12);
 }
 
 .profileRoleLabel {
   font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(34, 22, 14, 0.94);
+  color: rgba(24, 14, 8, 0.98);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(24, 16, 10, 0.12);
   flex-shrink: 0;
 }
 
@@ -161,11 +166,11 @@
 .walletCard {
   display: grid;
   gap: 18px;
-  padding: 18px 20px;
-  border-radius: 18px;
-  border: 1px solid rgb(var(--color-border-subtle) / 0.45);
-  background: linear-gradient(140deg, rgba(255, 255, 255, 0.97), rgba(255, 255, 255, 0.88));
-  box-shadow: 0 18px 36px rgba(18, 8, 4, 0.24);
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  background: none;
+  box-shadow: none;
   width: 100%;
   box-sizing: border-box;
 }

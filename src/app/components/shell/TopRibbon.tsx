@@ -248,13 +248,13 @@ export function TopRibbon({
               <button
                 type="button"
                 onClick={handleWalletCopy}
-                className="relative flex items-center gap-2 rounded-full border border-[#FEFBF4]/30 px-3 py-1 font-display text-[10px] font-semibold tracking-[0.08em] text-[#FEFBF4] transition hover:border-[#FEFBF4]/50 hover:text-[#FFF3E3]"
+                className="relative flex items-center gap-2 rounded-full bg-white/92 px-4 py-1.5 font-display text-[11px] font-semibold tracking-[0.08em] text-[#1F130A] shadow-[0_12px_26px_rgba(18,8,4,0.18)] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#1F130A]/15 focus:ring-offset-2 focus:ring-offset-transparent"
                 title={walletAddressValue ? `Copy ${walletAddressValue}` : undefined}
               >
-                <span className="text-[9px] uppercase tracking-[0.28em] text-[#FEFBF4]/60">Wallet</span>
-                <span className="text-[10px] tracking-[0.08em]">{walletLabel}</span>
+                <span className="text-[9px] uppercase tracking-[0.28em] text-[#5C4031]">Wallet</span>
+                <span className="text-[11px] tracking-[0.08em] text-[#1F130A]">{walletLabel}</span>
                 {walletCopied && (
-                  <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] tracking-[0.08em] text-[#FEFBF4]/70">
+                  <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] tracking-[0.08em] text-[#1F130A]/70">
                     Copied
                   </span>
                 )}
@@ -270,7 +270,6 @@ export function TopRibbon({
                 onSignOut={handleAuthSignOut}
                 turnstileSiteKey={turnstileSiteKey}
                 roleLabel={sessionLabel}
-                buttonToneClass="rounded-none border-transparent px-0 py-0 bg-transparent text-[#FEFBF4] hover:text-[#FFF3E3]"
                 buttonTitle={sessionIdentity.type === 'user' ? sessionIdentity.user?.email ?? undefined : undefined}
                 activeWalletKey={sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined}
                 walletPortfolio={walletPortfolio ?? undefined}
