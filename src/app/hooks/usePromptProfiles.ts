@@ -40,6 +40,8 @@ export const DEFAULT_TOOL_SLUGS: PromptToolSlugMap = {
   auth_info: 'agent.concierge.tool.auth_info',
   pumpstream_live_summary: 'agent.concierge.tool.pumpstream_live_summary',
   gmgn_fetch_token_snapshot: 'agent.concierge.tool.gmgn_fetch_token_snapshot',
+  onchain_activity_overview: 'agent.concierge.tool.onchain_activity_overview',
+  onchain_entity_insight: 'agent.concierge.tool.onchain_entity_insight',
   kolscan_leaderboard: 'agent.concierge.tool.kolscan_leaderboard',
   kolscan_wallet_detail: 'agent.concierge.tool.kolscan_wallet_detail',
   kolscan_trending_tokens: 'agent.concierge.tool.kolscan_trending_tokens',

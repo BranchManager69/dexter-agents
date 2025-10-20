@@ -223,6 +223,82 @@ export function createConciergeToolset(toolDescriptions: Record<string, string> 
       strict: true,
       execute: async (input) => normalizeResult(await callMcp('gmgn_fetch_token_snapshot', input as ToolCallArgs)),
     }),
+    onchain_activity_overview: tool({
+      name: 'onchain_activity_overview',
+      description: describeTool('onchain_activity_overview', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          scope: {
+            type: 'string',
+            description: 'Select "token" (default) or "wallet". Wallet scope requires both mint and wallet.',
+            enum: ['token', 'wallet'],
+          },
+          mint: {
+            type: 'string',
+            description: 'Solana token mint address (required for all scopes).',
+          },
+          wallet: {
+            type: 'string',
+            description: 'Wallet address to focus on when scope="wallet".',
+          },
+          timeframe: {
+            type: 'string',
+            description: 'Lookback window (e.g. "5m", "1h", "24h" or seconds).',
+          },
+          limit: {
+            type: 'number',
+            description: 'How many top wallets/trades to include (1-25).',
+          },
+          includeRaw: {
+            type: 'boolean',
+            description: 'When true, request untrimmed raw arrays from the API.',
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('onchain_activity_overview', input as ToolCallArgs)),
+    }),
+    onchain_entity_insight: tool({
+      name: 'onchain_entity_insight',
+      description: describeTool('onchain_entity_insight', toolDescriptions),
+      parameters: {
+        type: 'object',
+        properties: {
+          scope: {
+            type: 'string',
+            description: '"token", "wallet", or "trade". Use "trade" with a signature to inspect balance deltas.',
+            enum: ['token', 'wallet', 'trade'],
+          },
+          mint: {
+            type: 'string',
+            description: 'Token mint when looking at a token or wallet scope.',
+          },
+          wallet: {
+            type: 'string',
+            description: 'Wallet to analyze for wallet scope.',
+          },
+          signature: {
+            type: 'string',
+            description: 'Transaction signature when scope="trade".',
+          },
+          timeframe: {
+            type: 'string',
+            description: 'Optional lookback window for token or wallet insights.',
+          },
+          limit: {
+            type: 'number',
+            description: 'Optional limit for response lists (1-25).',
+          },
+        },
+        required: [],
+        additionalProperties: false,
+      } as const,
+      strict: true,
+      execute: async (input) => normalizeResult(await callMcp('onchain_entity_insight', input as ToolCallArgs)),
+    }),
     kolscan_leaderboard: tool({
       name: 'kolscan_leaderboard',
       description: describeTool('kolscan_leaderboard', toolDescriptions),

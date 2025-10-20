@@ -89,6 +89,14 @@ const DEFAULT_CONCIERGE_PROMPTS: ConciergePromptProfile = {
       slug: 'agent.concierge.tool.gmgn_fetch_token_snapshot',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.gmgn_fetch_token_snapshot". Update the tool description.',
     },
+    onchain_activity_overview: {
+      slug: 'agent.concierge.tool.onchain_activity_overview',
+      fallback: '⚠️ Missing prompt module "agent.concierge.tool.onchain_activity_overview". Update the tool description.',
+    },
+    onchain_entity_insight: {
+      slug: 'agent.concierge.tool.onchain_entity_insight',
+      fallback: '⚠️ Missing prompt module "agent.concierge.tool.onchain_entity_insight". Update the tool description.',
+    },
     kolscan_leaderboard: {
       slug: 'agent.concierge.tool.kolscan_leaderboard',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.kolscan_leaderboard". Update the tool description.',
