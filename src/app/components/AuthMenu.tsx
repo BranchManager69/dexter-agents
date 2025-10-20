@@ -286,11 +286,11 @@ export function AuthMenu({
       <div className={styles.section}>
         <button
           type="button"
-          className={`${styles.action} ${styles.actionPrimary}`}
+          className={`${styles.action} ${styles.actionPrimary} ${styles.actionPrimaryMagic}`}
           onClick={handleSendMagicLink}
           disabled={magicLinkBusy || (turnstileSiteKey ? !turnstileReady : false)}
         >
-          {magicLinkBusy ? "Sending…" : "Email me a link"}
+          {magicLinkBusy ? "Sending…" : "Email me a magic link"}
         </button>
       </div>
 
@@ -333,15 +333,17 @@ export function AuthMenu({
             {initials}
           </span>
           <div className={styles.profileSummary}>
-            <span className={styles.profileStatus}>Signed in</span>
-            <span className={styles.profileEmail}>{displayEmail}</span>
-            {roleLabel ? <span className={styles.profileRole}>{roleLabel}</span> : null}
-          </div>
-          {badgeVariant ? (
-            <div className={styles.profileBadge}>
-              <UserBadge variant={badgeVariant} size="sm" />
+            <div className={styles.profileHeaderRow}>
+              <span className={styles.profileEmail}>{displayEmail}</span>
+              {badgeVariant ? (
+                <span className={styles.profileBadge}>
+                  <UserBadge variant={badgeVariant} size="sm" />
+                </span>
+              ) : roleLabel ? (
+                <span className={styles.profileRoleLabel}>{roleLabel}</span>
+              ) : null}
             </div>
-          ) : null}
+          </div>
         </div>
 
         <div className={styles.menuDivider} aria-hidden="true" />
@@ -349,11 +351,13 @@ export function AuthMenu({
         {activeWalletKey ? (
           <div className={styles.walletCard}>
             <div className={styles.walletHeader}>
-              <div>
+              <div className={styles.walletHeaderInfo}>
                 <span className={styles.walletTitle}>Wallet</span>
                 <span className={styles.walletSubtitle}>Connected to your session</span>
               </div>
-              <HashBadge value={activeWalletKey} ariaLabel="wallet address" />
+              <div className={styles.walletKey}>
+                <HashBadge value={activeWalletKey} ariaLabel="wallet address" />
+              </div>
             </div>
 
             {walletPortfolio ? (
@@ -416,6 +420,9 @@ export function AuthMenu({
             </div>
 
             {walletFeedback ? <div className={styles.feedbackBar}>{walletFeedback}</div> : null}
+            <p className={styles.walletDisclaimer}>
+              We&apos;re working to improve wallet export and import. For now you&apos;ve been provided with a wallet you can export at any time.
+            </p>
           </div>
         ) : (
           <div className={styles.ctaRowSolo}>
