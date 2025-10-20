@@ -11,8 +11,8 @@ const VARIANT_STYLES: Record<UserBadgeVariant, { label: string; title: string; t
   dev: {
     label: "Dev",
     title: "Super admin access",
-    text: "text-amber-200",
-    dot: "bg-amber-300",
+    text: "text-[#3B1A05]",
+    dot: "bg-[#8C3A0E]",
   },
   admin: {
     label: "Admin",

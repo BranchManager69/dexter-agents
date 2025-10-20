@@ -248,13 +248,14 @@ export function TopRibbon({
               <button
                 type="button"
                 onClick={handleWalletCopy}
-                className="relative flex items-center gap-2 rounded-full bg-white/92 px-4 py-1.5 font-display text-[11px] font-semibold tracking-[0.08em] text-[#1F130A] shadow-[0_12px_26px_rgba(18,8,4,0.18)] transition hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#1F130A]/15 focus:ring-offset-2 focus:ring-offset-transparent"
+                className="relative flex items-center gap-2 rounded-full px-4 py-1.5 font-display text-[11px] font-semibold tracking-[0.08em] text-[#FEFFF8] shadow-[0_16px_28px_rgba(24,128,96,0.22)] transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[#20B483]/30 focus:ring-offset-2 focus:ring-offset-transparent"
+                style={{ background: 'linear-gradient(135deg, rgba(32, 180, 131, 0.96), rgba(18, 140, 102, 0.9))' }}
                 title={walletAddressValue ? `Copy ${walletAddressValue}` : undefined}
               >
-                <span className="text-[9px] uppercase tracking-[0.28em] text-[#5C4031]">Wallet</span>
-                <span className="text-[11px] tracking-[0.08em] text-[#1F130A]">{walletLabel}</span>
+                <span className="text-[9px] uppercase tracking-[0.28em] text-[#FDFBF4]/78">Wallet</span>
+                <span className="text-[11px] tracking-[0.08em] text-[#FEFFF8]">{walletLabel}</span>
                 {walletCopied && (
-                  <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] tracking-[0.08em] text-[#1F130A]/70">
+                  <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] tracking-[0.08em] text-[#FDFBF4]/75">
                     Copied
                   </span>
                 )}
