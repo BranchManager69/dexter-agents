@@ -156,9 +156,10 @@ interface HashBadgeProps {
   value: string;
   href?: string;
   ariaLabel?: string;
+  displayMode?: "compact" | "full";
 }
 
-export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
+export function HashBadge({ value, href, ariaLabel, displayMode = "compact" }: HashBadgeProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (event: React.MouseEvent<HTMLButtonElement | HTMLSpanElement>) => {
@@ -171,7 +172,7 @@ export function HashBadge({ value, href, ariaLabel }: HashBadgeProps) {
     } catch {}
   };
 
-  const display = formatAddress(value, { prefix: 6, suffix: 6 }) ?? value;
+  const display = displayMode === "full" ? value : formatAddress(value, { prefix: 6, suffix: 6 }) ?? value;
 
   return (
     <div className="flex items-center gap-2 text-xs text-[#4B5563]">

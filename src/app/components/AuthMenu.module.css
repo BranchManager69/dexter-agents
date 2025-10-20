@@ -172,18 +172,18 @@
 
 .walletHeader {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px 16px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   min-width: 0;
 }
 
 .walletHeaderInfo {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
   min-width: 0;
+  width: 100%;
 }
 
 .walletTitle {
@@ -194,25 +194,20 @@
   color: rgba(26, 16, 10, 0.94);
 }
 
-.walletSubtitle {
-  display: block;
-  font-size: 0.8rem;
-  color: rgba(32, 20, 12, 0.94);
-}
-
 .walletKey {
-  flex: 1 1 160px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
-  overflow: hidden;
+  width: 100%;
 }
 
 .walletKey :global(button) {
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-all;
+  text-align: left;
 }
 
 .walletKey :global(span),

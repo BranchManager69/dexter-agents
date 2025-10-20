@@ -319,13 +319,6 @@ export function AuthMenu({
     const badgeVariant = userBadge === "dev" ? "dev" : userBadge === "pro" ? "pro" : null;
     const displayEmail = authenticatedEmail ?? "Dexter user";
     const isWalletErrored = walletPortfolio?.status === "error";
-    const showWalletMetrics = Boolean(
-      walletPortfolio &&
-        !walletPortfolio.pending &&
-        !isWalletErrored &&
-        (walletPortfolio.solBalanceFormatted || walletPortfolio.totalUsdFormatted || walletPortfolio.tokenCount)
-    );
-
     return (
       <>
         <div className={styles.profileCard}>
@@ -353,10 +346,9 @@ export function AuthMenu({
             <div className={styles.walletHeader}>
               <div className={styles.walletHeaderInfo}>
                 <span className={styles.walletTitle}>Wallet</span>
-                <span className={styles.walletSubtitle}>Connected to your session</span>
-              </div>
-              <div className={styles.walletKey}>
-                <HashBadge value={activeWalletKey} ariaLabel="wallet address" />
+                <div className={styles.walletKey}>
+                  <HashBadge value={activeWalletKey} ariaLabel="wallet address" displayMode="full" />
+                </div>
               </div>
             </div>
 
@@ -371,33 +363,7 @@ export function AuthMenu({
                   {walletPortfolio.error ?? "Unable to load balances"}
                 </div>
               ) : (
-                <>
-                  {showWalletMetrics ? (
-                    <div className={styles.metricGrid}>
-                      {walletPortfolio.solBalanceFormatted ? (
-                        <div className={styles.metric}>
-                          <span className={styles.metricLabel}>SOL</span>
-                          <span className={styles.metricValue}>{walletPortfolio.solBalanceFormatted}</span>
-                        </div>
-                      ) : null}
-                      {walletPortfolio.totalUsdFormatted ? (
-                        <div className={styles.metric}>
-                          <span className={styles.metricLabel}>USD</span>
-                          <span className={styles.metricValue}>{walletPortfolio.totalUsdFormatted}</span>
-                        </div>
-                      ) : null}
-                      {walletPortfolio.tokenCount ? (
-                        <div className={styles.metric}>
-                          <span className={styles.metricLabel}>Tokens</span>
-                          <span className={styles.metricValue}>{walletPortfolio.tokenCount}</span>
-                        </div>
-                      ) : null}
-                    </div>
-                  ) : null}
-                  {walletPortfolio.lastUpdatedLabel ? (
-                    <div className={styles.walletHint}>Updated {walletPortfolio.lastUpdatedLabel}</div>
-                  ) : null}
-                </>
+                null
               )
             ) : null}
 
