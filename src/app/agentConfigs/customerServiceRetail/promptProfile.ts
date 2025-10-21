@@ -129,6 +129,10 @@ const DEFAULT_CONCIERGE_PROMPTS: ConciergePromptProfile = {
       slug: 'agent.concierge.tool.fetch',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.fetch". Update the tool description.',
     },
+    markets_fetch_ohlcv: {
+      slug: 'agent.concierge.tool.markets_fetch_ohlcv',
+      fallback: '⚠️ Missing prompt module "agent.concierge.tool.markets_fetch_ohlcv". Update the tool description.',
+    },
     codex_start: {
       slug: 'agent.concierge.tool.codex_start',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.codex_start". Update the tool description.',
