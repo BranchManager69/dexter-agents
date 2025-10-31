@@ -18,16 +18,32 @@
   <a href="https://github.com/openai/openai-agents-js"><img src="https://img.shields.io/badge/openai-agents-blue.svg" alt="OpenAI Agents"></a>
 </p>
 
-Dexter Voice is the production interface for Dexter’s realtime agents. It blends OpenAI Realtime + Agents, the MCP tool graph, and Supabase identity into a voice-first console that operators use to triage requests, pull on-chain data, and hand off to specialized agent workflows. The same codebase ships our public demo, internal ops cockpit, and the Playwright harness used to regression-test every scenario.
+Dexter Voice is the production interface for Dexter’s realtime agents. It blends OpenAI Realtime + Agents, the Dexter MCP tool graph, and Supabase identity into a voice-first console that operators use to triage requests, pull on-chain data, settle trades, and route conversations between specialized personas. The same codebase ships our public demo, internal ops cockpit, and the Playwright harness that regression-tests every scenario before an on-chain change ships.
 
 ---
 
-## Highlights
-- **Voice-native agent console** – realtime WebRTC surface with guardrails, live transcripts, and tool telemetry tuned for headset operators.
-- **Integrated tool orchestration** – MCP-backed tool notes render structured wallet, market, and research data in-line without leaking credentials to the browser.
-- **Scenario routing & handoffs** – configurable flows let the voice agent escalate between customer care, trading, and concierge personas with traceable context.
-- **Playwright harness baked in** – `dexchat` CLI spins up full sessions to validate agent responses and regenerate storage state for CI or smoke tests.
-- **Ops-ready deployment** – ships with PM2/nginx recipes from `dexter-ops`, sharing the same environment cascade as API and MCP services.
+## Core Capabilities
+- **Voice-native operator console** – realtime WebRTC surface with speech recognition, guardrails, and transcript metrics so agents can work heads‑up.
+- **Solana-first execution** – wallet diagnostics, swap previews, and trade execution run on managed wallets pulled from Dexter MCP, with signature provenance surfaced directly in the UI.
+- **x402 micropayment enforcement** – every tool call and session is metered through Dexter API’s x402 billing pipeline so premium flows stay on-chain-auditable.
+- **Scenario routing & handoffs** – configurable agent graphs escalate between customer support, concierge, trading, and human SIM personas while preserving context.
+- **Observable tool orchestration** – MCP-backed tool notes render structured responses (wallet balances, pumpstream intel, Tavily research) without exposing credentials to the browser.
+- **Playwright harness baked in** – the `dexchat` CLI launches full speech sessions to validate flows, regenerate Supabase storage state, and capture artifacts for CI.
+- **Ops-ready deployment** – PM2 + nginx templates from `dexter-ops` keep the voice surface in lockstep with API and MCP releases.
+
+## Architecture at a Glance
+1. **Dexter Voice (this repo)** hosts the Next.js 15 interface, realtime WebRTC bridge, and scenario logic.
+2. **Dexter API** issues short-lived Realtime tokens, mints wallet JWTs, and tallies x402 micropayments for every tool invocation.
+3. **Dexter MCP** exposes the Solana + research tool graph (wallet management, Jupiter swaps, pumpstream, Tavily search) consumed by the voice agent.
+4. **Supabase** keeps user identity, managed wallet assignments, and role gating in sync across sessions.
+
+The result is a governed agent console: operators speak to a realtime supervisor model, which delegates work across MCP tools while the API enforces quotas and debits x402 usage. The same harness CLI (`dexchat`) used by QA and CI replays these sessions end-to-end so each deploy ships with verifiable transcripts.
+
+## Why Teams Use Dexter Voice
+- **24/7 Solana trading desk** – stand up an always-on conversational agent that can inspect wallets, stage swaps, and hand off to humans with full transcript context.
+- **Governed experimentation** – prototype new MCP tools or prompts while x402 metering keeps premium flows accountable to finance and compliance teams.
+- **Operator augmentation** – headset operators get real-time transcripts, guardrail alerts, and tool telemetry without touching dashboard tabs.
+- **Hackathon-ready demos** – the same flows showcased in the Colosseum entry run locally with a single `npm run dev`, so judges and partners see the production stack.
 
 ## Dexter Stack
 
@@ -35,7 +51,7 @@ Dexter Voice is the production interface for Dexter’s realtime agents. It blen
 |------|------|
 | [`dexter-api`](https://github.com/BranchManager69/dexter-api) | Issues realtime tokens, proxies MCP tools, settles x402 billing |
 | [`dexter-fe`](https://github.com/BranchManager69/dexter-fe) | Browser client for production voice + chat surfaces |
-| **`dexter-agents` (Dexter Voice)** | Voice interface + harness that drives realtime sessions and regression tests |
+| **`dexter-agents` (Dexter Voice)** | Voice interface + regression harness orchestrating MCP tools under x402 governance |
 | [`dexter-mcp`](https://github.com/BranchManager69/dexter-mcp) | Managed MCP transport exposing wallet + trading tools |
 | [`dexter-ops`](https://github.com/BranchManager69/dexter-ops) | Shared ops playbook, PM2 config, nginx templates |
 
@@ -57,7 +73,8 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 - `.env.sample` documents required variables (`OPENAI_API_KEY`, `NEXT_PUBLIC_OPENAI_*_MODEL`, `NEXT_PUBLIC_SITE_URL`).
 - **Supabase** – set `NEXT_PUBLIC_SUPABASE_URL` for client fetches and keep `SUPABASE_ANON_KEY` server-side; the `/auth/config` proxy hands the anon key to the browser when needed.
 - **Cloudflare Turnstile** – set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (same value the main site uses) to render the security challenge before sending a magic link.
-- Set `TOKEN_AI_MCP_TOKEN` for local MCP tool runs (or `HARNESS_MCP_TOKEN` when using the harness CLI); production keeps it in PM2 env.
+- **x402 micropayments** – keep `NEXT_PUBLIC_DEXTER_API_ORIGIN` aligned with your `dexter-api` deployment; that service tallies x402 usage for each tool call surfaced in the UI.
+- Set `TOKEN_AI_MCP_TOKEN` for local MCP tool runs (or `HARNESS_MCP_TOKEN` when using the harness CLI); production keeps it in PM2 env so MCP connectors stay gated.
 - When deployed through `dexter-ops/ops/ecosystem.config.cjs`, `npm run deploy` builds the app and restarts the PM2 process with updated env.
 
 ### Supabase Redirect Allowlist
@@ -93,7 +110,7 @@ Create new scenarios by copying an existing folder, wiring it into `agentConfigs
 ## Harness & Testing
 - `npm run dexchat -- --prompt "Smoke" --url http://localhost:3000` runs a local Playwright smoke test and saves a JSON artifact to `harness-results/`.
 - `dexchat --prompt "Provide trading intel" --headful` (after `npm link`) opens a headed browser for manual observation.
-- Store notable harness artifacts alongside PRs or link to diffs when behavior changes.
+- Harness captures include Supabase auth status, MCP transcripts, and the x402 ledger entries returned by `dexter-api`; store notable runs alongside PRs or link to diffs when behavior changes.
 
 ## Scripts
 - `npm run dev` – Next.js dev server on port 3000.
