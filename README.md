@@ -9,7 +9,6 @@
   · <a href="https://github.com/BranchManager69/dexter-fe">Dexter FE</a>
   · <strong>Dexter Voice</strong>
   · <a href="https://github.com/BranchManager69/dexter-mcp">Dexter MCP</a>
-  · <a href="https://github.com/BranchManager69/dexter-ops">Dexter Ops</a>
 </p>
 
 <p align="center">
@@ -18,7 +17,9 @@
   <a href="https://github.com/openai/openai-agents-js"><img src="https://img.shields.io/badge/openai-agents-blue.svg" alt="OpenAI Agents"></a>
 </p>
 
-Dexter Voice is the production interface for Dexter’s realtime agents. It blends OpenAI Realtime + Agents, the Dexter MCP tool graph, and Supabase identity into a voice-first console that operators use to triage requests, pull on-chain data, settle trades, and route conversations between specialized personas. The same codebase ships our public demo, internal ops cockpit, and the Playwright harness that regression-tests every scenario before an on-chain change ships.
+Dexter Voice is Dexter’s flagship voice interface for realtime agents. It pairs OpenAI Realtime + Agents with the Dexter MCP tool graph, Supabase-backed identity, and x402 micropayments to deliver a headset-ready console that can triage tickets, inspect Solana wallets, stage swaps, and escalate to specialists with zero context loss.
+
+This is the surface we demo at Colosseum and to partners: the same build powers public walkthroughs, investor previews, and the regression harness we rely on before shipping any on-chain change.
 
 ---
 
@@ -29,7 +30,7 @@ Dexter Voice is the production interface for Dexter’s realtime agents. It blen
 - **Scenario routing & handoffs** – configurable agent graphs escalate between customer support, concierge, trading, and human SIM personas while preserving context.
 - **Observable tool orchestration** – MCP-backed tool notes render structured responses (wallet balances, pumpstream intel, Tavily research) without exposing credentials to the browser.
 - **Playwright harness baked in** – the `dexchat` CLI launches full speech sessions to validate flows, regenerate Supabase storage state, and capture artifacts for CI.
-- **Ops-ready deployment** – PM2 + nginx templates from `dexter-ops` keep the voice surface in lockstep with API and MCP releases.
+- **Ops-ready deployment** – ships with PM2 + nginx scripts so the voice surface stays in lockstep with Dexter API and MCP releases.
 
 ## Architecture at a Glance
 1. **Dexter Voice (this repo)** hosts the Next.js 15 interface, realtime WebRTC bridge, and scenario logic.
@@ -64,7 +65,7 @@ The result is a governed agent console: operators speak to a realtime supervisor
 | [`dexter-fe`](https://github.com/BranchManager69/dexter-fe) | Browser client for production voice + chat surfaces |
 | **`dexter-agents` (Dexter Voice)** | Voice interface + regression harness orchestrating MCP tools under x402 governance |
 | [`dexter-mcp`](https://github.com/BranchManager69/dexter-mcp) | Managed MCP transport exposing wallet + trading tools |
-| [`dexter-ops`](https://github.com/BranchManager69/dexter-ops) | Shared ops playbook, PM2 config, nginx templates |
+| Dexter Ops (internal) | Private ops playbook with PM2 config and nginx templates |
 
 Keep the repos cloned as siblings (for example under `/home/branchmanager/websites/`) so shared env loaders and PM2 scripts work without tweaks.
 
@@ -85,7 +86,7 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 - **Cloudflare Turnstile** – set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (same value the main surface uses) to render the security challenge before sending a magic link.
 - **x402 micropayments** – keep `NEXT_PUBLIC_DEXTER_API_ORIGIN` aligned with your `dexter-api` deployment; that service tallies x402 usage for each tool call surfaced in the UI.
 - Set `TOKEN_AI_MCP_TOKEN` for local MCP tool runs (or `HARNESS_MCP_TOKEN` when using the harness CLI); production keeps it in PM2 env so MCP connectors stay gated.
-- When deployed through `dexter-ops/ops/ecosystem.config.cjs`, `npm run deploy` builds the app and restarts the PM2 process with updated env.
+- When deployed through PM2, `npm run deploy` rebuilds the app and restarts the `dexter-agents` process with fresh environment variables.
 
 ## Project Layout
 - `src/app/App.tsx` – realtime UI state machine (transcript, guardrails, tool results).
@@ -110,9 +111,9 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 - `npm run pm2:dev` / `npm run pm2:prod` – convenience wrappers for running under PM2 in hot reload or production mode.
 
 ## Deployment Notes
-- Follow the PM2 definitions in `dexter-ops/ops/ecosystem.config.cjs`; the app expects `NODE_OPTIONS=--enable-source-maps` for readable logs.
+- PM2 deployments should set `NODE_OPTIONS=--enable-source-maps` for readable logs.
 - Set `NEXT_PUBLIC_SITE_URL` before deploying so share links and realtime callbacks point at the correct domain (currently `https://beta.dexter.cash`).
-- nginx templates and TLS automation live in `dexter-ops/ops/nginx-sites/`; reuse them when adding new surfaces.
+- Reuse your nginx/TLS templates to front the Next.js server (Dexter Ops maintains the internal reference implementation).
 
 ## Authentication & Sessions
 - **Guest mode** is always available: the realtime backend issues a funded demo wallet so visitors can trade, swap, and explore every tool without signing in.
@@ -120,6 +121,6 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 
 ## Docs & References
 - `AGENTS.md` – contributor guide (style, testing, PR checklists).
-- [`dexter-ops/OPERATIONS.md`](../dexter-ops/OPERATIONS.md) – PM2, nginx, smoke test procedures.
+- Dexter Ops runbook (internal) – contact the team for PM2, nginx, and smoke test procedures.
 - [`docs.dexter.cash`](https://docs.dexter.cash) – long-form guides on agent flows, MCP tooling, and x402 integration.
 - Issues or questions: open a ticket in the relevant repo and include harness artifacts or screenshots for faster triage.
