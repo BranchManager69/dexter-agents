@@ -82,19 +82,10 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 
 ## Environment
 - `.env.sample` documents required variables (`OPENAI_API_KEY`, `NEXT_PUBLIC_OPENAI_*_MODEL`, `NEXT_PUBLIC_SITE_URL`).
-- **Supabase** – set `NEXT_PUBLIC_SUPABASE_URL` for client fetches and keep `SUPABASE_ANON_KEY` server-side; the `/auth/config` proxy hands the anon key to the browser when needed.
-- **Cloudflare Turnstile** – set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (same value the main site uses) to render the security challenge before sending a magic link.
+- **Cloudflare Turnstile** – set `NEXT_PUBLIC_TURNSTILE_SITE_KEY` (same value the main surface uses) to render the security challenge before sending a magic link.
 - **x402 micropayments** – keep `NEXT_PUBLIC_DEXTER_API_ORIGIN` aligned with your `dexter-api` deployment; that service tallies x402 usage for each tool call surfaced in the UI.
 - Set `TOKEN_AI_MCP_TOKEN` for local MCP tool runs (or `HARNESS_MCP_TOKEN` when using the harness CLI); production keeps it in PM2 env so MCP connectors stay gated.
 - When deployed through `dexter-ops/ops/ecosystem.config.cjs`, `npm run deploy` builds the app and restarts the PM2 process with updated env.
-
-### Supabase Redirect Allowlist
-Add the beta surface to the Supabase project so magic links return to the correct domain:
-
-1. Supabase Dashboard → **Authentication → URL Configuration**
-2. Set **Site URL** to `https://dexter.cash`
-3. Under **Redirect URLs** include each surface you care about (e.g. `https://beta.dexter.cash`, `https://dexter.cash`, optionally `https://*.dexter.cash`)
-4. Save, then request a fresh magic link so the new redirect is used
 
 ## Project Layout
 - `src/app/App.tsx` – realtime UI state machine (transcript, guardrails, tool results).
