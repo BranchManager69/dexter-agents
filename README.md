@@ -45,6 +45,17 @@ The result is a governed agent console: operators speak to a realtime supervisor
 - **Operator augmentation** – headset operators get real-time transcripts, guardrail alerts, and tool telemetry without touching dashboard tabs.
 - **Hackathon-ready demos** – the same flows showcased in the Colosseum entry run locally with a single `npm run dev`, so judges and partners see the production stack.
 
+## Featured MCP Tooling
+- **Wallet resolution (`resolve_wallet`, `list_my_wallets`, `auth_info`)** – map the caller’s Supabase identity to managed Solana wallets, expose default/override assignments, and surface custody metadata before any trade fires.
+- **Wallet override & storage (`set_session_wallet_override`)** – let operators or scripted flows pivot to a specific wallet while logging the change for compliance and feeding the voice UI’s badge stack.
+- **Token intelligence (`solana_resolve_token`, `solana_list_balances`)** – pull metadata, price feeds, and current balances for the active wallet; results render as hash badges and token flow pills in the transcript.
+- **Swap planning (`solana_swap_preview`)** – preview Jupiter routes, show pool hops + price impact, and record the simulated signature. Operators can gate execution on guardrail thresholds.
+- **Swap execution (`solana_swap_execute`)** – perform routed swaps on managed wallets with on-chain signatures piped back into the UI and x402 invoice entries tallied by Dexter API.
+- **Pumpstream market scan (`pumpstream_live_summary`)** – stream trending Solana tokens with live viewers, market cap, and momentum so the agent can narrate runway before a trade.
+- **Research connectors (`search`, `fetch`)** – broker Tavily search and HTTP fetch calls to add off-chain context to conversations without exposing API keys to the browser.
+- **Social sentiment (`twitter_search`)** – summarize X/Twitter chatter around a project to complement on-chain signals.
+- **Dexter harness utilities (`dexchat`, `pumpstream:harness`)** – run scripted sessions against the same toolkit to regenerate Playwright storage, validate MCP auth, and archive transcripts with their x402 ledger entries.
+
 ## Dexter Stack
 
 | Repo | Role |
