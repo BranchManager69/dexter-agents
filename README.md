@@ -5,12 +5,12 @@
 <p align="center">
   <a href="https://github.com/BranchManager69/dexter-api">Dexter API</a>
   · <a href="https://github.com/BranchManager69/dexter-fe">Dexter FE</a>
-  · <strong>Dexter Agents</strong>
+  · <strong>Dexter Voice</strong>
   · <a href="https://github.com/BranchManager69/dexter-mcp">Dexter MCP</a>
   · <a href="https://github.com/BranchManager69/dexter-ops">Dexter Ops</a>
 </p>
 
-<h1 align="center">Dexter Agents</h1>
+<h1 align="center">Dexter Voice</h1>
 
 <p align="center">
   <a href="https://nodejs.org/en/download"><img src="https://img.shields.io/badge/node-%3E=20-green.svg" alt="Node >= 20"></a>
@@ -18,15 +18,16 @@
   <a href="https://github.com/openai/openai-agents-js"><img src="https://img.shields.io/badge/openai-agents-blue.svg" alt="OpenAI Agents"></a>
 </p>
 
-Next.js reference app showcasing advanced OpenAI Realtime + Agents patterns used across the Dexter stack. It powers voice-first demos, agent handoffs, and the Playwright-based `dexchat` harness for automated regression runs.
+Dexter Voice is the production interface for Dexter’s realtime agents. It blends OpenAI Realtime + Agents, the MCP tool graph, and Supabase identity into a voice-first console that operators use to triage requests, pull on-chain data, and hand off to specialized agent workflows. The same codebase ships our public demo, internal ops cockpit, and the Playwright harness used to regression-test every scenario.
 
 ---
 
 ## Highlights
-- **Realtime supervisor flow** – default `chatSupervisor` config mixes a realtime surface with a higher-IQ supervisor model for tool calls.
-- **Sequential agent handoffs** – specialized scenarios transfer control between authentication, returns, and trading agents.
-- **Harness-first testing** – `scripts/dexchat.js` drives Playwright smoke tests and exports replayable JSON artifacts.
-- **Ops-aligned deploy** – follows the `dexter-ops` PM2 + nginx templates; deploy with the same environment cascade as the other siblings.
+- **Voice-native agent console** – realtime WebRTC surface with guardrails, live transcripts, and tool telemetry tuned for headset operators.
+- **Integrated tool orchestration** – MCP-backed tool notes render structured wallet, market, and research data in-line without leaking credentials to the browser.
+- **Scenario routing & handoffs** – configurable flows let the voice agent escalate between customer care, trading, and concierge personas with traceable context.
+- **Playwright harness baked in** – `dexchat` CLI spins up full sessions to validate agent responses and regenerate storage state for CI or smoke tests.
+- **Ops-ready deployment** – ships with PM2/nginx recipes from `dexter-ops`, sharing the same environment cascade as API and MCP services.
 
 ## Dexter Stack
 
@@ -34,7 +35,7 @@ Next.js reference app showcasing advanced OpenAI Realtime + Agents patterns used
 |------|------|
 | [`dexter-api`](https://github.com/BranchManager69/dexter-api) | Issues realtime tokens, proxies MCP tools, settles x402 billing |
 | [`dexter-fe`](https://github.com/BranchManager69/dexter-fe) | Browser client for production voice + chat surfaces |
-| **`dexter-agents` (this repo)** | Agent experimentation playground, realtime demos, harness scripts |
+| **`dexter-agents` (Dexter Voice)** | Voice interface + harness that drives realtime sessions and regression tests |
 | [`dexter-mcp`](https://github.com/BranchManager69/dexter-mcp) | Managed MCP transport exposing wallet + trading tools |
 | [`dexter-ops`](https://github.com/BranchManager69/dexter-ops) | Shared ops playbook, PM2 config, nginx templates |
 
