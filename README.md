@@ -115,9 +115,8 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 - nginx templates and TLS automation live in `dexter-ops/ops/nginx-sites/`; reuse them when adding new surfaces.
 
 ## Authentication & Sessions
-- **Guest mode** is always available: the realtime backend receives a `guest_profile` and runs with demo wallet restrictions.
-- **Signed-in mode** – pass the Cloudflare Turnstile check, request a magic link, and open it in the same browser profile. Supabase emits `dexter_session` metadata so the UI badge and realtime logs both reflect the user.
-- `/auth/callback` keeps Supabase cookies in sync with auth state changes (`supabase.auth.onAuthStateChange`). If cookies go missing, double-check the Supabase redirect allow list and the Turnstile token.
+- **Guest mode** is always available: the realtime backend issues a funded demo wallet so visitors can trade, swap, and explore every tool without signing in.
+- **Signed-in mode** – run the Turnstile challenge, request a magic link, and open it in the same browser profile to bind your own Dexter wallet and persist history.
 
 ## Docs & References
 - `AGENTS.md` – contributor guide (style, testing, PR checklists).
