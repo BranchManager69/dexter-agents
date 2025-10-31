@@ -17,7 +17,7 @@
   <a href="https://github.com/openai/openai-agents-js"><img src="https://img.shields.io/badge/openai-agents-blue.svg" alt="OpenAI Agents"></a>
 </p>
 
-Dexter Voice is Dexter’s flagship voice interface for realtime agents. It pairs OpenAI Realtime + Agents with the Dexter MCP tool graph, Supabase-backed identity, and x402 micropayments to deliver a headset-ready console that can triage tickets, inspect Solana wallets, stage swaps, and escalate to specialists with zero context loss.
+Dexter Voice is Dexter’s flagship voice interface for realtime agents. Alongside our ChatGPT, Claude, and X (Twitter) surfaces—and with Alexa/Siri assistants in active development—it delivers the most immersive way to run Dexter agents end-to-end. The stack pairs OpenAI Realtime + Agents with the Dexter MCP tool graph, Supabase-backed identity, and x402 micropayments to deliver a headset-ready console that can triage tickets, inspect Solana wallets, stage swaps, and escalate to specialists with zero context loss.
 
 This is the surface we demo at Colosseum and to partners: the same build powers public walkthroughs, investor previews, and the regression harness we rely on before shipping any on-chain change.
 
