@@ -2,6 +2,8 @@
   <img src="./public/wordmarks/dexter-wordmark.svg" alt="Dexter wordmark" width="360">
 </p>
 
+<h1 align="center">Dexter Voice</h1>
+
 <p align="center">
   <a href="https://github.com/BranchManager69/dexter-api">Dexter API</a>
   · <a href="https://github.com/BranchManager69/dexter-fe">Dexter FE</a>
@@ -9,8 +11,6 @@
   · <a href="https://github.com/BranchManager69/dexter-mcp">Dexter MCP</a>
   · <a href="https://github.com/BranchManager69/dexter-ops">Dexter Ops</a>
 </p>
-
-<h1 align="center">Dexter Voice</h1>
 
 <p align="center">
   <a href="https://nodejs.org/en/download"><img src="https://img.shields.io/badge/node-%3E=20-green.svg" alt="Node >= 20"></a>
