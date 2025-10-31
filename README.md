@@ -21,6 +21,8 @@ Dexter Voice is Dexter’s flagship voice interface for realtime agents. Alongsi
 
 This is the surface we demo at Colosseum and to partners: the same build powers public walkthroughs, investor previews, and the regression harness we rely on before shipping any on-chain change.
 
+> 🎤 **Try it live:** Head to [beta.dexter.cash](https://beta.dexter.cash) for the hosted demo. No login required—guest sessions run on a funded Dexter wallet and can perform real Solana swaps. When you do sign in, a personal Dexter agent wallet (prefixed `Dex-`) is minted and can be exported immediately for custody or audits.
+
 ---
 
 ## Core Capabilities
