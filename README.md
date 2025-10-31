@@ -96,19 +96,6 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 - `AGENTS.md` – contributor guidelines covering style, testing, and PR expectations.
 - Internal diagrams and extended walkthroughs live in the private Dexter docs workspace; contact the team for access.
 
-## Tool Note Renderers
-- **Shared primitives** – `src/app/components/toolNotes/solanaVisuals.tsx` exports the icon, metric pill, and token flow components used across every renderer (not only Solana tools). Reach for these instead of re-creating bespoke badge layouts.
-- **Search & fetch** – the `search` and `fetch` notes now consume Tavily responses (web search + extraction). Results include structured snippets, favicons, and the source domain; the cards render as single-line links so users can click anywhere to open the page.
-- **Wallet & pumpstream** – wallet notes show copyable `HashBadge`s for mints/accounts, while the pumpstream renderer collapses market cap + momentum into one compact row and links the preview card directly to the stream.
-- **Solana artifacts in markdown** – addresses and signatures inside agent transcripts are replaced with clickable badges via the `solanaArtifactsRemarkPlugin`. When editing markdown-rendered output, leave the base58 strings intact—the plugin handles classification automatically.
-
-## Agent Scenarios
-- **chatSupervisor** – realtime agent greets and triages while a supervisor model executes complex tool calls.
-- **customerServiceRetail** – sequential handoff flow moving between authentication, returns, sales, and human SIM.
-- **dexterTrading** – example trading assistant tuned for Dexter’s wallets and data sources.
-
-Create new scenarios by copying an existing folder, wiring it into `agentConfigs/index.ts`, and updating presets under `src/app/config/`.
-
 ## Harness & Testing
 - `npm run dexchat -- --prompt "Smoke" --url http://localhost:3000` runs a local Playwright smoke test and saves a JSON artifact to `harness-results/`.
 - `dexchat --prompt "Provide trading intel" --headful` (after `npm link`) opens a headed browser for manual observation.
