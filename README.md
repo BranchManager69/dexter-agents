@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://docs.dexter.cash/previews/dexter-stack-wordmark.svg" alt="Dexter Stack wordmark" width="360">
+  <img src="public/assets/dexter-stack-wordmark.svg" alt="Dexter Stack wordmark" width="360">
 </p>
 
 <p align="center">
@@ -74,7 +74,7 @@ Add the beta surface to the Supabase project so magic links return to the correc
 - `src/app/components/`, `hooks/`, `contexts/` – reusable UI/state primitives.
 - `scripts/` – `dexchat.js` CLI and `runHarness.js` Playwright runner; artifacts land in `harness-results/` (git-ignored).
 - `AGENTS.md` – contributor guidelines covering style, testing, and PR expectations.
-- `docs/realtime-session-flow.md` – detailed handshake diagram and guest/user session notes.
+- Internal diagrams and extended walkthroughs live in the private Dexter docs workspace; contact the team for access.
 
 ## Tool Note Renderers
 - **Shared primitives** – `src/app/components/toolNotes/solanaVisuals.tsx` exports the icon, metric pill, and token flow components used across every renderer (not only Solana tools). Reach for these instead of re-creating bespoke badge layouts.
