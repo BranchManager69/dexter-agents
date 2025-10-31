@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/BranchManager69/dexter-fe/main/public/wordmarks/dexter-wordmark.svg" alt="Dexter wordmark" width="360">
+  <img src="./public/wordmarks/dexter-wordmark.svg" alt="Dexter wordmark" width="360">
 </p>
 
 <h1 align="center">Dexter Voice</h1>
