@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/assets/dexter-stack-wordmark.svg" alt="Dexter Stack wordmark" width="360">
+  <img src="./public/wordmarks/dexter-wordmark.svg" alt="Dexter wordmark" width="360">
 </p>
 
 <p align="center">
