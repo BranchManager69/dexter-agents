@@ -141,8 +141,29 @@ async function runHarness({
     page.on('pageerror', (err) => {
       const entry = { type: 'pageerror', text: err.message };
       consoleLogs.push(entry);
-      process.stderr.write(`[pageerror] ${err.message}\n`);
+      let stackSnippet = '';
+      if (err?.stack) {
+        const parts = String(err.stack).split('\n').slice(1, 3).map((line) => line.trim());
+        if (parts.length) {
+          stackSnippet = ` | ${parts.join(' | ')}`;
+        }
+      }
+      process.stderr.write(`[pageerror] ${err.message}${stackSnippet}\n`);
       lastActivity = Date.now();
+    });
+    page.on('response', (response) => {
+      const status = response.status();
+      if (status >= 400) {
+        let safeUrl = response.url();
+        try {
+          const parsed = new URL(safeUrl);
+          safeUrl = `${parsed.origin}${parsed.pathname}`;
+        } catch {
+          /* ignore URL parsing errors */
+        }
+        const method = response.request()?.method?.() || 'GET';
+        process.stderr.write(`[response:${status}] ${method} ${safeUrl}\n`);
+      }
     });
 
     await page.goto(targetUrl, { waitUntil: 'domcontentloaded' });
