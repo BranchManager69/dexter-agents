@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import "./lib/envSetup";
 import { Providers } from "./providers";
 import { activeThemeVariables } from "../theme/palette";
 

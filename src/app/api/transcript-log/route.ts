@@ -1,7 +1,11 @@
+import { randomUUID } from 'node:crypto';
+
 import { NextRequest, NextResponse } from 'next/server';
+import { createScopedLogger } from '@/server/logger';
 
 const ENABLE_TRANSCRIPT_LOGS = process.env.ENABLE_TRANSCRIPT_LOGS !== 'false';
 const MAX_FIELD_LENGTH = 2000;
+const log = createScopedLogger({ scope: 'api.transcript_log' });
 
 const sanitizeText = (value: unknown) => {
   if (typeof value !== 'string') return value;
@@ -15,6 +19,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const requestId = randomUUID();
+    const startedAt = Date.now();
+    const routeLog = log.child({
+      requestId,
+      path: '/api/transcript-log',
+      method: 'POST',
+    });
+
     const payload = await request.json();
     const entry = {
       ts: typeof payload?.ts === 'string' ? payload.ts : new Date().toISOString(),
@@ -31,11 +43,24 @@ export async function POST(request: NextRequest) {
       remoteIp: request.headers.get('x-forwarded-for') || undefined,
     };
 
-    console.log('[transcript]', JSON.stringify(entry));
+    routeLog.info(
+      {
+        event: 'transcript_entry',
+        durationMs: Date.now() - startedAt,
+        entry,
+      },
+      'Transcript entry logged',
+    );
 
     return NextResponse.json({ logged: true });
   } catch (error) {
-    console.error('[transcript] failed to log entry', error);
+    log.error(
+      {
+        event: 'transcript_log_failed',
+        error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+      },
+      'Transcript logging failed',
+    );
     return NextResponse.json({ error: 'invalid_payload' }, { status: 400 });
   }
 }

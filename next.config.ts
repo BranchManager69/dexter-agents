@@ -1,5 +1,17 @@
 import type { NextConfig } from "next";
 
+// Work around Node.js 22 lazy getter differences so Next's bundled webpack
+// exposes WebpackError/other exports before plugins access them.
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const webpackModule = require("next/dist/compiled/webpack/webpack");
+  if (typeof webpackModule?.init === "function") {
+    webpackModule.init();
+  }
+} catch {
+  // ignore
+}
+
 const API_ORIGIN =
   process.env.NEXT_PUBLIC_API_ORIGIN &&
   process.env.NEXT_PUBLIC_API_ORIGIN !== "relative"

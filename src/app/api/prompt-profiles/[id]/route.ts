@@ -29,13 +29,17 @@ async function getAccessToken(request: Request): Promise<string | null> {
   return session?.access_token ?? null;
 }
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
   try {
     const accessToken = await getAccessToken(request);
     if (!accessToken) {
       return NextResponse.json({ ok: false, error: "authentication_required" }, { status: 401 });
     }
-    const response = await fetch(getDexterApiRoute(`/prompt-profiles/${params.id}`), {
+    const response = await fetch(getDexterApiRoute(`/prompt-profiles/${id}`), {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -57,19 +61,23 @@ export async function GET(request: Request, { params }: { params: { id: string }
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error(`GET /api/prompt-profiles/${params.id} error`, error);
+    console.error(`GET /api/prompt-profiles/${id} error`, error);
     return NextResponse.json({ ok: false, error: "internal_error" }, { status: 500 });
   }
 }
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
   try {
     const accessToken = await getAccessToken(request);
     if (!accessToken) {
       return NextResponse.json({ ok: false, error: "authentication_required" }, { status: 401 });
     }
     const body = await request.json();
-    const response = await fetch(getDexterApiRoute(`/prompt-profiles/${params.id}`), {
+    const response = await fetch(getDexterApiRoute(`/prompt-profiles/${id}`), {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -93,18 +101,22 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error(`PUT /api/prompt-profiles/${params.id} error`, error);
+    console.error(`PUT /api/prompt-profiles/${id} error`, error);
     return NextResponse.json({ ok: false, error: "internal_error" }, { status: 500 });
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
   try {
     const accessToken = await getAccessToken(request);
     if (!accessToken) {
       return NextResponse.json({ ok: false, error: "authentication_required" }, { status: 401 });
     }
-    const response = await fetch(getDexterApiRoute(`/prompt-profiles/${params.id}`), {
+    const response = await fetch(getDexterApiRoute(`/prompt-profiles/${id}`), {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -126,7 +138,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error(`DELETE /api/prompt-profiles/${params.id} error`, error);
+    console.error(`DELETE /api/prompt-profiles/${id} error`, error);
     return NextResponse.json({ ok: false, error: "internal_error" }, { status: 500 });
   }
 }

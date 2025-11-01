@@ -29,13 +29,17 @@ async function getAccessToken(request: Request): Promise<string | null> {
   return session?.access_token ?? null;
 }
 
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ id: string }> },
+) {
+  const { id } = await context.params;
   try {
     const accessToken = await getAccessToken(request);
     if (!accessToken) {
       return NextResponse.json({ ok: false, error: "authentication_required" }, { status: 401 });
     }
-    const response = await fetch(getDexterApiRoute(`/prompt-profiles/${params.id}/activate`), {
+    const response = await fetch(getDexterApiRoute(`/prompt-profiles/${id}/activate`), {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -57,7 +61,7 @@ export async function POST(request: Request, { params }: { params: { id: string 
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error(`/api/prompt-profiles/${params.id}/activate POST error`, error);
+    console.error(`/api/prompt-profiles/${id}/activate POST error`, error);
     return NextResponse.json({ ok: false, error: "internal_error" }, { status: 500 });
   }
 }

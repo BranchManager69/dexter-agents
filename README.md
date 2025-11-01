@@ -89,6 +89,9 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 - **x402 micropayments** – keep `NEXT_PUBLIC_DEXTER_API_ORIGIN` aligned with your `dexter-api` deployment; that service tallies x402 usage for each tool call surfaced in the UI.
 - Set `TOKEN_AI_MCP_TOKEN` for local MCP tool runs (or `HARNESS_MCP_TOKEN` when using the harness CLI); production keeps it in PM2 env so MCP connectors stay gated.
 - When deployed through PM2, `npm run deploy` rebuilds the app and restarts the `dexter-agents` process with fresh environment variables.
+- Logging knobs:
+  - `LOG_LEVEL` defaults to `info`. Bump to `debug` when you need per-step traces, or drop to `warn` during noisy incidents.
+  - `LOG_PRETTY=1` forces colorized pino output for PM2 and other log tails (leave unset for raw JSON shipping to collectors).
 
 ## Project Layout
 - `src/app/App.tsx` – realtime UI state machine (transcript, guardrails, tool results).
@@ -111,6 +114,7 @@ The dev server hot-reloads agent configs and tool logic. Use the Scenario dropdo
 - `npm run lint` – Next.js ESLint preset across `src/`.
 - `npm run deploy` – build then restart the `dexter-agents` PM2 process with `--update-env`.
 - `npm run pm2:dev` / `npm run pm2:prod` – convenience wrappers for running under PM2 in hot reload or production mode.
+- `npm run logs:pretty` – colorized tail of `pm2 logs dexter-agents` piped through `pino-pretty`.
 
 ## Deployment Notes
 - PM2 deployments should set `NODE_OPTIONS=--enable-source-maps` for readable logs.

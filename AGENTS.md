@@ -25,6 +25,7 @@
 - PM2 process definitions live in `ops/ecosystem.config.cjs`. After edits, use `pm2 restart <process>` and confirm the change with `npm run smoke:prod`.
 - nginx updates require `sudo nginx -t && sudo systemctl reload nginx`; keep config diffs small and documented.
 - Shared assets (screenshots, wordmark) should be regenerated with `dxsnap` after any FE or docs change that affects previews.
+- Logging hygiene – `LOG_LEVEL` defaults to `info`; bump it to `debug` for verbose traces or drop to `warn` when you need quiet tails. `LOG_PRETTY=1` forces colors in PM2 logs (handy for quick triage); unset it when shipping raw JSON to collectors.
 
 ## Knowledge Base
 - `OPERATIONS.md` contains the condensed runbook (PM2, nginx, smoke tests, troubleshooting).

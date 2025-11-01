@@ -1,9 +1,12 @@
+import { randomUUID } from "node:crypto";
+
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { createRouteHandlerClient } from "@supabase/auth-helpers-nextjs";
 import { MODEL_IDS } from "../../config/models";
 import { getDexterApiRoute } from "../../config/env";
 import { resolveConciergeProfile } from "@/app/agentConfigs/customerServiceRetail/promptProfile";
+import { createScopedLogger } from "@/server/logger";
 
 type Database = any;
 
@@ -13,6 +16,7 @@ const ALLOW_GUEST_SESSIONS =
 export const dynamic = 'force-dynamic';
 
 let cachedGuestInstructions: { value: string; expiresAt: number } | null = null;
+const log = createScopedLogger({ scope: "api.session" });
 
 async function getGuestInstructions(): Promise<string> {
   const now = Date.now();
@@ -32,6 +36,14 @@ async function getGuestInstructions(): Promise<string> {
 }
 
 export async function GET(request: Request) {
+  const requestId = randomUUID();
+  const startedAt = Date.now();
+  const routeLog = log.child({
+    requestId,
+    path: "/api/session",
+    method: "GET",
+  });
+
   try {
     const cookieStorePromise = cookies();
     const supabase = createRouteHandlerClient<Database>(
@@ -47,7 +59,13 @@ export async function GET(request: Request) {
     } = await supabase.auth.getSession();
 
     if (sessionError) {
-      console.warn("/api/session supabase session error", sessionError.message);
+      routeLog.warn(
+        {
+          event: "supabase_session_error",
+          error: sessionError.message,
+        },
+        "Supabase session lookup returned an error",
+      );
     }
 
     const isAuthenticated = Boolean(session?.user);
@@ -58,6 +76,13 @@ export async function GET(request: Request) {
       : null;
 
     if (!isAuthenticated && !ALLOW_GUEST_SESSIONS) {
+      routeLog.warn(
+        {
+          event: "guest_sessions_disabled",
+          durationMs: Date.now() - startedAt,
+        },
+        "Guest sessions are disabled; rejecting unauthenticated request",
+      );
       return NextResponse.json({ error: "Sign-in required" }, { status: 401 });
     }
 
@@ -85,10 +110,16 @@ export async function GET(request: Request) {
     });
     if (!response.ok) {
       const body = await response.text();
-      console.error("/api/session upstream", {
-        status: response.status,
-        body,
-      });
+      routeLog.error(
+        {
+          event: "upstream_failure",
+          status: response.status,
+          bodyPreview: body.slice(0, 400),
+          durationMs: Date.now() - startedAt,
+          isAuthenticated,
+        },
+        "Dexter realtime session request failed",
+      );
       return NextResponse.json(
         { error: "Upstream session service failure", status: response.status },
         { status: 502 }
@@ -97,19 +128,32 @@ export async function GET(request: Request) {
 
     const data = await response.json();
     const sessionType = data?.dexter_session?.type || (isAuthenticated ? "user" : "guest");
-    console.log("/api/session ok", {
-      id: data?.id,
-      model: data?.model,
-      hasTools: Array.isArray(data?.tools) ? data.tools.length : 0,
-      sessionType,
-      supabaseUserId: data?.dexter_session?.user?.id ?? null,
-    });
+    routeLog.info(
+      {
+        event: "session_created",
+        durationMs: Date.now() - startedAt,
+        isAuthenticated,
+        sessionType,
+        sessionId: data?.id ?? null,
+        model: data?.model ?? null,
+        toolCount: Array.isArray(data?.tools) ? data.tools.length : 0,
+        supabaseUserId: data?.dexter_session?.user?.id ?? null,
+      },
+      "Realtime session created successfully",
+    );
     // IMPORTANT: Preserve backend-native tools and configuration returned by Dexter API.
     // Do not strip tools or override tool_choice/instructions so the Realtime backend
     // can call MCP directly using the bearer provided server-side.
     return NextResponse.json(data);
   } catch (error) {
-    console.error("Error in /session:", error);
+    routeLog.error(
+      {
+        event: "handler_exception",
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+      },
+      "Unhandled error while creating realtime session",
+    );
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

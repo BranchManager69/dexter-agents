@@ -1,10 +1,22 @@
+import { randomUUID } from 'node:crypto';
+
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConnectedMcpServer, resolveMcpAuth, summarizeIdentity } from './auth';
+import { createScopedLogger } from '@/server/logger';
 
 export const dynamic = 'force-dynamic';
+const log = createScopedLogger({ scope: 'api.mcp' });
 
 export async function GET() {
+  const requestId = randomUUID();
+  const startedAt = Date.now();
+  const routeLog = log.child({
+    requestId,
+    path: '/api/mcp',
+    method: 'GET',
+  });
+
   try {
     const auth = await resolveMcpAuth();
     const server = await getConnectedMcpServer(auth);
@@ -19,20 +31,53 @@ export async function GET() {
     if (summary.detail) {
       response.headers.set('x-dexter-mcp-detail', summary.detail);
     }
+
+    routeLog.info(
+      {
+        event: 'mcp_list_success',
+        durationMs: Date.now() - startedAt,
+        identity: summary.state,
+        minted: auth.minted,
+        toolCount: Array.isArray((tools as any)?.tools) ? (tools as any).tools.length : Array.isArray(tools) ? (tools as any[]).length : null,
+      },
+      'MCP tool listing succeeded',
+    );
     return response;
   } catch (error: any) {
-    console.error('[mcp] list tools failed', error?.message || error);
+    routeLog.error(
+      {
+        event: 'mcp_list_failed',
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+      },
+      'MCP tool listing failed',
+    );
     return NextResponse.json({ error: 'mcp_list_failed' }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
+  const requestId = randomUUID();
+  const startedAt = Date.now();
+  const routeLog = log.child({
+    requestId,
+    path: '/api/mcp',
+    method: 'POST',
+  });
+
   try {
     const body = await req.json().catch(() => ({}));
     const tool = String(body.tool || body.name || '').trim();
     const args = (body.arguments || body.args || {}) as Record<string, unknown>;
 
     if (!tool) {
+      routeLog.warn(
+        {
+          event: 'missing_tool',
+          durationMs: Date.now() - startedAt,
+        },
+        'MCP call rejected: missing tool name',
+      );
       return NextResponse.json({ error: 'missing_tool' }, { status: 400 });
     }
 
@@ -46,9 +91,27 @@ export async function POST(req: NextRequest) {
     if (summary.detail) {
       response.headers.set('x-dexter-mcp-detail', summary.detail);
     }
+    routeLog.info(
+      {
+        event: 'mcp_call_success',
+        durationMs: Date.now() - startedAt,
+        identity: summary.state,
+        minted: auth.minted,
+        tool,
+        argumentKeys: Object.keys(args || {}),
+      },
+      'MCP tool call completed',
+    );
     return response;
   } catch (error: any) {
-    console.error('[mcp] call failed', error?.message || error);
+    routeLog.error(
+      {
+        event: 'mcp_call_failed',
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+      },
+      'MCP tool call failed',
+    );
     return NextResponse.json({ error: 'mcp_call_failed', message: error?.message || String(error) }, { status: 500 });
   }
 }

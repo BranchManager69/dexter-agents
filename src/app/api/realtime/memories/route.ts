@@ -1,11 +1,15 @@
+import { randomUUID } from 'node:crypto';
+
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { MEMORY_LIMITS } from '@/app/config/memory';
+import { createScopedLogger } from '@/server/logger';
 
 type Database = any;
 
 export const dynamic = 'force-dynamic';
+const log = createScopedLogger({ scope: 'api.realtime.memories' });
 
 const normalizeList = (value: unknown): string[] => {
   if (!value) return [];
@@ -23,6 +27,14 @@ const normalizeList = (value: unknown): string[] => {
 };
 
 export async function GET() {
+  const requestId = randomUUID();
+  const startedAt = Date.now();
+  const routeLog = log.child({
+    requestId,
+    path: '/api/realtime/memories',
+    method: 'GET',
+  });
+
   try {
     const cookieStore = cookies();
     const supabase = createRouteHandlerClient<Database>({ cookies: () => cookieStore }, {
@@ -36,6 +48,13 @@ export async function GET() {
 
     const supabaseUserId = session?.user?.id;
     if (!supabaseUserId) {
+      routeLog.info(
+        {
+          event: 'no_authenticated_user',
+          durationMs: Date.now() - startedAt,
+        },
+        'Realtime memories request returning empty set (no supabase user)',
+      );
       return NextResponse.json({ memories: [] });
     }
 
@@ -49,7 +68,15 @@ export async function GET() {
       .limit(fetchLimit ?? 50);
 
     if (error) {
-      console.error('[memories] supabase error', error);
+      routeLog.error(
+        {
+          event: 'memories_query_failed',
+          durationMs: Date.now() - startedAt,
+          supabaseUserId,
+          error: error.message,
+        },
+        'Failed to query user_memories table',
+      );
       return NextResponse.json({ error: 'memories_fetch_failed' }, { status: 500 });
     }
 
@@ -78,7 +105,15 @@ export async function GET() {
       .limit(fetchLimit ?? 50);
 
     if (skippedError) {
-      console.error('[memories] supabase skipped error', skippedError);
+      routeLog.error(
+        {
+          event: 'skipped_query_failed',
+          durationMs: Date.now() - startedAt,
+          supabaseUserId,
+          error: skippedError.message,
+        },
+        'Failed to query conversation_logs for skipped sessions',
+      );
       return NextResponse.json({ error: 'memories_fetch_failed' }, { status: 500 });
     }
 
@@ -94,15 +129,39 @@ export async function GET() {
       status: 'skipped' as const,
     }));
 
+    const total = typeof count === 'number' ? count : memories.length;
+    const totalSkipped = typeof skippedCount === 'number' ? skippedCount : skipped.length;
+
+    routeLog.info(
+      {
+        event: 'memories_fetched',
+        durationMs: Date.now() - startedAt,
+        supabaseUserId,
+        memoriesReturned: memories.length,
+        skippedReturned: skipped.length,
+        total,
+        totalSkipped,
+        fetchLimit,
+      },
+      'Fetched realtime memories successfully',
+    );
+
     return NextResponse.json({
       memories,
       skipped,
-      total: typeof count === 'number' ? count : memories.length,
-      totalSkipped: typeof skippedCount === 'number' ? skippedCount : skipped.length,
+      total,
+      totalSkipped,
       limit: fetchLimit ?? null,
     });
   } catch (error) {
-    console.error('[memories] unexpected failure', error);
+    routeLog.error(
+      {
+        event: 'handler_exception',
+        durationMs: Date.now() - startedAt,
+        error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+      },
+      'Unhandled error during memories fetch',
+    );
     return NextResponse.json({ error: 'internal_error' }, { status: 500 });
   }
 }
