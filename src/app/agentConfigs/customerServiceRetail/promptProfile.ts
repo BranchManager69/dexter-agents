@@ -85,10 +85,6 @@ const DEFAULT_CONCIERGE_PROMPTS: ConciergePromptProfile = {
       slug: 'agent.concierge.tool.pumpstream_live_summary',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.pumpstream_live_summary". Update the tool description.',
     },
-    gmgn_fetch_token_snapshot: {
-      slug: 'agent.concierge.tool.gmgn_fetch_token_snapshot',
-      fallback: '⚠️ Missing prompt module "agent.concierge.tool.gmgn_fetch_token_snapshot". Update the tool description.',
-    },
     onchain_activity_overview: {
       slug: 'agent.concierge.tool.onchain_activity_overview',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.onchain_activity_overview". Update the tool description.',
@@ -97,33 +93,13 @@ const DEFAULT_CONCIERGE_PROMPTS: ConciergePromptProfile = {
       slug: 'agent.concierge.tool.onchain_entity_insight',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.onchain_entity_insight". Update the tool description.',
     },
-    kolscan_leaderboard: {
-      slug: 'agent.concierge.tool.kolscan_leaderboard',
-      fallback: '⚠️ Missing prompt module "agent.concierge.tool.kolscan_leaderboard". Update the tool description.',
-    },
-    kolscan_wallet_detail: {
-      slug: 'agent.concierge.tool.kolscan_wallet_detail',
-      fallback: '⚠️ Missing prompt module "agent.concierge.tool.kolscan_wallet_detail". Update the tool description.',
-    },
-    kolscan_trending_tokens: {
-      slug: 'agent.concierge.tool.kolscan_trending_tokens',
-      fallback: '⚠️ Missing prompt module "agent.concierge.tool.kolscan_trending_tokens". Update the tool description.',
-    },
-    kolscan_token_detail: {
-      slug: 'agent.concierge.tool.kolscan_token_detail',
-      fallback: '⚠️ Missing prompt module "agent.concierge.tool.kolscan_token_detail". Update the tool description.',
-    },
-    kolscan_resolve_wallet: {
-      slug: 'agent.concierge.tool.kolscan_resolve_wallet',
-      fallback: '⚠️ Missing prompt module "agent.concierge.tool.kolscan_resolve_wallet". Update the tool description.',
-    },
     search: {
       slug: 'agent.concierge.tool.search',
       fallback: '⚠️ Missing prompt module "agent.concierge.tool.search". Update the tool description.',
     },
-    twitter_search: {
-      slug: 'agent.concierge.tool.twitter_search',
-      fallback: '⚠️ Missing prompt module "agent.concierge.tool.twitter_search". Update the tool description.',
+    twitter_topic_analysis: {
+      slug: 'agent.concierge.tool.twitter_topic_analysis',
+      fallback: '⚠️ Missing prompt module "agent.concierge.tool.twitter_topic_analysis". Update the tool description.',
     },
     fetch: {
       slug: 'agent.concierge.tool.fetch',

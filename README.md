@@ -56,7 +56,7 @@ The result is a governed agent console: operators speak to a realtime supervisor
 - **Swap execution (`solana_swap_execute`)** – perform routed swaps on managed wallets with on-chain signatures piped back into the UI and x402 invoice entries tallied by Dexter API.
 - **Pumpstream market scan (`pumpstream_live_summary`)** – stream trending Solana tokens with live viewers, market cap, and momentum so the agent can narrate runway before a trade.
 - **Research connectors (`search`, `fetch`)** – broker Tavily search and HTTP fetch calls to add off-chain context to conversations without exposing API keys to the browser.
-- **Social sentiment (`twitter_search`)** – summarize X/Twitter chatter around a project to complement on-chain signals.
+- **Social sentiment (`twitter_topic_analysis`)** – summarize X/Twitter chatter around a project to complement on-chain signals.
 - **Dexter harness utilities (`dexchat`, `pumpstream:harness`)** – run scripted sessions against the same toolkit to regenerate Playwright storage, validate MCP auth, and archive transcripts with their x402 ledger entries.
 
 ## Dexter Stack

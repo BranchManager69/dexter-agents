@@ -178,7 +178,7 @@ export const toolFixtures: FixtureRecord = {
     },
   },
 
-  twitter_search: {
+  twitter_topic_analysis: {
     structuredContent: {
       query: "dexter agents",
       queries: ["dexter agents", "dexter ai"],

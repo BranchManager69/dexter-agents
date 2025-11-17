@@ -110,7 +110,7 @@ const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   stream_set_scene: streamSetSceneRenderer,
   solana_swap_preview: solanaSwapPreviewRenderer,
   solana_swap_execute: solanaSwapExecuteRenderer,
-  twitter_search: twitterSearchRenderer,
+  twitter_topic_analysis: twitterSearchRenderer,
   stream_public_shout: streamPublicShoutRenderer,
   stream_shout_feed: streamPublicShoutRenderer,
 };

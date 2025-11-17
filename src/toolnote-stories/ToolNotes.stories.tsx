@@ -85,7 +85,7 @@ const stories: StoryConfig[] = [
   {
     exportName: "TwitterSearch",
     storyName: "Twitter Search",
-    toolName: "twitter_search",
+    toolName: "twitter_topic_analysis",
     renderer: twitterSearchRenderer,
     expanded: true,
   },

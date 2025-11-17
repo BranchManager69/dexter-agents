@@ -169,7 +169,7 @@ function TwitterSearchContent({ item, isExpanded, onToggle, debug = false }: Par
           method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ tool: "twitter_search", arguments: args }),
+          body: JSON.stringify({ tool: "twitter_topic_analysis", arguments: args }),
         });
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
