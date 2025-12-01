@@ -68,10 +68,15 @@ export async function resolveMcpAuth(): Promise<McpAuthDetails> {
   );
   const {
     data: { session },
+    error: sessionError,
   } = await supabase.auth.getSession();
 
   const sessionPresent = Boolean(session);
   const hasRefresh = Boolean(session?.refresh_token);
+
+  if (sessionError) {
+    authLog.warn({ event: 'supabase_session_error', error: sessionError.message }, 'MCP auth: Supabase session lookup returned error');
+  }
 
   if (!sessionPresent) {
     authLog.warn({ event: 'no_supabase_session' }, 'MCP auth: Supabase session not found');
