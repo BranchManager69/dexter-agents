@@ -119,7 +119,13 @@ export function createConciergeToolset(toolDescriptions: Record<string, string> 
         additionalProperties: false,
       } as const,
       strict: true,
-      execute: async () => normalizeResult(await callMcp('resolve_wallet')),
+      execute: async () => {
+        const normalized = normalizeResult(await callMcp('resolve_wallet'));
+        if (process.env.NEXT_PUBLIC_DEBUG_TRANSCRIPT === 'true') {
+          console.log('[tools] resolve_wallet output:', JSON.stringify(normalized).slice(0, 200));
+        }
+        return normalized;
+      },
     }),
     list_my_wallets: tool({
       name: 'list_my_wallets',

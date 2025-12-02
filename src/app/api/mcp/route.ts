@@ -65,9 +65,10 @@ export async function POST(req: NextRequest) {
     method: 'POST',
   });
 
+  let tool = '';
   try {
     const body = await req.json().catch(() => ({}));
-    const tool = String(body.tool || body.name || '').trim();
+    tool = String(body.tool || body.name || '').trim();
     const args = (body.arguments || body.args || {}) as Record<string, unknown>;
 
     if (!tool) {
@@ -91,16 +92,18 @@ export async function POST(req: NextRequest) {
     if (summary.detail) {
       response.headers.set('x-dexter-mcp-detail', summary.detail);
     }
+    
+    // Condensed log for success
     routeLog.info(
       {
         event: 'mcp_call_success',
         durationMs: Date.now() - startedAt,
         identity: summary.state,
-        minted: auth.minted,
         tool,
-        argumentKeys: Object.keys(args || {}),
+        argKeys: Object.keys(args || {}), // Shorter key
+        // Omit full details to reduce noise, rely on mcp-tools log for deep dive if needed
       },
-      'MCP tool call completed',
+      `MCP tool executed: ${tool}` // clearer message
     );
     return response;
   } catch (error: any) {
@@ -108,9 +111,10 @@ export async function POST(req: NextRequest) {
       {
         event: 'mcp_call_failed',
         durationMs: Date.now() - startedAt,
-        error: error instanceof Error ? { message: error.message, stack: error.stack } : String(error),
+        error: error instanceof Error ? error.message : String(error), // Flatten error object
+        stack: process.env.NODE_ENV !== 'production' ? error?.stack : undefined,
       },
-      'MCP tool call failed',
+      `MCP tool failed: ${tool}`
     );
     return NextResponse.json({ error: 'mcp_call_failed', message: error?.message || String(error) }, { status: 500 });
   }

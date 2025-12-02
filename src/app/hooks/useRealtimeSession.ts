@@ -222,21 +222,24 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
     case "response.output_item.added": {
       // Collect MCP calls for this step
       const item = event?.item;
-        if (item && item.type === 'mcp_call' && item.id) {
-          pendingMcpCallsRef.current.add(item.id);
-          try {
-            historyHandlersRef.current.handleMcpToolCallStarted({
-              id: item.id,
-              name: item.name,
-              arguments: item.arguments,
-            });
-          } catch {}
-        }
+      if (item && item.type === 'mcp_call' && item.id) {
         if (transcriptionDebugEnabled) {
-          logServerEvent(event);
+          console.log('[dexter-client] mcp_call added', { id: item.id, name: item.name, status: item.status });
         }
-        break;
+        pendingMcpCallsRef.current.add(item.id);
+        try {
+          historyHandlersRef.current.handleMcpToolCallStarted({
+            id: item.id,
+            name: item.name,
+            arguments: item.arguments,
+          });
+        } catch {}
       }
+      if (transcriptionDebugEnabled) {
+        logServerEvent(event);
+      }
+      break;
+    }
       case "response.mcp_call.completed": {
         // Mark MCP call finished; if all done for this step and still active, advance
         const itemId = event?.item_id;
@@ -264,6 +267,9 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
         // Some transports signal completion here; honor both
         const item = event?.item;
         if (item && item.type === 'mcp_call') {
+          if (transcriptionDebugEnabled) {
+            console.log('[dexter-client] mcp_call detected', { id: item.id, name: item.name });
+          }
           // Surface tool usage inline in transcript (compact + note)
           try {
             const toolCall = {
@@ -274,7 +280,9 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
               output: item.output,
             };
             historyHandlersRef.current.handleMcpToolCallCompleted(null, null, toolCall);
-          } catch {}
+          } catch (err) {
+            console.error('[dexter-client] handleMcpToolCallCompleted failed', err);
+          }
 
           if (item.id && pendingMcpCallsRef.current.has(item.id)) {
             pendingMcpCallsRef.current.delete(item.id);

@@ -205,23 +205,16 @@ export function TranscriptMessages({
               </motion.div>
               <AnimatePresence mode="wait">
                 {showPrompt && (
-                  <motion.div
+                  <motion.p
                     key={promptKey}
-                    className="flex flex-col items-center"
+                    className="mt-6 text-base font-semibold tracking-[0.08em] text-[#FFA869] drop-shadow-[0_14px_36px_rgba(0,0,0,0.55)]"
                     initial={{ opacity: 0, y: 10, scale: 0.96 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 12, scale: 0.92 }}
                     transition={{ duration: 0.38, ease: [0.22, 0.61, 0.36, 1] }}
                   >
-                    <p className="mt-6 text-base font-semibold tracking-[0.08em] text-[#FFA869] drop-shadow-[0_14px_36px_rgba(0,0,0,0.55)]">
-                      {promptCopy}
-                    </p>
-                    <p className="mt-3 max-w-[280px] text-center text-xs leading-relaxed text-[#F7BE8A]/70">
-                      Dexter Voice is under construction.
-                      <br />
-                      MCP tools are not currently available.
-                    </p>
-                  </motion.div>
+                    {promptCopy}
+                  </motion.p>
                 )}
               </AnimatePresence>
             </div>
