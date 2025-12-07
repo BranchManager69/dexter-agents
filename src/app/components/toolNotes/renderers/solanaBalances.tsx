@@ -1,8 +1,22 @@
-import React from "react";
+"use client";
 
+import React from "react";
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge, formatTimestampDisplay } from "./helpers";
-import { MetricPill, TokenIcon, TokenResearchLinks } from "./solanaVisuals";
+import { normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
+import { 
+  SleekCard, 
+  SleekLabel, 
+  TokenIconSleek, 
+  SleekHash, 
+  MetricItem,
+  SleekLoadingCard,
+  SleekErrorCard,
+  formatUsdCompact, 
+  formatUsdPrecise,
+  formatPercent 
+} from "./sleekVisuals";
+
+// --- Types (Preserved) ---
 
 type BalanceEntry = {
   mint?: string;
@@ -23,6 +37,8 @@ const WELL_KNOWN_MINTS: Record<string, string> = {
   USDC11111111111111111111111111111111111111: "USDC",
   So11111111111111111111111111111111111111112: "SOL",
 };
+
+// --- Helpers (Preserved & Adapted) ---
 
 function pick<T>(...values: Array<T | null | undefined>): T | undefined {
   for (const value of values) {
@@ -60,15 +76,20 @@ function formatAmount(amount?: number, decimals?: number) {
   return amount.toLocaleString("en-US", { maximumFractionDigits: maxDigits });
 }
 
-function formatUsd(value?: number | string | null, precise = false) {
+function formatUsdHelper(value?: number | string | null, opts: { precise?: boolean; compact?: boolean } = {}) {
   const numeric = pickNumber(value);
   if (numeric === undefined) return undefined;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: precise ? 4 : 0,
-  }).format(numeric);
+  if (opts.compact) return formatUsdCompact(numeric);
+  return formatUsdPrecise(numeric);
 }
+
+function formatPercentHelper(value?: number | string | null) {
+  const numeric = pickNumber(value);
+  if (numeric === undefined) return undefined;
+  return formatPercent(numeric);
+}
+
+// --- Main Renderer ---
 
 const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debug = false }) => {
   const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
@@ -80,135 +101,133 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, 
       : [];
   const timestamp = formatTimestampDisplay(item.timestamp);
 
+  // Loading State
   if (item.status === "IN_PROGRESS" && balances.length === 0) {
-    return (
-      <div className={BASE_CARD_CLASS}>
-        <section className="flex flex-col gap-4">
-          <header className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token Balances</span>
-            {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
-          </header>
-          <p className="text-sm text-slate-500">Fetching balances…</p>
-        </section>
-      </div>
-    );
+    return <SleekLoadingCard />;
+  }
+
+  // No Balances
+  if (balances.length === 0) {
+    return <SleekErrorCard message="No balances detected for this wallet." />;
   }
 
   const visibleBalances = isExpanded ? balances : balances.slice(0, 6);
   const hasMore = balances.length > visibleBalances.length;
 
   return (
-    <div className={BASE_CARD_CLASS}>
-      <section className="flex flex-col gap-7">
-        <header className="flex flex-col gap-1">
-          <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token Balances</span>
-          {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
-        </header>
+    <div className="w-full max-w-3xl space-y-4">
+      <header className="flex items-center justify-between px-1">
+         <SleekLabel>Wallet Assets</SleekLabel>
+         {timestamp && <span className="text-[10px] text-neutral-600 font-mono">{timestamp}</span>}
+      </header>
 
-        <div className="flex flex-col gap-4">
-          {visibleBalances.map((entry, index) => {
-            const mint = pickString(entry.mint);
-            const ata = pickString(entry.ata);
-            const tokenMeta = entry.token && typeof entry.token === "object" ? entry.token : undefined;
-            const symbol =
-              pickString((tokenMeta as any)?.symbol) ??
-              symbolFromMint(mint ?? undefined) ??
-              (mint ? `${mint.slice(0, 4)}…` : `Token ${index + 1}`);
-            const name = pickString((tokenMeta as any)?.name);
-            const iconUrl = pickString(
-              (tokenMeta as any)?.imageUrl,
-              (tokenMeta as any)?.openGraphImageUrl,
-              (tokenMeta as any)?.headerImageUrl,
-              entry.icon,
-              entry.logo,
-            );
+      {/* Grid Layout: Compact cards side-by-side */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {visibleBalances.map((entry, index) => {
+          const mint = pickString(entry.mint);
+          const ata = pickString(entry.ata);
+          const tokenMeta = entry.token && typeof entry.token === "object" ? entry.token : undefined;
+          const symbol =
+            pickString((tokenMeta as any)?.symbol) ??
+            symbolFromMint(mint ?? undefined) ??
+            (mint ? `${mint.slice(0, 4)}…` : `Token ${index + 1}`);
+          const name = pickString((tokenMeta as any)?.name) ?? symbol;
+          const iconUrl = pickString(
+            (tokenMeta as any)?.imageUrl,
+            (tokenMeta as any)?.openGraphImageUrl,
+            (tokenMeta as any)?.headerImageUrl,
+            entry.icon,
+            entry.logo,
+          );
 
-            const amountUi = pickNumber(entry.amountUi, entry.amount_ui);
-            const amountDisplay = formatAmount(amountUi, entry.decimals);
-            const marketCap = formatUsd(
-              pickNumber(
-                (tokenMeta as any)?.marketCap,
-                (tokenMeta as any)?.market_cap,
-                (tokenMeta as any)?.marketCapUsd,
-                (tokenMeta as any)?.market_cap_usd,
-              ),
-              false,
-            );
-            const priceChangeRaw = pickNumber(
-              (tokenMeta as any)?.priceChange24h,
-              (tokenMeta as any)?.price_change_24h,
-            );
-            const priceChange =
-              priceChangeRaw !== undefined
-                ? `${priceChangeRaw >= 0 ? "+" : ""}${priceChangeRaw.toFixed(2)}%`
-                : undefined;
-            const priceUsd = pickNumber((tokenMeta as any)?.priceUsd, (tokenMeta as any)?.price_usd);
-            const holdingUsdRaw =
-              pickNumber((tokenMeta as any)?.holdingUsd, (tokenMeta as any)?.balanceUsd, (tokenMeta as any)?.balance_usd) ??
-              (priceUsd !== undefined && amountUi !== undefined ? priceUsd * amountUi : undefined);
-            const holdingUsd = formatUsd(holdingUsdRaw);
+          const amountUi = pickNumber(entry.amountUi, entry.amount_ui);
+          const amountDisplay = formatAmount(amountUi, entry.decimals);
+          
+          const marketCapRaw = pickNumber(
+              (tokenMeta as any)?.marketCap,
+              (tokenMeta as any)?.market_cap,
+              (tokenMeta as any)?.marketCapUsd,
+              (tokenMeta as any)?.market_cap_usd,
+          );
+          const marketCap = formatUsdHelper(marketCapRaw, { compact: true });
 
-            return (
-              <article key={mint ?? ata ?? `balance-${index}`} className="flex flex-col gap-3 border-b border-slate-200/60 pb-4 last:border-0 last:pb-0">
-                <div className="flex items-start gap-3">
-                  <TokenIcon label={symbol} imageUrl={iconUrl} size={48} />
-                  <div className="flex flex-1 flex-col gap-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <div className="flex flex-col">
-                        <span className="text-base font-semibold text-slate-900">{symbol}</span>
-                        {name && <span className="text-xs text-slate-500">{name}</span>}
-                      </div>
-                      {amountDisplay && (
-                        <div className="flex flex-col items-end">
-                          <span className="text-sm font-semibold text-slate-900">{amountDisplay}</span>
-                          {holdingUsd && <span className="text-xs text-slate-500">{holdingUsd}</span>}
+          const priceChangeRaw = pickNumber(
+            (tokenMeta as any)?.priceChange24h,
+            (tokenMeta as any)?.price_change_24h,
+          );
+          const priceChange = formatPercentHelper(priceChangeRaw);
+          const isPositive = priceChangeRaw !== undefined && priceChangeRaw >= 0;
+
+          const priceUsdRaw = pickNumber((tokenMeta as any)?.priceUsd, (tokenMeta as any)?.price_usd);
+          const priceUsd = formatUsdHelper(priceUsdRaw, { precise: true });
+
+          const holdingUsdRaw =
+            pickNumber((tokenMeta as any)?.holdingUsd, (tokenMeta as any)?.balanceUsd, (tokenMeta as any)?.balance_usd) ??
+            (priceUsdRaw !== undefined && amountUi !== undefined ? priceUsdRaw * amountUi : undefined);
+          
+          const holdingUsd = formatUsdHelper(holdingUsdRaw, { precise: false });
+
+          return (
+            <SleekCard key={mint ?? ata ?? `balance-${index}`} className="relative group overflow-hidden flex flex-col p-4 gap-3">
+               {/* Glow Effect */}
+               <div 
+                  className={`absolute -right-20 -top-20 h-64 w-64 rounded-full opacity-20 blur-3xl transition-colors duration-700 pointer-events-none ${
+                      isPositive ? 'bg-emerald-500' : 'bg-rose-500'
+                  }`} 
+               />
+
+               <div className="relative z-10 flex flex-col gap-3">
+                  {/* Top Row: Identity & Value */}
+                  <div className="flex justify-between items-start">
+                     <div className="flex items-center gap-3">
+                        <TokenIconSleek symbol={symbol} imageUrl={iconUrl} size={42} />
+                        <div>
+                           <div className="font-bold text-white tracking-tight">{symbol}</div>
+                           <div className="text-[10px] text-neutral-400 font-medium truncate max-w-[80px]">{name}</div>
                         </div>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                      {mint && <HashBadge value={mint} href={`https://solscan.io/token/${mint}`} ariaLabel={`${symbol} mint`} />}
-                    </div>
+                     </div>
+                     <div className="text-right">
+                        <div className="font-bold text-white tracking-tight tabular-nums">{holdingUsd ?? "—"}</div>
+                        <div className="text-[10px] text-neutral-400 font-medium tabular-nums">{amountDisplay}</div>
+                     </div>
                   </div>
-                </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {marketCap && <MetricPill label="MCAP" value={marketCap} />}
-                  {priceChange && (
-                    <MetricPill
-                      value={priceChange}
-                      tone={priceChangeRaw !== undefined && priceChangeRaw < 0 ? "negative" : "positive"}
-                    />
-                  )}
-                  {mint && <TokenResearchLinks mint={mint} />}
-                </div>
-              </article>
-            );
-          })}
-        </div>
+                  {/* Divider */}
+                  <div className="h-px w-full bg-white/5" />
 
-        {visibleBalances.length === 0 && (
-          <p className="text-sm text-slate-500">No balances detected for this wallet.</p>
-        )}
+                  {/* Bottom Row: Market Context (Price | Change) */}
+                  <div className="grid grid-cols-2 gap-2">
+                      <div className="flex flex-col">
+                          <SleekLabel>PRICE</SleekLabel>
+                          <span className="text-xs font-semibold text-neutral-200 tracking-wide mt-0.5">{priceUsd ?? "—"}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                          <SleekLabel>24H</SleekLabel>
+                          <span className={`text-xs font-bold tracking-wide mt-0.5 ${isPositive ? 'text-emerald-400' : priceChange ? 'text-rose-400' : 'text-neutral-200'}`}>
+                              {priceChange ?? "—"}
+                          </span>
+                      </div>
+                  </div>
+               </div>
+            </SleekCard>
+          );
+        })}
+      </div>
 
-        {hasMore && (
-          <button
-            type="button"
-            onClick={onToggle}
-            className="self-start rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 transition hover:border-slate-300 hover:text-slate-900"
-          >
-            {isExpanded ? "Collapse" : `Show all ${balances.length}`}
-          </button>
-        )}
-      </section>
+      {hasMore && (
+        <button
+          type="button"
+          onClick={onToggle}
+          className="w-full py-3 rounded-2xl border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          {isExpanded ? "Collapse List" : `Show ${balances.length - visibleBalances.length} more assets`}
+        </button>
+      )}
 
       {debug && (
-        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-            Raw balances payload
-          </summary>
-          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-xs">
-            {JSON.stringify(rawOutput, null, 2)}
-          </pre>
+        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+          <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
+          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(rawOutput, null, 2)}</pre>
         </details>
       )}
     </div>

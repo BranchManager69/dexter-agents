@@ -1,8 +1,20 @@
-import React from "react";
+"use client";
 
+import React, { useState } from "react";
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge, formatTimestampDisplay } from "./helpers";
-import { LinkPill, MetricPill, TokenIcon, TokenResearchLinks } from "./solanaVisuals";
+import { normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
+import { 
+  SleekCard, 
+  SleekLabel, 
+  TokenIconSleek, 
+  SleekHash, 
+  MetricItem, 
+  formatUsdCompact, 
+  formatUsdPrecise,
+  formatPercent 
+} from "./sleekVisuals";
+
+// --- Types (Preserved) ---
 
 type TokenResult = {
   address?: string;
@@ -50,6 +62,8 @@ type PairResult = {
   price_change_24h?: number;
 };
 
+// --- Helpers (Preserved) ---
+
 function pick<T>(...values: Array<T | null | undefined>): T | undefined {
   for (const value of values) {
     if (value !== null && value !== undefined) return value;
@@ -75,21 +89,26 @@ function pickNumber(...values: Array<number | string | null | undefined>) {
   return undefined;
 }
 
-function formatUsd(value?: number | string | null, precise = false) {
+function formatUsdHelper(value?: number | string | null, opts: { precise?: boolean; compact?: boolean } = {}) {
   const numeric = pickNumber(value);
   if (numeric === undefined) return undefined;
+  if (opts.compact) return formatUsdCompact(numeric);
+  // For standard price, we might want slightly different precision logic than the precise helper
+  // But for now using the precise one for consistency
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: precise ? 4 : 0,
+    maximumFractionDigits: opts.precise ? 6 : 2,
   }).format(numeric);
 }
 
-function formatPercent(value?: number | string | null) {
+function formatPercentHelper(value?: number | string | null) {
   const numeric = pickNumber(value);
   if (numeric === undefined) return undefined;
-  return `${numeric >= 0 ? "+" : ""}${numeric.toFixed(2)}%`;
+  return formatPercent(numeric);
 }
+
+// --- Main Renderer ---
 
 const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
@@ -103,148 +122,149 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
       ? (payload as TokenResult[])
       : [];
 
-  const visibleTokens = results.slice(0, 5);
+  const visibleTokens = results.slice(0, 3);
   const timestamp = formatTimestampDisplay(item.timestamp);
 
+  // Loading State
   if (item.status === "IN_PROGRESS" && results.length === 0) {
     return (
-      <div className={BASE_CARD_CLASS}>
-        <section className="flex flex-col gap-4">
-          <header className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token lookup</span>
-            {query && <span className="text-sm text-slate-500">Query · {query}</span>}
-            {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
-          </header>
-          <p className="text-sm text-slate-500">Searching for tokens…</p>
-        </section>
-      </div>
+      <SleekCard className="p-6">
+        <div className="flex items-center gap-4">
+          <div className="relative h-12 w-12 overflow-hidden rounded-2xl bg-neutral-800 animate-pulse" />
+          <div className="flex flex-col gap-2">
+            <div className="h-4 w-32 animate-pulse rounded bg-neutral-800" />
+            <div className="h-3 w-20 animate-pulse rounded bg-neutral-800" />
+          </div>
+        </div>
+      </SleekCard>
+    );
+  }
+
+  // No Results
+  if (results.length === 0) {
+    return (
+      <SleekCard className="p-6">
+        <div className="text-center text-neutral-400 text-sm">
+          No tokens found for "{query}".
+        </div>
+      </SleekCard>
     );
   }
 
   return (
-    <div className={BASE_CARD_CLASS}>
-      <section className="flex flex-col gap-7">
-        <header className="flex flex-col gap-1">
-          <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Token lookup</span>
-          {query && <span className="text-sm text-slate-500">Query · {query}</span>}
-          {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
-          {results.length > 0 && (
-            <span className="text-xs text-slate-400">{results.length} candidate{results.length === 1 ? "" : "s"}</span>
-          )}
-        </header>
+    <div className="w-full max-w-lg space-y-4">
+      <header className="flex items-center justify-between px-1">
+         <SleekLabel>Token Analysis</SleekLabel>
+         {timestamp && <span className="text-[10px] text-neutral-600 font-mono">{timestamp}</span>}
+      </header>
 
-        <div className="flex flex-col gap-6">
-          {visibleTokens.map((token, index) => {
-            const address = pickString(token.address, token.mint);
-            const info = token.info && typeof token.info === "object" ? token.info : undefined;
-            const symbol = pickString(token.symbol, (info as any)?.symbol) ?? (address ? address.slice(0, 4).toUpperCase() : `Result ${index + 1}`);
-            const name = pickString(token.name, (info as any)?.name);
-            const imageUrl = pickString(
+      {visibleTokens.map((token, index) => {
+        const address = pickString(token.address, token.mint);
+        const info = token.info && typeof token.info === "object" ? token.info : undefined;
+        const symbol = pickString(token.symbol, (info as any)?.symbol) ?? "UNKNOWN";
+        const name = pickString(token.name, (info as any)?.name);
+        const imageUrl = pickString(
               (info as any)?.imageUrl,
               (info as any)?.openGraphImageUrl,
               (info as any)?.headerImageUrl,
               token.icon,
               token.logo,
               token.image,
-            );
+        );
 
-            const liquiditySource = token.liquidity && typeof token.liquidity === "object" ? (token.liquidity as Record<string, unknown>).usd : undefined;
-            const liquidityValue = pickNumber(token.liquidityUsd, token.liquidity_usd, liquiditySource as number | string | null | undefined);
-            const liquidity = formatUsd(liquidityValue);
-            const totalVolumeSource = token.totalVolume && typeof token.totalVolume === "object" ? (token.totalVolume as Record<string, unknown>).h24 : undefined;
-            const volumeValue = pickNumber(token.volume24hUsd, token.volume24h_usd, token.volume24h, totalVolumeSource as number | string | null | undefined);
-            const volume = formatUsd(volumeValue);
-            const marketCapValue = pickNumber(
-              token.marketCap,
-              token.market_cap,
-              token.marketCapUsd,
-              token.market_cap_usd,
-              token.fdv,
-              token.fdvUsd,
-              token.fdv_usd,
-            );
-            const marketCap = formatUsd(marketCapValue);
-            const priceChangeRaw = pickNumber(
-              token.priceChange?.h24,
-              token.price_change_24h,
-              token.priceChange24h,
-            );
-            const priceChange = priceChangeRaw !== undefined ? formatPercent(priceChangeRaw) : undefined;
+        const marketCapValue = pickNumber(token.marketCap, token.market_cap, token.marketCapUsd, token.fdv);
+        const marketCap = formatUsdHelper(marketCapValue, { compact: true });
+        
+        const priceValue = pickNumber(token.priceUsd, token.price_usd);
+        const price = formatUsdHelper(priceValue, { precise: true });
 
-            const pairs = Array.isArray(token.pairs) ? token.pairs.slice(0, 3) : [];
+        const priceChangeRaw = pickNumber(token.priceChange?.h24, token.price_change_24h, token.priceChange24h);
+        const priceChange = formatPercentHelper(priceChangeRaw);
+        const isPositive = priceChangeRaw !== undefined && priceChangeRaw >= 0;
 
-            return (
-              <article key={address ?? `token-${index}`} className="flex flex-col gap-3 border-b border-slate-200/60 pb-5 last:border-0 last:pb-0">
-                <div className="flex items-start gap-3">
-                  <TokenIcon label={symbol} imageUrl={imageUrl} size={52} />
-                  <div className="flex flex-1 flex-col gap-1">
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <div className="flex flex-col">
-                        <span className="text-base font-semibold text-slate-900">{symbol}</span>
-                        {name && <span className="text-xs text-slate-500">{name}</span>}
+        const volumeValue = pickNumber(token.volume24hUsd, token.volume24h);
+        const volume = formatUsdHelper(volumeValue, { compact: true });
+
+        const liquidityValue = pickNumber(token.liquidityUsd, token.liquidity_usd);
+        const liquidity = formatUsdHelper(liquidityValue, { compact: true });
+
+        return (
+          <SleekCard key={address ?? index} className="relative group overflow-visible">
+             {/* Glow Effect */}
+             <div 
+                className={`absolute -right-20 -top-20 h-64 w-64 rounded-full opacity-20 blur-3xl transition-colors duration-700 pointer-events-none ${isPositive ? 'bg-emerald-500' : 'bg-rose-500'}`} 
+             />
+
+             <div className="relative z-10 flex flex-col p-5 gap-6">
+                {/* Header Row: Icon | Name(Big)/Ticker | Price/Change */}
+                <div className="flex items-start gap-4">
+                   <TokenIconSleek symbol={symbol} imageUrl={imageUrl} size={64} />
+                   
+                   <div className="flex flex-1 flex-col pt-0.5 min-w-0">
+                      {/* Swapped Hierarchy: Name Big, Ticker Small */}
+                      <h3 className="text-xl font-bold text-white tracking-tight leading-tight mb-1 truncate">
+                        {name}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-mono font-bold text-neutral-500 tracking-wider bg-white/5 px-1.5 py-0.5 rounded">
+                          {symbol}
+                        </span>
                       </div>
-                    </div>
-                    {address && (
-                      <HashBadge value={address} href={`https://solscan.io/token/${address}`} ariaLabel={`${symbol} mint`} />
-                    )}
-                  </div>
+                   </div>
+
+                   {/* Price Block */}
+                   <div className="flex flex-col items-end">
+                      <div className="text-2xl font-bold text-white tracking-tight tabular-nums">
+                        {price ?? "—"}
+                      </div>
+                      {priceChange && (
+                         <div className={`text-xs font-bold px-2 py-1 rounded-full bg-white/5 mt-1 ${isPositive ? 'text-emerald-400 shadow-[0_0_10px_-2px_rgba(52,211,153,0.3)]' : 'text-rose-400 shadow-[0_0_10px_-2px_rgba(251,113,133,0.3)]'}`}>
+                            {priceChange}
+                         </div>
+                      )}
+                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {marketCap && <MetricPill label="MCAP" value={marketCap} />}
-                  {priceChange && (
-                    <MetricPill
-                      value={priceChange}
-                      tone={priceChangeRaw !== undefined && priceChangeRaw < 0 ? "negative" : "positive"}
-                    />
-                  )}
-                  {liquidity && <MetricPill label="Liquidity" value={liquidity} />}
-                  {volume && <MetricPill label="24h Volume" value={volume} />}
+                {/* Metrics Row (Always Visible) */}
+                <div className="grid grid-cols-3 gap-3 border-t border-white/5 pt-5">
+                   {marketCap && <MetricItem label="MCAP" value={marketCap} />}
+                   {volume && <MetricItem label="VOL (24H)" value={volume} />}
+                   {liquidity && <MetricItem label="LIQUIDITY" value={liquidity} />}
                 </div>
 
-                {address && <TokenResearchLinks mint={address} />}
+                {/* Footer: Mint Address (Left) + Research Links (Right) */}
+                <div className="flex items-center justify-between pt-1">
+                   {/* Left: Mint Address Badge */}
+                   <div>
+                       {address && (
+                          <SleekHash value={address} href={`https://solscan.io/token/${address}`} label="Mint" />
+                       )}
+                   </div>
 
-                {pairs.length > 0 && (
-                  <div className="flex flex-col gap-2 text-sm text-slate-600">
-                    <span className="text-[11px] uppercase tracking-[0.24em] text-slate-300">Active pools</span>
-                    <div className="flex flex-wrap gap-2">
-                      {pairs.map((pair, idx) => {
-                        const dexLabel = pickString(pair.dexId) ?? `Pool ${idx + 1}`;
-                        const url = pickString(pair.url);
-                        const liq = formatUsd(
-                          pickNumber(
-                            pair.liquidity && typeof pair.liquidity === "object" ? ((pair.liquidity as Record<string, unknown>).usd as number | string | null | undefined) : undefined,
-                            pair.liquidityUsd,
-                            pair.liquidity_usd,
-                          ),
-                        );
-                        return url ? (
-                          <LinkPill key={url ?? `${dexLabel}-${idx}`} value={`${dexLabel}${liq ? ` · ${liq}` : ""}`} href={url} />
-                        ) : (
-                          <MetricPill key={`${dexLabel}-${idx}`} label={dexLabel} value={liq ?? "On-chain"} />
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </article>
-            );
-          })}
-
-          {visibleTokens.length === 0 && (
-            <p className="text-sm text-slate-500">No tokens matched this query.</p>
-          )}
-        </div>
-      </section>
+                   {/* Right: Research Links (Always Visible) */}
+                   <div className="flex gap-4">
+                      {['Solscan', 'Birdeye', 'Dexscreener'].map((site) => (
+                         <a 
+                           key={site}
+                           href={address ? `https://${site.toLowerCase()}.io/token/${address}` : '#'}
+                           target="_blank"
+                           rel="noreferrer"
+                           className="text-[9px] uppercase font-bold tracking-widest text-neutral-600 hover:text-white transition-colors"
+                         >
+                           {site}
+                         </a>
+                      ))}
+                   </div>
+                </div>
+             </div>
+          </SleekCard>
+        );
+      })}
 
       {debug && (
-        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-            Raw token payload
-          </summary>
-          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-xs">
-            {JSON.stringify(rawOutput, null, 2)}
-          </pre>
+        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+          <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
+          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(rawOutput, null, 2)}</pre>
         </details>
       )}
     </div>
