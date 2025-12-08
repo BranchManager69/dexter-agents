@@ -1,9 +1,21 @@
-import React from "react";
+"use client";
 
+import React from "react";
+import { ArrowRightIcon } from "@radix-ui/react-icons";
+import { motion } from "framer-motion";
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatSolDisplay } from "./helpers";
-import { LinkPill, MetricPill, TokenFlow } from "./solanaVisuals";
+import { normalizeOutput, unwrapStructured, formatSolDisplay } from "./helpers";
 import type { TokenSide } from "./solanaVisuals";
+import { 
+  SleekCard, 
+  SleekLabel, 
+  TokenIconSleek, 
+  SleekHash, 
+  MetricItem,
+  formatUsdCompact, 
+  formatUsdPrecise,
+  formatPercent 
+} from "./sleekVisuals";
 
 type SwapArgs = Record<string, unknown>;
 
@@ -39,7 +51,7 @@ const WELL_KNOWN_MINTS: Record<string, string> = {
   So11111111111111111111111111111111111111112: "SOL",
 };
 
-function formatPercent(value: unknown): string | undefined {
+function formatPercentHelper(value: unknown): string | undefined {
   if (value === null || value === undefined) return undefined;
   const numeric = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(numeric)) return undefined;
@@ -190,7 +202,7 @@ function buildMetrics(structured: any, variant: "preview" | "execute"): { metric
   const priceImpactRaw = pick(structured?.priceImpactPercent, structured?.priceImpact, structured?.price_impact_percent, structured?.price_impact);
   let priceImpact: { value: string; tone: "neutral" | "positive" | "negative" } | undefined;
   if (priceImpactRaw !== undefined) {
-    const formatted = formatPercent(priceImpactRaw) ?? String(priceImpactRaw);
+    const formatted = formatPercentHelper(priceImpactRaw) ?? String(priceImpactRaw);
     const numeric = typeof priceImpactRaw === "number" ? priceImpactRaw : Number(priceImpactRaw);
     const tone = Number.isFinite(numeric) ? (numeric >= 0 ? "positive" : "negative") : "neutral";
     priceImpact = { value: formatted, tone };
@@ -293,90 +305,175 @@ function buildSwapViewModel(label: string, item: any, structured: any, args: Swa
   };
 }
 
-function MetricCard({ metric }: { metric: Metric }) {
-  return <MetricPill label={metric.label} value={metric.value} tone={metric.tone ?? "neutral"} />;
+// --- Sleek Swap Flow Component ---
+
+function SleekSwapFlow({ from, to }: { from: TokenSide; to: TokenSide }) {
+  // Corrected Animation Timeline (8s total)
+  // 0.00 -> 0.25 (Swap: 2s)
+  // 0.25 -> 0.50 (Hold: 2s)
+  // 0.50 -> 0.75 (Return: 2s)
+  // 0.75 -> 1.00 (Hold: 2s)
+  const times = [0, 0.125, 0.25, 0.5, 0.625, 0.75, 1];
+
+  return (
+    <div className="relative h-24 w-full flex items-center justify-between px-2">
+      {/* Left Text (Static) */}
+      <div className="flex flex-col items-start z-0">
+         <div className="h-14 w-14" /> 
+         <div className="mt-2 flex flex-col">
+            <span className="text-xl font-bold text-white tracking-tight tabular-nums">{from.amount ?? "0"}</span>
+            <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{from.asset}</span>
+         </div>
+      </div>
+
+      {/* Right Text (Static) */}
+      <div className="flex flex-col items-end z-0">
+         <div className="h-14 w-14" /> 
+         <div className="mt-2 flex flex-col items-end">
+            <span className="text-xl font-bold text-emerald-400 tracking-tight tabular-nums">{to.amount ?? "—"}</span>
+            <span className="text-xs font-bold text-neutral-500 uppercase tracking-wider">{to.asset}</span>
+         </div>
+      </div>
+
+      {/* The Moving Icons Layer */}
+      <div className="absolute inset-0 pointer-events-none">
+         {/* Icon A (From) - Moves Left -> Right -> Left */}
+         <motion.div
+            className="absolute top-0"
+            initial={{ left: 8 }} // Explicit start matching px-2
+            animate={{
+               left: ["8px", "calc(50% - 28px)", "calc(100% - 64px)", "calc(100% - 64px)", "calc(50% - 28px)", "8px", "8px"],
+               top: [0, -40, 0, 0, -40, 0, 0], // Arc UP
+               zIndex: [10, 20, 10, 10, 20, 10, 10], 
+               scale: [1, 1.2, 1, 1, 1.2, 1, 1]
+            }}
+            transition={{
+               duration: 8,
+               times: times,
+               repeat: Infinity,
+               ease: "easeInOut"
+            }}
+            style={{ width: 56, height: 56 }}
+         >
+            <div className="relative w-full h-full">
+               <TokenIconSleek symbol={from.asset ?? "IN"} imageUrl={from.imageUrl} size={56} />
+            </div>
+         </motion.div>
+
+         {/* Icon B (To) - Moves Right -> Left -> Right */}
+         <motion.div
+            className="absolute top-0"
+            initial={{ right: 8 }} // Explicit start matching px-2
+            animate={{
+               right: ["8px", "calc(50% - 28px)", "calc(100% - 64px)", "calc(100% - 64px)", "calc(50% - 28px)", "8px", "8px"],
+               top: [0, 40, 0, 0, 40, 0, 0], // Arc DOWN
+               zIndex: [10, 1, 1, 1, 10], 
+               scale: [1, 0.8, 1, 1, 0.8, 1, 1]
+            }}
+            transition={{
+               duration: 8,
+               times: times,
+               repeat: Infinity,
+               ease: "easeInOut"
+            }}
+            style={{ width: 56, height: 56 }}
+         >
+            <TokenIconSleek symbol={to.asset ?? "OUT"} imageUrl={to.imageUrl} size={56} />
+         </motion.div>
+      </div>
+      
+      {/* Center Marker */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+         <ArrowRightIcon className="w-4 h-4 text-white/10" />
+      </div>
+    </div>
+  );
 }
 
 function SwapNote({ view, debug, debugLabel }: { view: SwapViewModel; debug?: boolean; debugLabel: string }) {
   return (
-    <div className={BASE_CARD_CLASS}>
-      <section className="relative flex flex-col gap-8">
-        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">{view.title}</span>
-            {view.timestamp && <span className="text-xs text-slate-400">{view.timestamp}</span>}
-          </div>
-          {view.hero.priceImpact && (
-            <span
-              className={`inline-flex h-8 items-center justify-center rounded-full px-4 text-sm font-semibold ${
-                view.hero.priceImpact.tone === "positive"
-                  ? "bg-emerald-500/10 text-emerald-600"
-                  : view.hero.priceImpact.tone === "negative"
-                    ? "bg-rose-500/10 text-rose-600"
-                    : "bg-slate-900/5 text-slate-700"
-              }`}
-            >
-              {`Price impact ${view.hero.priceImpact.value}`}
-            </span>
-          )}
-        </header>
+    <SleekCard className="relative overflow-visible p-6 flex flex-col gap-6">
+      <header className="flex items-center justify-between">
+         <SleekLabel>{view.title}</SleekLabel>
+         {view.timestamp && <span className="text-[10px] text-neutral-600 font-mono">{view.timestamp}</span>}
+      </header>
 
-        <TokenFlow from={view.hero.from} to={view.hero.to} animate />
+      {/* The Visual Flow */}
+      <SleekSwapFlow from={view.hero.from} to={view.hero.to} />
 
-        {view.metrics.length > 0 && (
-          <div className="relative mt-2 flex flex-wrap gap-3">
-            {view.metrics.map((metric) => (
-              <MetricCard key={`${metric.label}-${metric.value}`} metric={metric} />
-            ))}
-          </div>
-        )}
-
-        {view.meta.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-600">
-            {view.meta.map((meta) =>
-              meta.href ? (
-                <LinkPill key={`${meta.label}-${meta.value}`} value={meta.value} href={meta.href} />
-              ) : (
-                <MetricPill key={`${meta.label}-${meta.value}`} label={meta.label} value={meta.value} tone={meta.tone ?? "neutral"} />
-              )
-            )}
-          </div>
-        )}
-
-        {view.warnings.length > 0 && (
-          <section className="mt-4 flex flex-col gap-2 text-sm text-amber-900">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-amber-600">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-amber-700">!</span>
-              Pay attention
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-2 gap-3 border-t border-white/5 pt-5 mt-4">
+         {view.hero.priceImpact && (
+            <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.02]">
+                <SleekLabel>PRICE IMPACT</SleekLabel>
+                <span className={`text-sm font-bold tracking-wide ${
+                    view.hero.priceImpact.tone === 'negative' ? 'text-rose-400' : 'text-emerald-400'
+                }`}>
+                    {view.hero.priceImpact.value}
+                </span>
             </div>
-            <ul className="space-y-2">
-              {view.warnings.map((warn, idx) => (
-                <li key={`${warn}-${idx}`} className="leading-relaxed">
-                  {warn}
+         )}
+         
+         {view.metrics.map((metric) => (
+            <MetricItem key={metric.label} label={metric.label.toUpperCase()} value={metric.value} />
+         ))}
+         
+         {view.meta.filter(m => !m.href).map((meta) => (
+            <MetricItem key={meta.label} label={meta.label.toUpperCase()} value={meta.value} />
+         ))}
+      </div>
+
+      {/* Warnings & Errors */}
+      {view.warnings.length > 0 && (
+        <div className="flex flex-col gap-1 pt-4 border-t border-white/5">
+           <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <span className="text-[9px] uppercase font-bold tracking-widest text-amber-500">Warning</span>
+           </div>
+           <ul className="pl-3.5 space-y-1">
+              {view.warnings.map((w, i) => (
+                <li key={i} className="text-xs text-neutral-400">
+                  {w.replace(/Monitor price impact\.?/, "").trim() || w}
                 </li>
               ))}
-            </ul>
-          </section>
-        )}
-
-        {view.errorMessage && (
-          <section className="mt-4 flex flex-col gap-2 text-sm text-rose-600">
-            <div className="text-xs font-semibold uppercase tracking-[0.22em]">Execution error</div>
-            <p className="mt-2 leading-relaxed">{view.errorMessage}</p>
-          </section>
-        )}
-      </section>
-
-      {debug && (
-        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-            {debugLabel}
-          </summary>
-          <pre className="mt-3 max-h-64 overflow-y-auto whitespace-pre-wrap break-words text-xs">{JSON.stringify(view.rawData, null, 2)}</pre>
-        </details>
+           </ul>
+        </div>
       )}
 
-    </div>
+      {view.errorMessage && (
+        <div className="flex flex-col gap-1 pt-4 border-t border-white/5">
+           <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              <span className="text-[9px] uppercase font-bold tracking-widest text-rose-500">Error</span>
+           </div>
+           <p className="text-xs text-neutral-400 pl-3.5">{view.errorMessage}</p>
+        </div>
+      )}
+
+      {/* Footer Links */}
+      {view.meta.some(m => m.href) && (
+        <div className="flex gap-4 justify-end border-t border-white/5 pt-4">
+           {view.meta.filter(m => m.href).map((meta) => (
+              <a 
+                key={meta.label}
+                href={meta.href}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[9px] uppercase font-bold tracking-widest text-neutral-600 hover:text-white transition-colors"
+              >
+                {meta.label}
+              </a>
+           ))}
+        </div>
+      )}
+
+      {debug && (
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+          <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
+          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(view.rawData, null, 2)}</pre>
+        </details>
+      )}
+    </SleekCard>
   );
 }
 

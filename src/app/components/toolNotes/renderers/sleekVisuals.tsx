@@ -84,15 +84,18 @@ export const SleekHash = ({ value, href, label, truncate = true }: { value: stri
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Removed border/bg/padding to be "text-only" sleek
   return (
-    <div className="flex items-center gap-2 rounded-full border border-white/5 bg-white/5 px-3 py-1.5 transition hover:bg-white/10">
-      <span className="font-mono text-xs text-neutral-400">{display}</span>
-      <button onClick={handleCopy} className="text-neutral-500 hover:text-white transition-colors" title={`Copy ${label}`}>
-        {copied ? <span className="text-[9px] text-emerald-400 font-bold">COPIED</span> : <ClipboardCopyIcon className="h-3.5 w-3.5" />}
+    <div className="flex items-center gap-2 group cursor-pointer transition-colors" onClick={handleCopy} title={`Copy ${label}`}>
+      <span className="font-mono text-xs text-neutral-400 group-hover:text-neutral-200 transition-colors">
+        {display}
+      </span>
+      <button className="text-neutral-600 hover:text-white transition-colors opacity-0 group-hover:opacity-100 -ml-1">
+        {copied ? <span className="text-[9px] text-emerald-400 font-bold ml-1">COPIED</span> : <ClipboardCopyIcon className="h-3 w-3" />}
       </button>
       {href && (
-        <a href={href} target="_blank" rel="noreferrer" className="text-neutral-500 hover:text-white transition-colors border-l border-white/10 pl-2">
-           <ExternalLinkIcon className="h-3.5 w-3.5" />
+        <a href={href} target="_blank" rel="noreferrer" className="text-neutral-600 hover:text-white transition-colors pl-1 opacity-0 group-hover:opacity-100">
+           <ExternalLinkIcon className="h-3 w-3" />
         </a>
       )}
     </div>
@@ -110,7 +113,7 @@ export const MetricItem = ({ label, value, className }: { label: string; value: 
   </div>
 );
 
-// Pure formatters (no parsing logic)
+// Pure formatters
 export const formatUsdCompact = (value: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",

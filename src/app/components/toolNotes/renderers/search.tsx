@@ -1,8 +1,14 @@
-import React from "react";
+"use client";
 
+import React, { useState } from "react";
+import { MagnifyingGlassIcon, ExternalLinkIcon } from "@radix-ui/react-icons";
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
-import { TokenIcon } from "./solanaVisuals";
+import { normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
+import { 
+  SleekCard, 
+  SleekLabel, 
+  TokenIconSleek
+} from "./sleekVisuals";
 
 type SearchResult = {
   id?: string;
@@ -55,7 +61,7 @@ function resolveFaviconUrl(favicon?: string | null, pageUrl?: string | null) {
       }
       return new URL(trimmed, `${base.origin}/`).toString();
     } catch {
-      // ignore and fall back below
+      // ignore
     }
   }
   return trimmed;
@@ -84,17 +90,7 @@ const searchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
     ? (payload as SearchPayload).answer!.trim()
     : null;
   const query = typeof args.query === "string" && args.query.trim().length > 0 ? args.query.trim() : undefined;
-  const responseTimeRaw =
-    (payload as SearchPayload)?.response_time ??
-    (payload as SearchPayload)?.responseTime ??
-    (typeof (normalized as any)?.response_time === "number" ? (normalized as any).response_time : undefined);
-  const responseTime =
-    typeof responseTimeRaw === "number"
-      ? responseTimeRaw
-      : typeof responseTimeRaw === "string"
-        ? Number(responseTimeRaw)
-        : undefined;
-  const responseTimeDisplay = formatResponseTime(Number.isFinite(responseTime) ? responseTime : undefined);
+  
   const rawImages = Array.isArray((payload as SearchPayload)?.images) ? ((payload as SearchPayload).images ?? []) : [];
   const imageResults = rawImages.filter(
     (img): img is { url: string; description?: string | null } =>
@@ -104,146 +100,89 @@ const searchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const timestamp = formatTimestampDisplay(item.timestamp);
 
   return (
-    <div className={BASE_CARD_CLASS}>
-      <section className="flex flex-col gap-6">
-        <header className="flex flex-col gap-1">
-          {query && <span className="text-xs uppercase tracking-[0.32em] text-slate-400">Search</span>}
-          <div className="flex flex-col gap-1">
-            {query && <h2 className="text-lg font-semibold text-slate-900">{query}</h2>}
-            {(timestamp || responseTimeDisplay) && (
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-400">
-                {timestamp && <span>{timestamp}</span>}
-                {timestamp && responseTimeDisplay && <span>•</span>}
-                {responseTimeDisplay && <span>Response time {responseTimeDisplay}</span>}
-              </div>
-            )}
-          </div>
-        </header>
+    <SleekCard className="relative overflow-visible p-6 flex flex-col gap-6 w-full max-w-4xl">
+      <header className="flex items-center justify-between">
+         <div className="flex items-center gap-2">
+            <MagnifyingGlassIcon className="w-4 h-4 text-neutral-500" />
+            <SleekLabel>Search Results</SleekLabel>
+         </div>
+         <div className="flex gap-3">
+            {timestamp && <span className="text-[10px] text-neutral-600 font-mono">{timestamp}</span>}
+         </div>
+      </header>
 
-        {answer && (
-          <article className="rounded-2xl border border-slate-200/70 bg-white/60 px-4 py-3 text-sm text-slate-700 shadow-sm">
-            <span className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-400">Summary</span>
-            <p className="mt-2 break-words leading-relaxed">{answer}</p>
-          </article>
-        )}
+      {query && (
+        <div className="text-xl font-bold text-white tracking-tight">
+           “{query}”
+        </div>
+      )}
 
-        {imageResults.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <span className="text-xs uppercase tracking-[0.32em] text-slate-400">Image Highlights</span>
-            <div className={`grid gap-3 ${imageResults.length > 1 ? "sm:grid-cols-2" : ""}`}>
-              {imageResults.slice(0, 4).map((image, index) => (
-                <a
-                  key={`${image.url}-${index}`}
-                  href={image.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="group relative block overflow-hidden rounded-2xl border border-transparent bg-white/40 shadow-sm transition hover:border-slate-200 hover:bg-white/70"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={image.url}
-                    alt={image.description ?? "Search result illustration"}
-                    loading="lazy"
-                    className="h-40 w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-                  />
-                  {image.description && (
-                    <div className="absolute inset-x-0 bottom-0 bg-black/55 px-3 py-2 text-xs font-medium text-white backdrop-blur-sm">
-                      <p className="line-clamp-2">{image.description}</p>
-                    </div>
-                  )}
-                </a>
+      {answer && (
+        <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 text-sm text-neutral-300 leading-relaxed">
+           <SleekLabel>AI Summary</SleekLabel>
+           <p className="mt-2">{answer}</p>
+        </div>
+      )}
+
+      {imageResults.length > 0 && (
+        <div className="flex flex-col gap-3">
+           <SleekLabel>Visuals</SleekLabel>
+           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              {imageResults.slice(0, 4).map((img, idx) => (
+                 <a 
+                   key={idx} 
+                   href={img.url} 
+                   target="_blank" 
+                   rel="noreferrer" 
+                   className="relative aspect-square rounded-xl overflow-hidden border border-white/5 group"
+                 >
+                    <img src={img.url} alt="Search result" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                 </a>
               ))}
-            </div>
-          </section>
-        )}
+           </div>
+        </div>
+      )}
 
-        <div className="flex flex-col gap-5">
-          {results.map((result, index) => {
+      <div className="flex flex-col gap-4">
+         {results.map((result, index) => {
             const title = result.title?.trim() || `Result ${index + 1}`;
             const snippet = result.snippet?.trim();
             const url = result.url?.trim();
             const hostname = extractHostname(url);
             const label = hostname ? hostname.slice(0, 2).toUpperCase() : title.slice(0, 2).toUpperCase();
-            const publishedAt = formatTimestampDisplay(result.published_at ?? (result as any)?.publishedAt);
-            const score = typeof result.score === "number" && Number.isFinite(result.score) ? result.score : null;
-            const faviconUrl =
-              resolveFaviconUrl(result.favicon, url) ??
-              (url || hostname
-                ? `https://www.google.com/s2/favicons?sz=128&domain_url=${encodeURIComponent(url ?? hostname!)}`
-                : null);
+            const faviconUrl = resolveFaviconUrl(result.favicon, url);
 
             return (
-              <article
-                key={result.id ?? url ?? `result-${index}`}
-                className="group flex w-full flex-col gap-2 rounded-2xl border border-transparent px-4 py-3 transition hover:border-slate-200 hover:bg-white/60"
-              >
-                {url ? (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex flex-col gap-3 focus:outline-none focus:ring-2 focus:ring-flux/40"
-                  >
-                    <div className="flex items-start gap-4">
-                      <div className="mt-[3px] flex h-12 w-12 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl bg-slate-100 shadow-sm">
-                        {faviconUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={faviconUrl}
-                            alt={hostname ?? title}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                            referrerPolicy="no-referrer"
-                          />
-                        ) : (
-                          <TokenIcon label={label} size={48} />
-                        )}
-                      </div>
-                      <div className="flex flex-1 flex-col gap-1">
-                        {hostname && (
-                          <span className="text-xs uppercase tracking-[0.24em] text-slate-400">
-                            {hostname}
-                          </span>
-                        )}
-                        <span className="break-words text-base font-semibold text-slate-900 transition group-hover:text-flux">
-                          {title}
-                        </span>
-                        {snippet && <p className="break-words text-sm text-slate-600">{snippet}</p>}
-                        {(publishedAt || score !== null) && (
-                          <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.24em] text-slate-400">
-                            {publishedAt && <span>{publishedAt}</span>}
-                            {publishedAt && score !== null && <span>•</span>}
-                            {score !== null && <span>Relevance {score.toFixed(2)}</span>}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </a>
-                ) : (
-                  <div className="flex flex-col gap-1">
-                    <span className="break-words text-sm font-semibold text-slate-900">{title}</span>
-                    {snippet && <p className="break-words text-sm text-slate-600">{snippet}</p>}
+               <a 
+                 key={index}
+                 href={url} 
+                 target="_blank" 
+                 rel="noreferrer"
+                 className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-transparent hover:bg-white/[0.05] hover:border-white/10 transition-all group"
+               >
+                  <div className="shrink-0 pt-1">
+                     <TokenIconSleek symbol={label} imageUrl={faviconUrl ?? undefined} size={40} />
                   </div>
-                )}
-              </article>
+                  <div className="flex flex-col gap-1 min-w-0">
+                     <div className="flex items-center gap-2">
+                        <span className="text-xs uppercase font-bold tracking-wider text-neutral-500">{hostname}</span>
+                        <ExternalLinkIcon className="w-3 h-3 text-neutral-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                     </div>
+                     <h3 className="text-base font-bold text-white leading-tight truncate pr-4">{title}</h3>
+                     {snippet && <p className="text-xs text-neutral-400 line-clamp-2 leading-relaxed">{snippet}</p>}
+                  </div>
+               </a>
             );
-          })}
-
-          {results.length === 0 && <p className="text-sm text-slate-500">No web results were returned.</p>}
-        </div>
-      </section>
+         })}
+      </div>
 
       {debug && (
-        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-            Raw search payload
-          </summary>
-          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-xs">
-            {JSON.stringify(normalized, null, 2)}
-          </pre>
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+          <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
+          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(normalized, null, 2)}</pre>
         </details>
       )}
-    </div>
+    </SleekCard>
   );
 };
 

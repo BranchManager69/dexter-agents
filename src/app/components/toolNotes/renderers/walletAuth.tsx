@@ -1,8 +1,15 @@
-import React from "react";
+"use client";
 
+import React from "react";
+import { LockClosedIcon } from "@radix-ui/react-icons";
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge, formatTimestampDisplay } from "./helpers";
-import { MetricPill } from "./solanaVisuals";
+import { normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
+import { 
+  SleekCard, 
+  SleekLabel, 
+  SleekHash,
+  MetricItem
+} from "./sleekVisuals";
 
 type Diagnostics = {
   bearer_source?: string;
@@ -34,57 +41,62 @@ const walletAuthRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   if (diagnostics.has_token !== undefined) diagnosticChips.push({ label: "Token", value: diagnostics.has_token ? "Present" : "Missing", tone: diagnostics.has_token ? "positive" : "negative" });
 
   return (
-    <div className={BASE_CARD_CLASS}>
-      <section className="flex flex-col gap-7">
-        <header className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-1">
-            <span className="text-[11px] uppercase tracking-[0.26em] text-indigo-500">Auth Diagnostics</span>
-            {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
-          </div>
-        </header>
+    <SleekCard className="relative overflow-visible p-5 flex flex-col gap-5">
+      <header className="flex items-center justify-between">
+         <SleekLabel>Auth Diagnostics</SleekLabel>
+         {timestamp && <span className="text-[10px] text-neutral-600 font-mono">{timestamp}</span>}
+      </header>
 
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2 text-sm text-slate-600">
-            <span className="text-[11px] uppercase tracking-[0.24em] text-slate-300">Active wallet</span>
+      <div className="flex items-center gap-6">
+        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 shadow-inner">
+           <LockClosedIcon className="w-6 h-6 text-neutral-400" />
+        </div>
+        
+        <div className="flex flex-1 flex-col gap-2 min-w-0">
+          <div>
+            <div className="text-xs text-neutral-400 font-medium mb-1">Session Wallet</div>
             {payload.wallet_address ? (
-              <HashBadge value={payload.wallet_address} href={`https://solscan.io/account/${payload.wallet_address}`} ariaLabel="Active wallet" />
+              <SleekHash value={payload.wallet_address} label="Active wallet" truncate={false} />
             ) : (
-              <span className="text-slate-500">No wallet bound to this session.</span>
+              <span className="text-sm text-neutral-500">No wallet bound to this session.</span>
             )}
           </div>
-
-          {payload.user_id && (
-            <div className="flex flex-col gap-2 text-sm text-slate-600">
-              <span className="text-[11px] uppercase tracking-[0.24em] text-slate-300">Supabase user</span>
-              <HashBadge value={payload.user_id} ariaLabel="Supabase user id" />
-            </div>
-          )}
-
-          {diagnosticChips.length > 0 && (
-            <div className="flex flex-wrap gap-3">
-              {diagnosticChips.map((chip, idx) => (
-                <MetricPill key={`${chip.label}-${idx}`} label={chip.label} value={chip.value} tone={chip.tone ?? "neutral"} />
-              ))}
-            </div>
-          )}
-
-          {diagnostics.detail && (
-            <p className="text-sm text-slate-600">{diagnostics.detail}</p>
-          )}
         </div>
-      </section>
+      </div>
+
+      {payload.user_id && (
+        <div className="flex flex-col gap-1 pt-2 border-t border-white/5">
+           <SleekLabel>Supabase User</SleekLabel>
+           <SleekHash value={payload.user_id} label="User ID" truncate={false} />
+        </div>
+      )}
+
+      {diagnosticChips.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-white/5">
+          {diagnosticChips.map((chip, idx) => (
+            <MetricItem 
+              key={`${chip.label}-${idx}`} 
+              label={chip.label.toUpperCase()} 
+              value={chip.value} 
+              className={chip.tone === 'notice' ? 'border-amber-500/20 bg-amber-500/5' : ''}
+            />
+          ))}
+        </div>
+      )}
+
+      {diagnostics.detail && (
+        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl text-xs text-neutral-400 font-mono break-all">
+           {diagnostics.detail}
+        </div>
+      )}
 
       {debug && (
-        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-            Raw auth payload
-          </summary>
-          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-xs">
-            {JSON.stringify(normalized, null, 2)}
-          </pre>
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+          <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
+          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(normalized, null, 2)}</pre>
         </details>
       )}
-    </div>
+    </SleekCard>
   );
 };
 
