@@ -195,7 +195,7 @@ export function TopRibbon({
       >
         <div className="relative mx-auto flex w-full max-w-6xl items-center gap-3">
           {/* Brand Wordmark (Left) */}
-          <div className="flex items-center">
+          <div className="flex items-center gap-2.5">
              <Image 
                src="/assets/logos/wordmark_white.svg" 
                alt="Dexter" 
@@ -204,6 +204,9 @@ export function TopRibbon({
                className="h-7 w-auto opacity-90 hover:opacity-100 transition-opacity"
                priority
              />
+             <span className="font-display text-lg font-medium text-white/60 tracking-wide mt-0.5">
+                Voice
+             </span>
           </div>
 
           <div className="ml-auto flex flex-shrink-0 items-center gap-3 pl-2 whitespace-nowrap">
