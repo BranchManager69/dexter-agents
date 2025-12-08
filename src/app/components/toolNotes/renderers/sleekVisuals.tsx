@@ -16,7 +16,6 @@ export const SleekValue = ({ children, className }: { children: React.ReactNode;
   </span>
 );
 
-// Updated to accept all motion props (layout, onClick, etc.)
 export const SleekCard = ({ children, className, ...props }: HTMLMotionProps<"div">) => (
   <motion.div
     initial={{ opacity: 0, y: 10, scale: 0.98 }}
@@ -74,9 +73,9 @@ export const TokenIconSleek = ({ symbol, imageUrl, size = 56 }: { symbol: string
   );
 };
 
-export const SleekHash = ({ value, href, label }: { value: string; href?: string; label: string }) => {
+export const SleekHash = ({ value, href, label, truncate = true }: { value: string; href?: string; label: string; truncate?: boolean }) => {
   const [copied, setCopied] = useState(false);
-  const display = `${value.slice(0, 4)}...${value.slice(-4)}`;
+  const display = truncate ? `${value.slice(0, 4)}...${value.slice(-4)}` : value;
 
   const handleCopy = (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -1,8 +1,14 @@
-import React from "react";
+"use client";
 
+import React from "react";
 import type { ToolNoteRenderer } from "./types";
-import { BASE_CARD_CLASS, normalizeOutput, unwrapStructured, HashBadge, formatTimestampDisplay } from "./helpers";
-import { LinkPill, TokenIcon } from "./solanaVisuals";
+import { normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
+import { 
+  SleekCard, 
+  SleekLabel, 
+  TokenIconSleek, 
+  SleekHash 
+} from "./sleekVisuals";
 
 type WalletResolvePayload = {
   wallet_address?: string;
@@ -75,57 +81,65 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const timestamp = formatTimestampDisplay(item.timestamp);
 
   return (
-    <div className={BASE_CARD_CLASS}>
-      <section className="flex flex-col gap-6">
-        <header className="flex flex-col gap-1">
-          <span className="text-xs uppercase tracking-[0.32em] text-slate-400">Session wallet</span>
-          {timestamp && <span className="text-xs text-slate-400">{timestamp}</span>}
-        </header>
+    <SleekCard className="relative overflow-visible p-5 flex flex-col gap-5">
+      <header className="flex items-center justify-between">
+         <SleekLabel>Session Wallet</SleekLabel>
+         {timestamp && <span className="text-[10px] text-neutral-600 font-mono">{timestamp}</span>}
+      </header>
 
-        <div className="flex flex-col gap-5">
-          <div className="flex flex-wrap items-center gap-4">
-            <TokenIcon label={iconLabel} size={56} />
-            <div className="flex flex-col">
-              <span className="text-[11px] uppercase tracking-[0.28em] text-slate-400">Active wallet</span>
-              {resolvedAddress ? (
-                <HashBadge value={resolvedAddress} href={`https://solscan.io/account/${resolvedAddress}`} ariaLabel="Resolved wallet" />
-              ) : (
-                <span className="text-sm text-slate-500">Resolver did not return a wallet.</span>
-              )}
-            </div>
-            {sourceLabel && (
-              <span className="ml-auto rounded-full border border-slate-200 px-3 py-1 text-[11px] uppercase tracking-[0.24em] text-slate-500">
-                {sourceLabel}
-              </span>
+      <div className="flex items-start gap-4">
+        <TokenIconSleek symbol={iconLabel} size={64} />
+        
+        <div className="flex flex-1 flex-col gap-2 min-w-0">
+          <div>
+            <div className="text-xs text-neutral-400 font-medium mb-1">Active Wallet Address</div>
+            {resolvedAddress ? (
+              <SleekHash value={resolvedAddress} label="Wallet" truncate={false} />
+            ) : (
+              <span className="text-sm text-rose-400 font-medium">Resolver failed to return a wallet.</span>
             )}
           </div>
 
-          {showRequested && (
-            <div className="flex flex-col gap-2 text-sm text-slate-600">
-              <span className="text-[11px] uppercase tracking-[0.28em] text-slate-400">Last requested</span>
-              <HashBadge value={requestedAddress!} ariaLabel="Requested wallet" />
-            </div>
-          )}
-
-          {resolvedAddress && (
-            <div className="flex flex-wrap gap-3">
-              <LinkPill value="Open in Solscan" href={`https://solscan.io/account/${resolvedAddress}`} />
+          {sourceLabel && (
+            <div className="flex">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 border border-white/10 px-2 py-1 rounded-full">
+                Source: {sourceLabel}
+              </span>
             </div>
           )}
         </div>
-      </section>
+      </div>
+
+      {showRequested && (
+        <div className="flex flex-col gap-2 p-3 bg-white/[0.02] border border-white/5 rounded-xl">
+          <SleekLabel>Requested Override</SleekLabel>
+          <SleekHash value={requestedAddress!} label="Requested" truncate={false} />
+        </div>
+      )}
+
+      {resolvedAddress && (
+        <div className="flex gap-4 justify-end border-t border-white/5 pt-4">
+           {['Solscan', 'Explorer'].map((site) => (
+              <a 
+                key={site}
+                href={`https://${site === 'Solscan' ? 'solscan.io' : 'explorer.solana.com'}/account/${resolvedAddress}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[9px] uppercase font-bold tracking-widest text-neutral-600 hover:text-white transition-colors"
+              >
+                {site}
+              </a>
+           ))}
+        </div>
+      )}
 
       {debug && (
-        <details className="mt-4 max-w-2xl text-sm text-slate-700" open>
-          <summary className="cursor-pointer text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-            Raw resolver payload
-          </summary>
-          <pre className="mt-2 max-h-64 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-xs">
-            {JSON.stringify(normalized, null, 2)}
-          </pre>
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+          <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
+          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(normalized, null, 2)}</pre>
         </details>
       )}
-    </div>
+    </SleekCard>
   );
 };
 
