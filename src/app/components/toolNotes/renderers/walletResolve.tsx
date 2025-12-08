@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
+import { IdCardIcon } from "@radix-ui/react-icons";
 import type { ToolNoteRenderer } from "./types";
 import { normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
 import { 
   SleekCard, 
   SleekLabel, 
-  TokenIconSleek, 
   SleekHash 
 } from "./sleekVisuals";
 
@@ -76,7 +76,6 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const source = typeof (payload as any)?.source === "string" ? (payload as any).source : resolvedAddress ? "resolver" : "unknown";
   const showRequested = requestedAddress && requestedAddress !== resolvedAddress;
   const sourceLabel = source ? source.replace(/_/g, " ") : null;
-  const iconLabel = resolvedAddress ? resolvedAddress.slice(0, 2).toUpperCase() : "??";
 
   const timestamp = formatTimestampDisplay(item.timestamp);
 
@@ -87,8 +86,9 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
          {timestamp && <span className="text-[10px] text-neutral-600 font-mono">{timestamp}</span>}
       </header>
 
-      <div className="flex items-start gap-4">
-        <TokenIconSleek symbol={iconLabel} size={64} />
+      <div className="flex items-center gap-6">
+        {/* Pure Icon: No Container, No Border, Just Identity */}
+        <IdCardIcon className="w-12 h-12 text-neutral-600/80 drop-shadow-md" />
         
         <div className="flex flex-1 flex-col gap-2 min-w-0">
           <div>
@@ -101,9 +101,9 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
           </div>
 
           {sourceLabel && (
-            <div className="flex">
-              <span className="text-[10px] uppercase font-bold tracking-wider text-neutral-500 border border-white/10 px-2 py-1 rounded-full">
-                Source: {sourceLabel}
+            <div className="flex mt-0.5">
+              <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-500 opacity-80">
+                {sourceLabel}
               </span>
             </div>
           )}
@@ -111,7 +111,7 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
       </div>
 
       {showRequested && (
-        <div className="flex flex-col gap-2 p-3 bg-white/[0.02] border border-white/5 rounded-xl">
+        <div className="flex flex-col gap-2 pt-4 border-t border-white/5">
           <SleekLabel>Requested Override</SleekLabel>
           <SleekHash value={requestedAddress!} label="Requested" truncate={false} />
         </div>
