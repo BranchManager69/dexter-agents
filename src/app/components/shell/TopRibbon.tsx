@@ -1,6 +1,7 @@
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { createPortal } from "react-dom";
+import Image from "next/image";
 import { SessionStatus } from "@/app/types";
 import type { DexterUserBadge } from "@/app/types";
 import { AuthMenu } from "@/app/components/AuthMenu";
@@ -54,16 +55,6 @@ interface TopRibbonProps {
   crestOrigin?: { pageLeft: number; pageTop: number; width: number; height: number } | null;
 }
 
-function formatWalletAddress(address?: string | null) {
-  if (!address || address === 'Auto' || address.trim().length === 0) {
-    return 'Auto';
-  }
-  if (address.length <= 10) {
-    return address;
-  }
-  return `${address.slice(0, 4)}…${address.slice(-4)}`;
-}
-
 function resolveSessionRoleVariant(identity: SessionIdentitySummary, userBadge?: DexterUserBadge | null): UserBadgeVariant {
   if (userBadge === 'dev' || userBadge === 'pro') {
     return userBadge;
@@ -111,39 +102,7 @@ export function TopRibbon({
 }: TopRibbonProps) {
   const sessionVariant = resolveSessionRoleVariant(sessionIdentity, userBadge);
   const sessionLabel = resolveSessionLabel(sessionVariant);
-  const walletAddressValue = sessionIdentity.wallet?.public_key ?? activeWalletKey ?? undefined;
-  const walletLabel = formatWalletAddress(walletAddressValue);
   const hasConnectionToggle = Boolean(onToggleConnection);
-  const hasWalletAddress = walletAddressValue && walletLabel !== 'Auto';
-
-  const [walletCopied, setWalletCopied] = React.useState(false);
-  const walletCopyTimeoutRef = React.useRef<number | null>(null);
-
-  React.useEffect(() => {
-    return () => {
-      if (walletCopyTimeoutRef.current) {
-        window.clearTimeout(walletCopyTimeoutRef.current);
-        walletCopyTimeoutRef.current = null;
-      }
-    };
-  }, []);
-
-  const handleWalletCopy = React.useCallback(async () => {
-    if (!walletAddressValue) return;
-    try {
-      await navigator.clipboard.writeText(walletAddressValue);
-      setWalletCopied(true);
-      if (walletCopyTimeoutRef.current) {
-        window.clearTimeout(walletCopyTimeoutRef.current);
-      }
-      walletCopyTimeoutRef.current = window.setTimeout(() => {
-        setWalletCopied(false);
-        walletCopyTimeoutRef.current = null;
-      }, 1200);
-    } catch (error) {
-      console.warn('Failed to copy wallet address', error);
-    }
-  }, [walletAddressValue]);
 
   const handleAuthSignIn = async (email: string, captchaToken: string | null) => {
     if (!onSignIn) return { success: false, message: "Sign-in not available" };
@@ -229,37 +188,26 @@ export function TopRibbon({
 
   return (
     <>
-      {walletCopied && typeof window !== 'undefined'
-        ? createPortal(
-            <div className="pointer-events-none fixed top-6 left-1/2 z-[9999] -translate-x-1/2 rounded-full border border-emerald-500/20 bg-[#0A0A0A]/90 px-4 py-1.5 font-display text-[11px] font-semibold tracking-[0.08em] text-emerald-400 shadow-[0_12px_28px_rgba(0,0,0,0.5)] backdrop-blur-md">
-              Wallet copied
-            </div>,
-            document.body,
-          )
-        : null}
       <div
         className="relative w-full px-5 pb-2 pt-1 sm:px-7"
         data-session-status={sessionStatus}
         data-can-toggle-connection={hasConnectionToggle}
       >
         <div className="relative mx-auto flex w-full max-w-6xl items-center gap-3">
+          {/* Brand Wordmark (Left) */}
+          <div className="flex items-center">
+             <Image 
+               src="/assets/logos/wordmark_white.svg" 
+               alt="Dexter" 
+               width={110} 
+               height={28} 
+               className="h-7 w-auto opacity-90 hover:opacity-100 transition-opacity"
+               priority
+             />
+          </div>
+
           <div className="ml-auto flex flex-shrink-0 items-center gap-3 pl-2 whitespace-nowrap">
-            {hasWalletAddress ? (
-              <button
-                type="button"
-                onClick={handleWalletCopy}
-                className="relative flex items-center gap-2 rounded-full bg-white/[0.03] border border-white/10 px-4 py-1.5 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-200 transition hover:bg-white/[0.08] hover:border-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black"
-                title={walletAddressValue ? `Copy ${walletAddressValue}` : undefined}
-              >
-                <span className="text-[9px] uppercase tracking-[0.28em] text-neutral-500">Wallet</span>
-                <span className="text-[11px] tracking-[0.08em] font-mono">{walletLabel}</span>
-                {walletCopied && (
-                  <span className="pointer-events-none absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] tracking-[0.08em] text-emerald-400 font-bold">
-                    Copied
-                  </span>
-                )}
-              </button>
-            ) : null}
+            {/* Wallet Button Removed (Integrated into AuthMenu) */}
 
             <div className="flex items-center">
               <AuthMenu
