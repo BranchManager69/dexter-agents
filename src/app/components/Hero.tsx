@@ -93,8 +93,8 @@ export function Hero({ className, title, subtitle, loading = false }: HeroProps)
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="h-6 w-60 rounded-full bg-[#FFE6CC]/60" />
-            <div className="h-4 w-72 rounded-full bg-[#FFE6CC]/40" />
+            <div className="h-6 w-60 rounded-full bg-white/10 animate-pulse" />
+            <div className="h-4 w-72 rounded-full bg-white/5 animate-pulse" />
           </motion.div>
         ) : (
           <motion.div
@@ -111,17 +111,17 @@ export function Hero({ className, title, subtitle, loading = false }: HeroProps)
               className="relative inline-flex flex-col"
               variants={titleVariants}
             >
-              <span className="relative z-[2] font-display text-[32px] leading-[1.1] tracking-tight text-[#6B320F] sm:text-[40px] font-semibold">
+              <span className="relative z-[2] font-display text-[32px] leading-[1.1] tracking-tight text-white sm:text-[40px] font-semibold drop-shadow-xl">
                 {title}
               </span>
               <motion.span
-                className="pointer-events-none absolute inset-x-0 -bottom-1 h-2 origin-left rounded-full bg-gradient-to-r from-[#F5B266] via-[#FFDEA7] to-[#F9F1E8]/60"
+                className="pointer-events-none absolute inset-x-0 -bottom-1 h-2 origin-left rounded-full bg-gradient-to-r from-orange-500 via-amber-500 to-transparent opacity-60 blur-sm"
                 style={{ zIndex: 1 }}
                 variants={accentVariants}
               />
             </motion.div>
             <motion.p
-              className="mt-3 max-w-2xl text-sm text-[#A75A26] sm:text-base"
+              className="mt-3 max-w-2xl text-sm text-neutral-400 sm:text-base font-body leading-relaxed"
               variants={subtitleVariants}
             >
               {subtitle}

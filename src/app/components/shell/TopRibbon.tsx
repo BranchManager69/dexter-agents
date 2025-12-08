@@ -231,7 +231,7 @@ export function TopRibbon({
     <>
       {walletCopied && typeof window !== 'undefined'
         ? createPortal(
-            <div className="pointer-events-none fixed top-6 left-1/2 z-[9999] -translate-x-1/2 rounded-full border border-[#FEFBF4]/35 bg-[#200700]/90 px-4 py-1 font-display text-[11px] font-semibold tracking-[0.08em] text-[#FEFBF4] shadow-[0_12px_28px_rgba(242,62,1,0.28)]">
+            <div className="pointer-events-none fixed top-6 left-1/2 z-[9999] -translate-x-1/2 rounded-full border border-emerald-500/20 bg-[#0A0A0A]/90 px-4 py-1.5 font-display text-[11px] font-semibold tracking-[0.08em] text-emerald-400 shadow-[0_12px_28px_rgba(0,0,0,0.5)] backdrop-blur-md">
               Wallet copied
             </div>,
             document.body,
@@ -248,14 +248,13 @@ export function TopRibbon({
               <button
                 type="button"
                 onClick={handleWalletCopy}
-                className="relative flex items-center gap-2 rounded-full px-4 py-1.5 font-display text-[11px] font-semibold tracking-[0.08em] text-[#FEFFF8] shadow-[0_16px_28px_rgba(24,128,96,0.22)] transition hover:opacity-95 focus:outline-none focus:ring-2 focus:ring-[#20B483]/30 focus:ring-offset-2 focus:ring-offset-transparent"
-                style={{ background: 'linear-gradient(135deg, rgba(32, 180, 131, 0.96), rgba(18, 140, 102, 0.9))' }}
+                className="relative flex items-center gap-2 rounded-full bg-white/[0.03] border border-white/10 px-4 py-1.5 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-200 transition hover:bg-white/[0.08] hover:border-white/20 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-offset-2 focus:ring-offset-black"
                 title={walletAddressValue ? `Copy ${walletAddressValue}` : undefined}
               >
-                <span className="text-[9px] uppercase tracking-[0.28em] text-[#FDFBF4]/78">Wallet</span>
-                <span className="text-[11px] tracking-[0.08em] text-[#FEFFF8]">{walletLabel}</span>
+                <span className="text-[9px] uppercase tracking-[0.28em] text-neutral-500">Wallet</span>
+                <span className="text-[11px] tracking-[0.08em] font-mono">{walletLabel}</span>
                 {walletCopied && (
-                  <span className="pointer-events-none absolute -bottom-3 left-1/2 -translate-x-1/2 text-[8px] tracking-[0.08em] text-[#FDFBF4]/75">
+                  <span className="pointer-events-none absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] tracking-[0.08em] text-emerald-400 font-bold">
                     Copied
                   </span>
                 )}
@@ -300,7 +299,7 @@ export function TopRibbon({
                 <motion.button
                   type="button"
                   onClick={onReloadBrand}
-                  className="pointer-events-auto group relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-[#FEFBF4]/70 focus:ring-offset-2 focus:ring-offset-[#FF6500]"
+                  className="pointer-events-auto group relative flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:ring-offset-2 focus:ring-offset-black"
                   aria-label="Reload Dexter brand"
                   whileHover={{ scale: 1.04, rotate: 4 }}
                   whileFocus={{ scale: 1.04, rotate: -3 }}

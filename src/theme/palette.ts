@@ -21,6 +21,7 @@ type NeutralScale = {
   700: string;
   800: string;
   900: string;
+  950: string;
 };
 
 type AccentSet = {
@@ -62,7 +63,7 @@ export interface ThemePalette {
 const hexToRgb = (hex: string) => {
   const cleaned = hex.replace("#", "");
   if (cleaned.length !== 6) {
-    throw new Error(`Expected 6-digit hex value, received ${hex}`);
+    return "0 0 0"; // Fallback
   }
   const r = parseInt(cleaned.slice(0, 2), 16);
   const g = parseInt(cleaned.slice(2, 4), 16);
@@ -70,55 +71,57 @@ const hexToRgb = (hex: string) => {
   return `${r} ${g} ${b}`;
 };
 
-export const sunrisePalette: ThemePalette = {
-  name: "sunrise",
-  background: "#FF6500",
-  foreground: "#FFF7EC",
+export const midnightPalette: ThemePalette = {
+  name: "midnight",
+  background: "#000000", // True Pitch Black
+  foreground: "#FFFFFF", // Pure White
   surface: {
-    base: "#FF7C26",
-    raised: "#FF923F",
-    glass: "#FFA85D",
+    base: "#050505", // Deepest Void
+    raised: "#0A0A0A", // Layer 1
+    glass: "#111111", // Layer 2
   },
   header: {
-    background: "#FF6500",
-    border: "#FFD07A",
+    background: "#000000",
+    border: "#1F1F1F",
   },
   footer: {
-    background: "#FF6500",
-    border: "#FFD07A",
+    background: "#000000",
+    border: "#1F1F1F",
   },
   borders: {
-    subtle: "#FFC58F",
-    strong: "#FFE4B8",
+    subtle: "#262626",
+    strong: "#404040",
   },
   neutrals: {
-    100: "#FFF3E3",
-    200: "#FFE1C2",
-    300: "#FFCDA1",
-    400: "#FFB57A",
-    500: "#FF9A56",
-    600: "#FF8131",
-    700: "#F26416",
-    800: "#D65105",
-    900: "#993200",
+    // Standard Dark Mode Scale
+    100: "#FFFFFF", // Lightest
+    200: "#E5E5E5",
+    300: "#D4D4D4",
+    400: "#A3A3A3",
+    500: "#737373",
+    600: "#525252",
+    700: "#404040",
+    800: "#262626",
+    900: "#171717",
+    950: "#0A0A0A", // Darkest
   },
   accent: {
-    info: "#26B5FF",
-    success: "#16C98C",
-    warn: "#FFD05A",
-    critical: "#FF4D69",
+    info: "#38BDF8", // Sky
+    success: "#34D399", // Emerald
+    warn: "#FBBF24", // Amber
+    critical: "#F87171", // Rose
   },
   primary: {
-    base: "#F26B1A",
-    bright: "#F23E01",
-    muted: "#FEFBF4",
+    base: "#FF6500", // Neon Dexter Orange
+    bright: "#FF8533",
+    muted: "#1A0500", // Deepest Ember (for gradients)
   },
-  flux: "#FFC93C",
-  iris: "#FF7FC1",
-  focusRing: "#FDF0CF",
+  flux: "#0EA5E9", // Sky Blue
+  iris: "#6366F1", // Indigo
+  focusRing: "#FF6500",
   gradient: {
-    warmSpot: "#F26B1A",
-    emberSpot: "#F23E01",
+    warmSpot: "#FF6500",
+    emberSpot: "#D03801",
   },
 };
 
@@ -156,4 +159,4 @@ export const paletteCssVariables = (palette: ThemePalette): CSSProperties => {
   return cssVariables as CSSProperties;
 };
 
-export const activeThemeVariables = paletteCssVariables(sunrisePalette);
+export const activeThemeVariables = paletteCssVariables(midnightPalette);

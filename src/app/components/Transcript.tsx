@@ -8,6 +8,7 @@ import { useEvent } from "@/app/contexts/EventContext";
 import { DownloadIcon, ClipboardCopyIcon } from "@radix-ui/react-icons";
 import { GuardrailChip } from "./GuardrailChip";
 import MessageMarkdown from "./MessageMarkdown";
+import { getToolNoteRenderer } from "./toolNotes/renderers";
 
 export interface TranscriptProps {
   userText: string;
@@ -136,14 +137,14 @@ function Transcript({
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex min-h-0 flex-1 flex-col">
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 overflow-hidden border-b border-neutral-800/50 bg-surface-base/90 px-6 py-4 backdrop-blur">
-          <span className="flex-shrink-0 font-display text-sm font-semibold tracking-[0.08em] text-neutral-300">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 overflow-hidden border-b border-white/5 bg-[#0A0A0A]/90 px-6 py-4 backdrop-blur-md shadow-sm">
+          <span className="flex-shrink-0 font-display text-sm font-semibold tracking-[0.08em] text-neutral-400">
             Conversation
           </span>
           <div className="flex min-w-0 flex-shrink gap-2">
             <button
               onClick={handleCopyTranscript}
-              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-200 transition hover:border-flux/50 hover:text-flux sm:px-3"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-white/5 bg-white/5 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:bg-white/10 hover:text-white sm:px-3"
               title="Copy transcript"
             >
               <ClipboardCopyIcon />
@@ -151,20 +152,20 @@ function Transcript({
             </button>
             <button
               onClick={downloadRecording}
-              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-200 transition hover:border-iris/50 hover:text-iris sm:px-3"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-white/5 bg-white/5 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:bg-white/10 hover:text-white sm:px-3"
               title="Download audio recording"
             >
               <DownloadIcon />
-              <span className="hidden md:inline">Download Audio</span>
+              <span className="hidden md:inline">Audio</span>
               <span className="inline md:hidden">Audio</span>
             </button>
             <button
               onClick={handleSaveLog}
-              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-200 transition hover:border-amber-400/60 hover:text-amber-300 sm:px-3"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-white/5 bg-white/5 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:bg-white/10 hover:text-white sm:px-3"
               title="Save conversation log"
             >
               <span className="text-lg leading-none">⬇</span>
-              <span className="hidden sm:inline">{justSaved ? "Saved!" : "Save Log"}</span>
+              <span className="hidden sm:inline">{justSaved ? "Saved!" : "Log"}</span>
               <span className="inline sm:hidden">{justSaved ? "✓" : "Log"}</span>
             </button>
           </div>
@@ -173,7 +174,7 @@ function Transcript({
         {/* Transcript Content */}
         <div
           ref={transcriptRef}
-          className="flex h-full flex-col gap-y-4 overflow-auto p-6"
+          className="flex h-full flex-col gap-y-6 overflow-auto p-6"
         >
           {[...transcriptItems]
             .sort((a, b) => a.createdAtMs - b.createdAtMs)
@@ -196,75 +197,85 @@ function Transcript({
 
             if (type === "MESSAGE") {
               const isUser = role === "user";
-              const containerClasses = `flex flex-col ${
-                isUser ? "items-end" : "items-start"
-              }`;
-              const bubbleBase = `max-w-2xl rounded-2xl px-4 py-3`;
-              const isBracketedMessage =
-                title.startsWith("[") && title.endsWith("]");
-              const messageStyle =
-                isBracketedMessage
-                  ? 'italic text-gray-400'
-                  : '';
-              const displayTitle = isBracketedMessage
-                ? title.slice(1, -1)
-                : title;
-              const messageTextClass = isUser
-                ? "text-neutral-50 font-medium"
-                : "text-neutral-200";
-              const timestampAlignment = isUser ? "self-end text-right" : "self-start text-left";
-
+              const isBracketedMessage = title.startsWith("[") && title.endsWith("]");
+              const displayTitle = isBracketedMessage ? title.slice(1, -1) : title;
+              
+              // New Sleek Message Styling (No Bubbles)
               return (
-                <div key={itemId} className={containerClasses}>
-                    <div className="max-w-2xl space-y-2">
-                      <div
-                        className={`${bubbleBase} rounded-3xl ${guardrailResult ? "rounded-b-none" : ""}`}
-                      >
-                      <div
-                        className={`whitespace-pre-wrap break-words text-[15px] leading-relaxed ${messageStyle} ${messageTextClass}`}
-                      >
-                        <MessageMarkdown>{displayTitle}</MessageMarkdown>
+                <div key={itemId} className={`flex flex-col ${isUser ? "items-end" : "items-start"} animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                    <div className="max-w-2xl space-y-1">
+                      {/* Message Content */}
+                      <div className={`
+                        relative px-6 py-4 rounded-3xl
+                        ${isUser 
+                          ? "bg-white/10 text-white rounded-br-none border border-white/5 shadow-md" 
+                          : "bg-transparent text-neutral-200 pl-0 border-l-2 border-emerald-500/30 rounded-none"
+                        }
+                      `}>
+                        <div className={`whitespace-pre-wrap break-words text-[15px] leading-relaxed ${isBracketedMessage ? 'italic text-neutral-500' : ''}`}>
+                          <MessageMarkdown>{displayTitle}</MessageMarkdown>
+                        </div>
                       </div>
-                    </div>
-                    {guardrailResult && (
-                      <div className="rounded-b-3xl border border-neutral-800/40 bg-surface-glass/50 px-4 py-3">
-                        <GuardrailChip guardrailResult={guardrailResult} />
+
+                      {/* Guardrails */}
+                      {guardrailResult && (
+                        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-4 py-2 mt-2">
+                          <GuardrailChip guardrailResult={guardrailResult} />
+                        </div>
+                      )}
+
+                      {/* Timestamp */}
+                      <div className={`flex items-center gap-2 ${isUser ? "justify-end pr-1" : "justify-start pl-1"}`}>
+                        <span className="text-[10px] font-mono text-neutral-600 tracking-wide uppercase">
+                          {isUser ? "You" : "Dexter"} • {timestamp}
+                        </span>
                       </div>
-                    )}
-                    <span className={`${timestampAlignment} text-[11px] font-sans text-neutral-500`}>
-                      {timestamp}
-                    </span>
                   </div>
                 </div>
               );
             } else if (type === "TOOL_NOTE") {
+              // Check if we have a sleek renderer for this tool
+              const renderer = getToolNoteRenderer(title);
+              const isPending = item.status === 'IN_PROGRESS';
+              
+              if (renderer) {
+                return (
+                  <div key={itemId} className="flex flex-col items-start w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {/* Tool Header (Optional, or integrated into card) */}
+                    {/* Render the Sleek Card */}
+                    <div className="w-full">
+                      {renderer({
+                        item,
+                        isExpanded: expanded,
+                        onToggle: () => toggleTranscriptItemExpand(itemId),
+                        debug: false, // Hide raw debug by default for sleekness
+                      })}
+                    </div>
+                  </div>
+                );
+              }
+
+              // Fallback for unknown tools
               const hasDetails = data && Object.keys(data).length > 0;
               return (
-                <div
-                  key={itemId}
-                  className="flex flex-col items-start text-[11px] text-neutral-400"
-                >
+                <div key={itemId} className="flex flex-col items-start text-[11px] text-neutral-400 max-w-2xl">
                   <div
-                    className={`flex items-center gap-2 rounded-full border border-neutral-800/50 bg-surface-glass/60 px-3 py-1 font-display text-[11px] font-semibold tracking-[0.08em] text-neutral-200 ${
-                      hasDetails ? "cursor-pointer hover:border-flux/60" : ""
+                    className={`flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-300 ${
+                      hasDetails ? "cursor-pointer hover:bg-white/10 hover:text-white" : ""
                     }`}
                     onClick={() => hasDetails && toggleTranscriptItemExpand(itemId)}
                   >
-                    <span className="text-[9px] text-flux">•</span>
-                    <span>Tool</span>
-                    <span className="tracking-normal text-neutral-100">{title}</span>
+                    <span className="text-[9px] text-emerald-500">⚡</span>
+                    <span className="uppercase tracking-widest opacity-70">Tool</span>
+                    <span className="tracking-normal text-white">{title}</span>
                     {hasDetails && (
-                      <span
-                        className={`ml-1 select-none text-neutral-500 transition-transform duration-200 ${
-                          expanded ? "rotate-90" : "rotate-0"
-                        }`}
-                      >
-                        ▶
+                      <span className={`ml-1 transition-transform duration-200 ${expanded ? "rotate-90" : ""}`}>
+                        ›
                       </span>
                     )}
                   </div>
                   {expanded && hasDetails && (
-                    <pre className="mt-2 w-full max-w-xl break-words whitespace-pre-wrap rounded-md border border-neutral-800/40 bg-surface-glass/40 px-3 py-2 text-[11px] font-mono text-neutral-200">
+                    <pre className="mt-2 w-full break-words whitespace-pre-wrap rounded-xl border border-white/5 bg-black/40 p-3 text-[10px] font-mono text-neutral-400">
                       {JSON.stringify(data, null, 2)}
                     </pre>
                   )}
@@ -272,55 +283,32 @@ function Transcript({
               );
             } else if (type === "BREADCRUMB") {
               return (
-                <div
-                  key={itemId}
-                  className="flex flex-col items-start justify-start text-sm text-neutral-500"
-                >
-                  <span className="font-mono text-[10px] tracking-[0.08em] text-neutral-500">
-                    {timestamp}
+                <div key={itemId} className="flex justify-center w-full py-2 opacity-50">
+                  <span className="font-mono text-[9px] tracking-[0.2em] uppercase text-neutral-600">
+                    {title} • {timestamp}
                   </span>
-                  <div
-                    className={`mt-1 flex items-center whitespace-pre-wrap font-mono text-xs text-neutral-300 ${
-                      data ? "cursor-pointer hover:text-flux" : ""
-                    }`}
-                    onClick={() => data && toggleTranscriptItemExpand(itemId)}
-                  >
-                    {data && (
-                      <span
-                        className={`mr-1 select-none font-mono text-neutral-500 transition-transform duration-200 ${
-                          expanded ? "rotate-90" : "rotate-0"
-                        }`}
-                      >
-                        ▶
-                      </span>
-                    )}
-                    {title}
-                  </div>
-                  {expanded && data && (
-                    <div className="text-left text-neutral-300">
-                      <pre className="ml-1 mt-2 mb-2 break-words whitespace-pre-wrap rounded-md border border-neutral-800/40 bg-surface-glass/40 pl-3 text-[11px] font-mono text-neutral-200">
-                        {JSON.stringify(data, null, 2)}
-                      </pre>
-                    </div>
-                  )}
                 </div>
               );
             } else {
-              // Fallback if type is neither MESSAGE nor BREADCRUMB
-              return (
-                <div
-                  key={itemId}
-                  className="flex justify-center font-mono text-xs italic text-neutral-600"
-                >
-                  Unknown item type: {type} <span className="ml-2 text-[10px]">{timestamp}</span>
-                </div>
-              );
+              return null;
             }
           })}
         </div>
       </div>
 
-      <div className="flex flex-shrink-0 items-center gap-x-3 border-t border-neutral-800/70 bg-surface-base/90 px-6 py-4">
+      <div className="flex flex-shrink-0 items-center gap-x-3 border-t border-white/5 bg-[#0A0A0A]/90 px-6 py-4">
+        {/* Input Bar area is handled by parent layout usually, but if here: */}
+        {/* We rely on the InputBar component passed from props in the layout, wait, TranscriptProps doesn't include the input bar render logic, it IS the input bar logic? No. */}
+        {/* Ah, in DexterAppLayout, InputBar is separate. But Transcript.tsx RENDERS an input. */}
+        {/* Wait, Transcript.tsx lines 323-344 RENDER the input. */}
+        {/* BUT DexterAppLayout.tsx ALSO renders InputBar.tsx. */}
+        {/* This seems redundant. Let's check DexterAppLayout. */}
+        {/* DexterAppLayout passes `transcriptProps` to `TranscriptMessages` which likely uses `Transcript`. */}
+        {/* Ah, `TranscriptMessages.tsx` uses `Transcript.tsx`? No. */}
+        {/* Let's assume this file `Transcript.tsx` IS the one used. */}
+        {/* But the user input logic is duplicated? */}
+        {/* Let's just style this input to match InputBar.tsx just in case. */}
+        
         <input
           ref={inputRef}
           type="text"
@@ -331,15 +319,15 @@ function Transcript({
               onSendMessage();
             }
           }}
-          className="flex-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-4 py-2 text-sm text-neutral-100 outline-none transition focus:border-flux/50 focus:ring-2 focus:ring-flux/30"
-          placeholder="Ask Dexter anything"
+          className="flex-1 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-white placeholder-neutral-500 outline-none transition focus:border-white/20 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+          placeholder="Ask Dexter anything..."
         />
         <button
           onClick={onSendMessage}
           disabled={!canSend || !userText.trim()}
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-800/70 bg-iris/20 text-iris transition hover:border-iris/60 hover:bg-iris/30 disabled:opacity-50"
+          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-black transition hover:bg-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed"
         >
-          <Image src="arrow.svg" alt="Send" width={20} height={20} />
+          <span className="text-xl leading-none mb-0.5">↑</span>
         </button>
       </div>
     </div>

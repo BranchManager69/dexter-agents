@@ -5,33 +5,50 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer utilities {
-  .bg-gradient-fade-dark {
-    background: linear-gradient(
-      180deg,
-      rgb(var(--color-background) / 0) 0%,
-      rgb(var(--color-background) / 0.82) 48%,
-      rgb(var(--color-background) / 0.94) 100%
-    );
-  }
-}
-
 :root {
-  color-scheme: dark;
+  /* DARK MODE NATIVE */
+  --color-background: 5 5 5;
+  --color-foreground: 255 255 255;
+  
+  --color-surface-base: 10 10 10;
+  --color-surface-raised: 20 20 20;
+  --color-surface-glass: 10 10 10;
+
+  --color-primary: 255 101 0; /* Dexter Orange */
+  --color-primary-bright: 255 128 40;
+  --color-primary-muted: 60 20 5; /* Deep Burnt Orange for gradients */
+
+  --color-flux: 56 189 248; /* Sky Blue */
+  --color-iris: 99 102 241; /* Indigo */
+
+  /* Neutral Scale (Dark Mode) */
+  --color-neutral-100: 255 255 255;
+  --color-neutral-200: 229 229 229;
+  --color-neutral-300: 163 163 163;
+  --color-neutral-400: 115 115 115;
+  --color-neutral-500: 82 82 82;
+  --color-neutral-600: 64 64 64;
+  --color-neutral-700: 38 38 38;
+  --color-neutral-800: 23 23 23;
+  --color-neutral-900: 10 10 10;
+
+  /* Borders */
+  --color-border-subtle: 255 255 255;
+  --color-border-strong: 255 255 255;
 }
 
-html,
 body {
   @apply text-foreground font-body antialiased;
-  height: 100vh;
-  width: 100vw;
-  background-color: rgb(var(--color-background));
+  background-color: #050505; /* Hard fallback to Black */
+  /* Deep Space Mesh */
+  background: radial-gradient(circle at 15% 50%, rgba(60, 20, 5, 0.15), transparent 40%),
+              radial-gradient(circle at 85% 30%, rgba(99, 102, 241, 0.08), transparent 40%),
+              #050505; /* Fallback layer */
+  color: #ffffff;
   overflow: hidden;
   position: fixed;
-  background: radial-gradient(circle at 24% 16%, rgb(var(--color-primary-muted) / 0.45), transparent 58%),
-    radial-gradient(circle at 78% 18%, rgb(var(--color-flux) / 0.24), transparent 50%),
-    radial-gradient(circle at 68% 78%, rgb(var(--color-primary) / 0.16), transparent 60%),
-    linear-gradient(180deg, rgb(var(--color-neutral-100)) 0%, rgb(var(--color-primary-muted)) 100%);
+  height: 100vh;
+  width: 100vw;
 }
 
 @supports (height: 100dvh) {
@@ -45,68 +62,16 @@ body {
 .dexter-header {
   position: sticky;
   top: 0;
-  border-bottom: 1px solid rgba(var(--color-border-strong), 0.38);
-  background: linear-gradient(
-    125deg,
-    rgb(var(--color-background) / 0.94) 0%,
-    rgb(var(--color-surface-base) / 0.92) 65%,
-    rgb(var(--color-gradient-warm) / 0.28) 100%
-  );
-  box-shadow: 0 14px 28px rgba(26, 12, 6, 0.26);
-}
-
-.dexter-header::after {
-  content: "";
-  position: absolute;
-  inset: auto 0 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--color-border-strong), 0.6), transparent);
-  pointer-events: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(10, 10, 10, 0.8);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 button,
 input,
 textarea {
   @apply font-body;
-}
-
-@keyframes voice-pulse {
-  0%,
-  100% {
-    transform: scaleY(0.45);
-    opacity: 0.55;
-  }
-  50% {
-    transform: scaleY(1);
-    opacity: 1;
-  }
-}
-
-.voice-wave {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.voice-wave-bar {
-  width: 3px;
-  height: 18px;
-  border-radius: 999px;
-  background: rgb(var(--color-flux) / 0.7);
-  animation: voice-pulse 1.2s ease-in-out infinite;
-  transform-origin: bottom center;
-}
-
-.voice-wave-bar:nth-child(2) {
-  animation-delay: 0.12s;
-}
-
-.voice-wave-bar:nth-child(3) {
-  animation-delay: 0.24s;
-}
-
-.voice-wave-bar:nth-child(4) {
-  animation-delay: 0.12s;
 }
 
 .scrollbar-hide {

@@ -111,7 +111,7 @@ export function InputBar({
             {attachments.map(({ id, label, description }) => (
               <div
                 key={id}
-                className="group flex items-center gap-2 rounded-full border border-neutral-800/40 bg-neutral-900/70 px-3 py-1.5 text-xs font-medium text-neutral-100 backdrop-blur-xl"
+                className="group flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-neutral-200 backdrop-blur-xl"
               >
                 <span>{label}</span>
                 {description ? (
@@ -121,7 +121,7 @@ export function InputBar({
                   <button
                     type="button"
                     onClick={() => onRemoveAttachment(id)}
-                    className="flex h-5 w-5 items-center justify-center rounded-full bg-neutral-800/80 text-[10px] text-neutral-300 transition hover:bg-neutral-700/90 hover:text-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-500/70"
+                    className="flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-[10px] text-neutral-400 transition hover:bg-white/20 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20"
                     aria-label={`Remove ${label}`}
                   >
                     ×
@@ -132,7 +132,7 @@ export function InputBar({
           </div>
         ) : null}
 
-        <div className="relative flex w-full items-center gap-2 rounded-full border border-neutral-800/40 bg-[rgba(12,8,3,0.72)] px-2 py-1.5 shadow-[0_24px_48px_rgba(9,5,0,0.35)] backdrop-blur-2xl transition focus-within:border-[#F26B1A]/50">
+        <div className="relative flex w-full items-center gap-2 rounded-full border border-white/10 bg-[#0A0A0A]/80 px-2 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-300 focus-within:border-white/20 focus-within:shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_12px_40px_rgba(0,0,0,0.6)]">
           <input
             ref={fileInputRef}
             type="file"
@@ -145,7 +145,7 @@ export function InputBar({
             type="button"
             onClick={handleAttachmentButton}
             disabled={!onAddAttachments}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#F26B1A]/15 text-[#F26B1A] transition hover:bg-[#F26B1A]/25 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F9CF9D]/70 disabled:cursor-not-allowed disabled:bg-[#F26B1A]/10 disabled:text-[#F26B1A]/50 disabled:opacity-60"
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-neutral-400 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:cursor-not-allowed disabled:opacity-40"
             aria-label="Add attachments"
           >
             <MediaGlyph className="h-4 w-4" />
@@ -157,7 +157,7 @@ export function InputBar({
             onSubmit={onSendMessage}
             disabled={!canSend}
             autoFocus={shouldAutoFocus}
-            className="bg-transparent px-1 py-1.5 text-neutral-50"
+            className="bg-transparent px-1 py-1.5 text-white placeholder-neutral-500"
           />
 
           <SendButton onClick={onSendMessage} disabled={!canSubmit} />
