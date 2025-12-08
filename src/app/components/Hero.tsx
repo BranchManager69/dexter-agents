@@ -111,7 +111,8 @@ export function Hero({ className, title, subtitle, loading = false }: HeroProps)
               className="relative inline-flex flex-col"
               variants={titleVariants}
             >
-              <span className="relative z-[2] font-display text-[32px] leading-[1.1] tracking-tight text-white sm:text-[40px] font-semibold drop-shadow-xl">
+              {/* Updated to Warm Orange/White (#FFEFD5 is PapayaWhip/Light Orange) */}
+              <span className="relative z-[2] font-display text-[32px] leading-[1.1] tracking-tight text-[#FFE4C4] sm:text-[40px] font-semibold drop-shadow-xl">
                 {title}
               </span>
               <motion.span
@@ -121,7 +122,7 @@ export function Hero({ className, title, subtitle, loading = false }: HeroProps)
               />
             </motion.div>
             <motion.p
-              className="mt-3 max-w-2xl text-sm text-neutral-400 sm:text-base font-body leading-relaxed"
+              className="mt-3 max-w-2xl text-sm text-[#D4A68C] sm:text-base font-body leading-relaxed"
               variants={subtitleVariants}
             >
               {subtitle}

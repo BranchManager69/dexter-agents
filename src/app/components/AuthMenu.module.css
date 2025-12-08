@@ -143,14 +143,19 @@
 }
 
 .walletKey {
-  color: #fff; /* Fix black-on-black */
-  font-family: monospace;
-  font-size: 0.85rem;
+  color: #fff;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem; /* Reduced to fit full address */
+  letter-spacing: -0.02em;
+  width: 100%;
 }
 
 .walletKey :global(button) {
   color: #fff;
   text-align: left;
+  width: 100%;
+  white-space: nowrap;
+  overflow: visible; /* Prevent cut-off */
 }
 
 .walletStatus {
