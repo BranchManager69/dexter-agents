@@ -1,8 +1,6 @@
 "use client";
 
 import React from "react";
-import { motion } from "framer-motion";
-import { createPortal } from "react-dom";
 
 import Hero from "./Hero";
 import AdminDock from "./AdminDock";
@@ -17,10 +15,7 @@ import SignalsDrawer from "./signals/SignalsDrawer";
 import { DebugInfoModal } from "./DebugInfoModal";
 import SuperAdminModal from "./SuperAdminModal";
 import AgentPersonaModal from "./AgentPersonaModal";
-import { ConnectionStatusControl } from "./shell/ConnectionStatusControl";
 import VadControlPanel from "./shell/VadControlPanel";
-
-import type { SessionStatus } from "@/app/types";
 
 import type { DexterAppController } from "../hooks/useDexterAppController";
 
@@ -84,12 +79,7 @@ export function DexterAppLayout({
       <SuperAdminModal {...superAdminModalProps} />
       <AgentPersonaModal {...personaModalProps} />
       <VadControlPanel {...vadPanelProps} />
-      <FloatingConnectionStatus
-        sessionStatus={topRibbonProps.sessionStatus}
-        onToggleConnection={topRibbonProps.onToggleConnection}
-        heroCollapsed={heroCollapsed}
-        hasConnectedOnce={hasConnectedOnce}
-      />
+      {/* Connection status moved to BottomStatusRail */}
       <AdminDock
         canUseAdminTools={heroControlsProps.canUseAdminTools}
         showSuperAdminTools={heroControlsProps.showSuperAdminTools}
@@ -113,90 +103,3 @@ export function DexterAppLayout({
 }
 
 export default DexterAppLayout;
-
-type FloatingConnectionStatusProps = {
-  sessionStatus: SessionStatus;
-  onToggleConnection?: () => void;
-  heroCollapsed: boolean;
-  hasConnectedOnce: boolean;
-};
-
-function FloatingConnectionStatus({
-  sessionStatus,
-  onToggleConnection,
-  heroCollapsed,
-  hasConnectedOnce,
-}: FloatingConnectionStatusProps) {
-  const [mounted, setMounted] = React.useState(false);
-  const [position, setPosition] = React.useState({ top: 132, left: 24 });
-
-  const updatePosition = React.useCallback(() => {
-    if (typeof window === "undefined") return;
-
-    const target = document.querySelector('[data-hero-anchor]');
-
-    if (target instanceof HTMLElement) {
-      const rect = target.getBoundingClientRect();
-      const nextTop = Math.max(rect.top - 10, 60);
-      const nextLeft = Math.max(rect.left + 20, 16);
-
-      setPosition((prev) => {
-        const diffTop = Math.abs(prev.top - nextTop);
-        const diffLeft = Math.abs(prev.left - nextLeft);
-        if (diffTop < 1 && diffLeft < 1) {
-          return prev;
-        }
-        return { top: nextTop, left: nextLeft };
-      });
-    }
-  }, []);
-
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  React.useEffect(() => {
-    if (!mounted) return;
-
-    updatePosition();
-    const handle = () => updatePosition();
-    window.addEventListener("resize", handle);
-    window.addEventListener("scroll", handle, { passive: true });
-
-    return () => {
-      window.removeEventListener("resize", handle);
-      window.removeEventListener("scroll", handle);
-    };
-  }, [mounted, updatePosition]);
-
-  React.useEffect(() => {
-    if (!mounted) return;
-    const raf = window.requestAnimationFrame(() => updatePosition());
-    return () => window.cancelAnimationFrame(raf);
-  }, [mounted, heroCollapsed, sessionStatus, updatePosition]);
-
-  const shouldDisplay = sessionStatus !== "DISCONNECTED" || hasConnectedOnce;
-
-  if (!mounted || typeof window === "undefined" || !shouldDisplay) {
-    return null;
-  }
-
-  return createPortal(
-    <motion.div
-      className="pointer-events-none fixed z-40"
-      style={{ top: position.top, left: position.left }}
-      initial={{ opacity: 0, y: -10, scale: 0.94 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.35, ease: [0.22, 0.61, 0.36, 1], delay: 0.1 }}
-    >
-      <div className="pointer-events-auto">
-        <ConnectionStatusControl
-          sessionStatus={sessionStatus}
-          onToggleConnection={onToggleConnection}
-          allowReconnect={hasConnectedOnce}
-        />
-      </div>
-    </motion.div>,
-    document.body,
-  );
-}

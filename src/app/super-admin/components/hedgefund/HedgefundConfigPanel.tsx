@@ -129,14 +129,14 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
   };
 
   return (
-    <section className="rounded-xl border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
+    <section className="rounded-sm border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
       <header className="mb-4">
         <p className="text-xs uppercase tracking-wide text-neutral-400">Config</p>
         <h2 className="mt-1 text-lg font-semibold text-foreground">Risk & Runtime Controls</h2>
       </header>
 
       <div className="grid gap-4 text-sm">
-        <fieldset className="flex items-center justify-between rounded-md border border-slate-700/70 bg-slate-900/60 px-4 py-3">
+        <fieldset className="flex items-center justify-between rounded-sm border border-slate-700/70 bg-slate-900/60 px-4 py-3">
           <legend className="sr-only">Dry run toggle</legend>
           <div>
             <p className="text-sm font-medium text-foreground">Dry Run</p>
@@ -153,7 +153,7 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
           </label>
         </fieldset>
 
-        <fieldset className="flex items-center justify-between rounded-md border border-slate-700/70 bg-slate-900/60 px-4 py-3">
+        <fieldset className="flex items-center justify-between rounded-sm border border-slate-700/70 bg-slate-900/60 px-4 py-3">
           <legend className="sr-only">Auto start toggle</legend>
           <div>
             <p className="text-sm font-medium text-foreground">Auto Start Worker</p>
@@ -209,7 +209,7 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
         </div>
 
         {error ? (
-          <div className="rounded-md border border-red-600/40 bg-red-900/30 px-3 py-2 text-xs text-red-100">
+          <div className="rounded-sm border border-red-600/40 bg-red-900/30 px-3 py-2 text-xs text-red-100">
             {error}
           </div>
         ) : null}
@@ -219,7 +219,7 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
             type="button"
             onClick={handleSave}
             disabled={saving || !isDirty || loading}
-            className="rounded-md border border-emerald-500/50 bg-emerald-600/30 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-600/50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-sm border border-emerald-500/50 bg-emerald-600/30 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-600/50 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? "Saving…" : "Save Config"}
           </button>
@@ -227,7 +227,7 @@ export function HedgefundConfigPanel({ accessToken, config, loading, onSaved }: 
             type="button"
             onClick={handleReset}
             disabled={saving || loading || !config}
-            className="rounded-md border border-slate-700/70 bg-slate-900/60 px-4 py-2 text-sm text-neutral-200 transition hover:bg-slate-800/60 disabled:cursor-not-allowed disabled:opacity-40"
+            className="rounded-sm border border-slate-700/70 bg-slate-900/60 px-4 py-2 text-sm text-neutral-200 transition hover:bg-slate-800/60 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Reset
           </button>
@@ -257,7 +257,7 @@ function ConfigNumberInput({ label, value, onChange }: ConfigNumberInputProps) {
         type="number"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+        className="rounded-sm border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
       />
     </label>
   );

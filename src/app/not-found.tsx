@@ -8,7 +8,7 @@ export default function NotFound() {
         The page you’re looking for doesn’t exist or has been moved. Please check the URL or return to the homepage.
       </p>
       <Link
-        className="mt-4 inline-flex items-center rounded-full bg-[#F26B1A] px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#FFF5ED] transition hover:bg-[#ff7d30]"
+        className="mt-4 inline-flex items-center rounded-sm bg-[#F26B1A] px-4 py-2 text-sm font-semibold uppercase tracking-[0.18em] text-[#FFF5ED] transition hover:bg-[#ff7d30]"
         href="/"
       >
         Go Home

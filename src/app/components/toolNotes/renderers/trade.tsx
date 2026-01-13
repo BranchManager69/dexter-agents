@@ -228,7 +228,7 @@ function TradeNote({
         {view.warnings.length > 0 && (
           <section className="flex flex-col gap-2 text-sm text-amber-900">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.22em] text-amber-600">
-              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-amber-500/20 text-amber-700">!</span>
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-sm bg-amber-500/20 text-amber-700">!</span>
               Pay attention
             </div>
             <ul className="space-y-2">
@@ -258,14 +258,14 @@ function TradeNote({
             {view.requestData && Object.keys(view.requestData).length > 0 && (
               <div>
                 <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Request</div>
-                <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-slate-700">
+                <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-sm border border-slate-200/70 bg-white/80 p-3 text-slate-700">
                   {JSON.stringify(view.requestData, null, 2)}
                 </pre>
               </div>
             )}
             <div>
               <div className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Response</div>
-              <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-slate-200/70 bg-white/80 p-3 text-slate-700">
+              <pre className="mt-1 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-sm border border-slate-200/70 bg-white/80 p-3 text-slate-700">
                 {JSON.stringify(view.rawData, null, 2)}
               </pre>
             </div>

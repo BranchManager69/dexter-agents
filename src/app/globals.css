@@ -82,3 +82,40 @@ textarea {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Orange Scrollbar (Firefox) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #F26B1A transparent;
+}
+
+/* Orange Scrollbar (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #F26B1A 0%, #d95a10 100%);
+  border-radius: 4px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #ff7a2a 0%, #F26B1A 100%);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: #d95a10;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}

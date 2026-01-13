@@ -17,7 +17,7 @@ export function HedgefundPortfolioCard({ portfolio, loading }: HedgefundPortfoli
   const totalSol = portfolio?.totalSol ?? null;
 
   return (
-    <section className="rounded-xl border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
+    <section className="rounded-sm border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
       <header className="mb-4">
         <p className="text-xs uppercase tracking-wide text-neutral-400">Portfolio</p>
         <h2 className="mt-1 text-lg font-semibold text-foreground">Wallet Balances</h2>
@@ -25,7 +25,7 @@ export function HedgefundPortfolioCard({ portfolio, loading }: HedgefundPortfoli
       </header>
 
       {snapshots.length === 0 ? (
-        <div className="rounded-lg border border-slate-800/60 bg-slate-900/60 p-6 text-sm text-neutral-400">
+        <div className="rounded-sm border border-slate-800/60 bg-slate-900/60 p-6 text-sm text-neutral-400">
           {loading ? "Fetching token balances…" : "No snapshots available yet."}
         </div>
       ) : (
@@ -33,7 +33,7 @@ export function HedgefundPortfolioCard({ portfolio, loading }: HedgefundPortfoli
           {snapshots.map((snapshot) => (
             <div
               key={snapshot.alias}
-              className="rounded-lg border border-slate-800/60 bg-slate-950/40 p-4 shadow-lg shadow-black/20"
+              className="rounded-sm border border-slate-800/60 bg-slate-950/40 p-4 shadow-lg shadow-black/20"
             >
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
@@ -54,7 +54,7 @@ export function HedgefundPortfolioCard({ portfolio, loading }: HedgefundPortfoli
                 </div>
               </div>
 
-              <div className="mt-4 overflow-hidden rounded-md border border-slate-800/60">
+              <div className="mt-4 overflow-hidden rounded-sm border border-slate-800/60">
                 <table className="min-w-full divide-y divide-slate-800/60 text-sm">
                   <thead className="bg-slate-900/80 text-xs uppercase tracking-wide text-neutral-400">
                     <tr>

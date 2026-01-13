@@ -117,14 +117,14 @@ const walletListRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpanded
         <button
           type="button"
           onClick={onToggle}
-          className="w-full py-3 rounded-2xl border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="w-full py-3 rounded-sm border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
         >
           {isListExpanded ? "Collapse List" : `Show ${wallets.length - visibleWallets.length} more wallets`}
         </button>
       )}
 
       {debug && (
-        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(normalized, null, 2)}</pre>
         </details>

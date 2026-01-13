@@ -20,7 +20,7 @@ const changeToneClass = (tone: "positive" | "negative" | "neutral") => {
 };
 
 const renderEmptyState = (message: string) => (
-  <div className="rounded-md border border-dashed border-neutral-800/60 bg-surface-glass/40 px-4 py-6 text-center text-xs text-neutral-500">
+  <div className="rounded-sm border border-dashed border-neutral-800/60 bg-surface-glass/40 px-4 py-6 text-center text-xs text-neutral-500">
     {message}
   </div>
 );
@@ -28,7 +28,7 @@ const renderEmptyState = (message: string) => (
 export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacySignalPanelsProps) {
   return (
     <div className="flex flex-col gap-4">
-      <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
+      <section className="rounded-sm border border-neutral-800/60 bg-surface-base/80 p-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-sm font-semibold tracking-[0.08em] text-neutral-400">
             Market Pulse
@@ -42,7 +42,7 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
             marketPulse.items.map((item) => (
               <div
                 key={item.label}
-                className="flex items-center justify-between rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 text-neutral-200"
+                className="flex items-center justify-between rounded-sm border border-neutral-800/60 bg-surface-glass/60 px-3 py-2 text-neutral-200"
               >
                 <div className="font-mono text-xs tracking-[0.1em] tracking-[0.24em] text-neutral-400">
                   {item.label}
@@ -63,7 +63,7 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
         </div>
       </section>
 
-      <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
+      <section className="rounded-sm border border-neutral-800/60 bg-surface-base/80 p-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-sm font-semibold tracking-[0.08em] text-neutral-400">
             Pump Streams
@@ -77,7 +77,7 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
             pumpStreams.items.map((stream) => (
               <div
                 key={stream.title}
-                className="flex items-center justify-between rounded-md border border-neutral-800/60 bg-surface-glass/60 px-3 py-3"
+                className="flex items-center justify-between rounded-sm border border-neutral-800/60 bg-surface-glass/60 px-3 py-3"
               >
                 <div>
                   <div className="font-body text-sm text-neutral-100">{stream.title}</div>
@@ -104,7 +104,7 @@ export function LegacySignalPanels({ marketPulse, pumpStreams, wallet }: LegacyS
         </div>
       </section>
 
-      <section className="rounded-lg border border-neutral-800/60 bg-surface-base/80 p-4">
+      <section className="rounded-sm border border-neutral-800/60 bg-surface-base/80 p-4">
         <div className="flex items-center justify-between">
           <h3 className="font-display text-sm font-semibold tracking-[0.08em] text-neutral-400">
             Wallet Radar

@@ -61,7 +61,7 @@ const streamPublicShoutRenderer: ToolNoteRenderer = ({ item, debug = false }) =>
             <summary className="cursor-pointer text-[11px] uppercase tracking-[0.22em] text-neutral-400">
               Raw shout feed payload
             </summary>
-            <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/40 bg-neutral-950/60 p-3 text-[11px] leading-tight text-neutral-300">
+            <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-sm border border-neutral-800/40 bg-neutral-950/60 p-3 text-[11px] leading-tight text-neutral-300">
               {JSON.stringify(structured, null, 2)}
             </pre>
           </details>
@@ -84,7 +84,7 @@ const streamPublicShoutRenderer: ToolNoteRenderer = ({ item, debug = false }) =>
           <summary className="cursor-pointer text-[11px] uppercase tracking-[0.22em] text-neutral-400">
             Raw shout payload
           </summary>
-          <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-md border border-neutral-800/40 bg-neutral-950/60 p-3 text-[11px] leading-tight text-neutral-300">
+          <pre className="mt-2 max-h-48 overflow-y-auto whitespace-pre-wrap break-words rounded-sm border border-neutral-800/40 bg-neutral-950/60 p-3 text-[11px] leading-tight text-neutral-300">
             {JSON.stringify(structured, null, 2)}
           </pre>
         </details>

@@ -99,7 +99,7 @@ function createCodexRenderer(kind: CodexKind): ToolNoteRenderer {
     return (
       <SleekCard className="relative overflow-visible p-5 flex flex-col gap-5 bg-[#050505]">
         {/* Scanline Overlay */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl z-0 opacity-10">
+        <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-sm z-0 opacity-10">
            <div className="w-full h-full bg-[linear-gradient(to_bottom,transparent_50%,rgba(0,0,0,0.5)_51%)] bg-[length:100%_4px]" />
            <div className="absolute inset-0 animate-[scanline_8s_linear_infinite] bg-gradient-to-b from-transparent via-white/5 to-transparent h-[20%]" />
         </div>
@@ -110,7 +110,7 @@ function createCodexRenderer(kind: CodexKind): ToolNoteRenderer {
               <SleekLabel>{title}</SleekLabel>
            </div>
            <div className="flex gap-3 items-center">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-500 border border-white/10 px-2 py-0.5 rounded-full">
+              <span className="text-[9px] uppercase font-bold tracking-widest text-neutral-500 border border-white/10 px-2 py-0.5 rounded-sm">
                  {statusLabel}
               </span>
               {timestamp && <span className="text-[10px] text-neutral-600 font-mono">{timestamp}</span>}
@@ -131,7 +131,7 @@ function createCodexRenderer(kind: CodexKind): ToolNoteRenderer {
            <div className="relative z-10 flex flex-col gap-2 font-mono text-xs pl-4 border-l-2 border-emerald-500/20">
               <div className="flex items-center gap-2 mb-1">
                  <SleekLabel>Reasoning Trail</SleekLabel>
-                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                 <div className="w-1.5 h-1.5 rounded-sm bg-emerald-500 animate-pulse" />
               </div>
               <p className="text-emerald-400/80 leading-relaxed whitespace-pre-wrap">
                  {reasoning}
@@ -163,7 +163,7 @@ function createCodexRenderer(kind: CodexKind): ToolNoteRenderer {
         )}
 
         {debug && (
-          <details className="relative z-10 mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+          <details className="relative z-10 mt-2 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
             <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
             <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(rawOutput, null, 2)}</pre>
           </details>

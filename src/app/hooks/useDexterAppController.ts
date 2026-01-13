@@ -2657,6 +2657,10 @@ export function useDexterAppController(): DexterAppController {
     },
     canUseSignals: canUseAdminTools,
     canUseDebug: canUseAdminTools,
+    // Connection status in bottom bar
+    sessionStatus,
+    onToggleConnection,
+    showConnectionStatus: sessionStatus !== 'DISCONNECTED' || hasConnectedOnce,
   };
 
   const signalsDrawerProps: SignalsDrawerShellProps = {

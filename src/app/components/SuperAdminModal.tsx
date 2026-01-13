@@ -453,7 +453,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
 
       <div className="fixed inset-0 z-[10999] flex items-center justify-center px-2 py-6 sm:px-4 sm:py-8">
         <div
-          className="relative flex h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-amber-400/60 bg-neutral-950/95 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:h-[90vh]"
+          className="relative flex h-[96vh] w-full max-w-5xl flex-col overflow-hidden rounded-sm border border-amber-400/60 bg-neutral-950/95 shadow-[0_24px_70px_rgba(0,0,0,0.55)] backdrop-blur-xl sm:h-[90vh]"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="flex flex-1 flex-col overflow-y-auto px-4 py-5 sm:px-6 sm:py-6">
@@ -472,7 +472,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
               <button
                 type="button"
                 onClick={onClose}
-                className="self-start rounded-full border border-amber-300/40 p-1 text-amber-200 transition hover:border-amber-200/60 hover:text-amber-50"
+                className="self-start rounded-sm border border-amber-300/40 p-1 text-amber-200 transition hover:border-amber-200/60 hover:text-amber-50"
                 aria-label="Close superadmin panel"
               >
                 <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -493,12 +493,12 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                   placeholder="Filter modules"
                   value={filter}
                   onChange={(event) => setFilter(event.target.value)}
-                  className="mt-2 w-full rounded-lg border border-amber-400/30 bg-neutral-900/70 px-3 py-2 text-sm text-amber-50 placeholder:text-amber-200/40 focus:border-amber-300/70 focus:outline-none"
+                  className="mt-2 w-full rounded-sm border border-amber-400/30 bg-neutral-900/70 px-3 py-2 text-sm text-amber-50 placeholder:text-amber-200/40 focus:border-amber-300/70 focus:outline-none"
                 />
               </div>
 
               <div className="flex-1 overflow-hidden">
-                <div className="max-h-[360px] overflow-y-auto rounded-lg border border-amber-400/20 bg-neutral-900/40">
+                <div className="max-h-[360px] overflow-y-auto rounded-sm border border-amber-400/20 bg-neutral-900/40">
                   {loadState === "loading" && (
                     <div className="p-4 text-sm text-amber-100/70">Loading modules…</div>
                   )}
@@ -552,7 +552,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
               <button
                 type="button"
                 onClick={handleCreateNew}
-                className="rounded-lg border border-amber-400/50 px-3 py-2 text-sm font-medium text-amber-100 transition hover:border-amber-300 hover:text-amber-50"
+                className="rounded-sm border border-amber-400/50 px-3 py-2 text-sm font-medium text-amber-100 transition hover:border-amber-300 hover:text-amber-50"
               >
                 + New prompt module
               </button>
@@ -602,7 +602,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                             })
                           }
                           disabled={!isCreatingNew}
-                          className={`mt-1 w-full rounded-lg border px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300/70 ${
+                          className={`mt-1 w-full rounded-sm border px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300/70 ${
                             isCreatingNew
                               ? "border-amber-400/40 bg-neutral-900/70"
                               : "border-amber-400/20 bg-neutral-900/40 text-amber-200/70"
@@ -623,7 +623,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                               return { ...prev, title: event.target.value };
                             })
                           }
-                          className="mt-1 w-full rounded-lg border border-amber-400/40 bg-neutral-900/70 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300/70"
+                          className="mt-1 w-full rounded-sm border border-amber-400/40 bg-neutral-900/70 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300/70"
                           placeholder="Dexter Concierge Instructions"
                         />
                       </div>
@@ -641,14 +641,14 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                             return { ...prev, segment: event.target.value };
                           })
                         }
-                        className="mt-1 h-64 w-full resize-y rounded-lg border border-amber-400/40 bg-neutral-900/60 px-3 py-3 font-mono text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300/70"
+                        className="mt-1 h-64 w-full resize-y rounded-sm border border-amber-400/40 bg-neutral-900/60 px-3 py-3 font-mono text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300/70"
                         spellCheck={false}
                       />
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-2">
                       {!isCreatingNew && original && (
-                        <div className="rounded-lg border border-amber-400/20 bg-neutral-900/50 p-3 text-xs text-amber-200/60">
+                        <div className="rounded-sm border border-amber-400/20 bg-neutral-900/50 p-3 text-xs text-amber-200/60">
                           <p>
                             <span className="font-semibold text-amber-200/80">Updated by:</span>{" "}
                             {original.updatedBy?.email ?? original.updatedBy?.id ?? "Unknown"}
@@ -676,7 +676,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                               return { ...prev, notes: event.target.value };
                             })
                           }
-                          className="mt-1 h-20 w-full resize-none rounded-lg border border-amber-400/30 bg-neutral-900/60 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300/70"
+                          className="mt-1 h-20 w-full resize-none rounded-sm border border-amber-400/30 bg-neutral-900/60 px-3 py-2 text-sm text-amber-50 focus:outline-none focus:ring-2 focus:ring-amber-300/70"
                           placeholder="Optional context for this change"
                         />
                       </div>
@@ -687,7 +687,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                         type="button"
                         onClick={handleSave}
                         disabled={!canSave}
-                        className={`rounded-lg border px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] transition ${
+                        className={`rounded-sm border px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] transition ${
                           canSave
                             ? "border-amber-300/70 bg-amber-400/20 text-amber-50 hover:border-amber-200 hover:text-amber-100"
                             : "border-neutral-700 bg-neutral-800/60 text-neutral-500"
@@ -703,7 +703,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                         type="button"
                         onClick={resetDraft}
                         disabled={saving || (!isCreatingNew && !isDirty && !draft.notes)}
-                        className="rounded-lg border border-amber-300/30 px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] text-amber-100/70 transition hover:border-amber-200/60 hover:text-amber-50 disabled:opacity-40"
+                        className="rounded-sm border border-amber-300/30 px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] text-amber-100/70 transition hover:border-amber-200/60 hover:text-amber-50 disabled:opacity-40"
                       >
                         Reset
                       </button>
@@ -711,7 +711,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                         <button
                           type="button"
                           onClick={toggleHistory}
-                          className={`rounded-lg border px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] transition ${
+                          className={`rounded-sm border px-4 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] transition ${
                             historyVisibility
                               ? "border-amber-300/70 text-amber-100"
                               : "border-amber-300/40 text-amber-100/70 hover:border-amber-200/60 hover:text-amber-50"
@@ -724,7 +724,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                         <button
                           type="button"
                           onClick={refreshHistory}
-                          className="rounded-lg border border-amber-300/30 px-3 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] text-amber-100/70 transition hover:border-amber-200/60 hover:text-amber-50"
+                          className="rounded-sm border border-amber-300/30 px-3 py-2 text-xs font-semibold font-display font-semibold tracking-[0.08em] text-amber-100/70 transition hover:border-amber-200/60 hover:text-amber-50"
                         >
                           Refresh
                         </button>
@@ -732,7 +732,7 @@ export function SuperAdminModal({ open, onClose }: SuperAdminModalProps) {
                     </div>
 
                     {historyVisibility && selectedSlug && (
-                      <div className="mt-2 space-y-3 rounded-lg border border-amber-400/20 bg-neutral-900/40 p-3">
+                      <div className="mt-2 space-y-3 rounded-sm border border-amber-400/20 bg-neutral-900/40 p-3">
                         {currentHistory?.status === "loading" && (
                           <p className="text-sm text-amber-100/70">Loading history…</p>
                         )}

@@ -208,7 +208,7 @@ export function TokenFlow({ from, to, animate = false }: TokenFlowProps) {
         <TokenBadge side={{ ...from, accent: from.accent ?? "from" }} compact />
         {animate ? (
           <div className="flex flex-col items-center gap-2 text-slate-600">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-sm bg-white shadow-[0_8px_20px_rgba(15,23,42,0.08)]">
               <svg className="h-5 w-5 animate-pulse" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M5 12.75h10.19l-2.72 2.72a.75.75 0 1 0 1.06 1.06l4.25-4.25a.75.75 0 0 0 0-1.06l-4.25-4.25a.75.75 0 0 0-1.06 1.06l2.72 2.72H5a.75.75 0 0 0 0 1.5Z"

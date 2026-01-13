@@ -13,13 +13,13 @@ function shorten(pubkey: string): string {
 
 export function HedgefundWalletsCard({ wallets, loading }: HedgefundWalletsCardProps) {
   return (
-    <section className="rounded-xl border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
+    <section className="rounded-sm border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
       <header className="mb-4">
         <p className="text-xs uppercase tracking-wide text-neutral-400">Wallets</p>
         <h2 className="mt-1 text-lg font-semibold text-foreground">Execution Pool</h2>
       </header>
 
-      <div className="overflow-hidden rounded-lg border border-slate-800/60">
+      <div className="overflow-hidden rounded-sm border border-slate-800/60">
         <table className="min-w-full divide-y divide-slate-800/60 text-sm">
           <thead className="bg-slate-900/80 text-xs uppercase tracking-wide text-neutral-400">
             <tr>
@@ -46,7 +46,7 @@ export function HedgefundWalletsCard({ wallets, loading }: HedgefundWalletsCardP
                     {wallet.tags?.length ? (
                       <div className="flex flex-wrap gap-2">
                         {wallet.tags.map((tag) => (
-                          <span key={tag} className="rounded-full border border-slate-700/60 bg-slate-900/60 px-2 py-0.5 text-xs text-neutral-200">
+                          <span key={tag} className="rounded-sm border border-slate-700/60 bg-slate-900/60 px-2 py-0.5 text-xs text-neutral-200">
                             {tag}
                           </span>
                         ))}

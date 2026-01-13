@@ -118,7 +118,7 @@ const searchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
       )}
 
       {answer && (
-        <div className="p-4 rounded-2xl bg-white/[0.03] border border-white/5 text-sm text-neutral-300 leading-relaxed">
+        <div className="p-4 rounded-sm bg-white/[0.03] border border-white/5 text-sm text-neutral-300 leading-relaxed">
            <SleekLabel>AI Summary</SleekLabel>
            <p className="mt-2">{answer}</p>
         </div>
@@ -134,7 +134,7 @@ const searchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
                    href={img.url} 
                    target="_blank" 
                    rel="noreferrer" 
-                   className="relative aspect-square rounded-xl overflow-hidden border border-white/5 group"
+                   className="relative aspect-square rounded-sm overflow-hidden border border-white/5 group"
                  >
                     <img src={img.url} alt="Search result" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
                  </a>
@@ -158,7 +158,7 @@ const searchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
                  href={url} 
                  target="_blank" 
                  rel="noreferrer"
-                 className="flex gap-4 p-4 rounded-2xl bg-white/[0.02] border border-transparent hover:bg-white/[0.05] hover:border-white/10 transition-all group"
+                 className="flex gap-4 p-4 rounded-sm bg-white/[0.02] border border-transparent hover:bg-white/[0.05] hover:border-white/10 transition-all group"
                >
                   <div className="shrink-0 pt-1">
                      <TokenIconSleek symbol={label} imageUrl={faviconUrl ?? undefined} size={40} />
@@ -177,7 +177,7 @@ const searchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
       </div>
 
       {debug && (
-        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(normalized, null, 2)}</pre>
         </details>

@@ -134,7 +134,7 @@ const walletResolveRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
       )}
 
       {debug && (
-        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(normalized, null, 2)}</pre>
         </details>

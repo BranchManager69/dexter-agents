@@ -404,7 +404,7 @@ function SwapNote({ view, debug, debugLabel }: { view: SwapViewModel; debug?: bo
       {/* Metrics Grid */}
       <div className="grid grid-cols-2 gap-3 border-t border-white/5 pt-5 mt-4">
          {view.hero.priceImpact && (
-            <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.02]">
+            <div className="flex flex-col gap-1.5 p-3 rounded-sm bg-white/[0.02] border border-white/[0.02]">
                 <SleekLabel>PRICE IMPACT</SleekLabel>
                 <span className={`text-sm font-bold tracking-wide ${
                     view.hero.priceImpact.tone === 'negative' ? 'text-rose-400' : 'text-emerald-400'
@@ -427,7 +427,7 @@ function SwapNote({ view, debug, debugLabel }: { view: SwapViewModel; debug?: bo
       {view.warnings.length > 0 && (
         <div className="flex flex-col gap-1 pt-4 border-t border-white/5">
            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-sm bg-amber-500 animate-pulse" />
               <span className="text-[9px] uppercase font-bold tracking-widest text-amber-500">Warning</span>
            </div>
            <ul className="pl-3.5 space-y-1">
@@ -443,7 +443,7 @@ function SwapNote({ view, debug, debugLabel }: { view: SwapViewModel; debug?: bo
       {view.errorMessage && (
         <div className="flex flex-col gap-1 pt-4 border-t border-white/5">
            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+              <div className="w-1.5 h-1.5 rounded-sm bg-rose-500 animate-pulse" />
               <span className="text-[9px] uppercase font-bold tracking-widest text-rose-500">Error</span>
            </div>
            <p className="text-xs text-neutral-400 pl-3.5">{view.errorMessage}</p>
@@ -468,7 +468,7 @@ function SwapNote({ view, debug, debugLabel }: { view: SwapViewModel; debug?: bo
       )}
 
       {debug && (
-        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(view.rawData, null, 2)}</pre>
         </details>

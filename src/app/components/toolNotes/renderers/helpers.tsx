@@ -56,7 +56,7 @@ export function resolveSourceBadge(source: string | null) {
     return {
       label: "Unknown source",
       className:
-        "rounded-full border border-[#D1D5DB] bg-white px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#1F2937]",
+        "rounded-sm border border-[#D1D5DB] bg-white px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#1F2937]",
     };
   }
   const normalized = source.toLowerCase();
@@ -65,45 +65,45 @@ export function resolveSourceBadge(source: string | null) {
       return {
         label: "Resolver default",
         className:
-          "rounded-full border border-[#34D399]/40 bg-[#ECFDF5] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#047857]",
+          "rounded-sm border border-[#34D399]/40 bg-[#ECFDF5] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#047857]",
       };
     case "session":
     case "override":
       return {
         label: "Session override",
         className:
-          "rounded-full border border-[#FB923C]/40 bg-[#FFF7ED] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#9A3412]",
+          "rounded-sm border border-[#FB923C]/40 bg-[#FFF7ED] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#9A3412]",
       };
     case "primary":
       return {
         label: "Primary wallet",
         className:
-          "rounded-full border border-[#34D399]/40 bg-[#ECFDF5] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#047857]",
+          "rounded-sm border border-[#34D399]/40 bg-[#ECFDF5] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#047857]",
       };
     case "demo":
       return {
         label: "Demo wallet",
         className:
-          "rounded-full border border-[#A855F7]/30 bg-[#F5F3FF] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#6D28D9]",
+          "rounded-sm border border-[#A855F7]/30 bg-[#F5F3FF] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#6D28D9]",
       };
     case "env":
     case "environment":
       return {
         label: "Env fallback",
         className:
-          "rounded-full border border-[#60A5FA]/40 bg-[#EFF6FF] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#1D4ED8]",
+          "rounded-sm border border-[#60A5FA]/40 bg-[#EFF6FF] px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#1D4ED8]",
       };
     case "none":
       return {
         label: "No wallet bound",
         className:
-          "rounded-full border border-[#D1D5DB] bg-white px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#4B5563]",
+          "rounded-sm border border-[#D1D5DB] bg-white px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#4B5563]",
       };
     default:
       return {
         label: source,
         className:
-          "rounded-full border border-[#D1D5DB] bg-white px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#1F2937]",
+          "rounded-sm border border-[#D1D5DB] bg-white px-3 py-1 text-[11px] font-display font-medium tracking-[0.08em] text-[#1F2937]",
       };
   }
 }

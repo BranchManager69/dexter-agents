@@ -1,5 +1,7 @@
 import React from "react";
 import Image from "next/image";
+import { ConnectionStatusControl } from "./ConnectionStatusControl";
+import type { SessionStatus } from "@/app/types";
 
 interface BottomStatusRailProps {
   onOpenDebugModal: () => void;
@@ -15,6 +17,10 @@ interface BottomStatusRailProps {
   } | null;
   canUseSignals: boolean;
   canUseDebug: boolean;
+  // Connection status
+  sessionStatus?: SessionStatus;
+  onToggleConnection?: () => void;
+  showConnectionStatus?: boolean;
 }
 
 export function BottomStatusRail({
@@ -24,25 +30,37 @@ export function BottomStatusRail({
   vadControl,
   canUseSignals,
   canUseDebug,
+  sessionStatus,
+  onToggleConnection,
+  showConnectionStatus = false,
 }: BottomStatusRailProps) {
   return (
     <div className="flex items-center justify-between gap-6 px-9 py-3 text-sm text-neutral-200">
-      {/* Left: Dexter.cash link with logo */}
-      <a
-        href="https://dexter.cash"
-        className="flex items-center gap-2 text-xs text-neutral-300 transition hover:text-flux"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        <Image
-          src="/assets/logos/logo.svg"
-          alt="Dexter"
-          width={16}
-          height={16}
-          className="h-4 w-4"
-        />
-        <span>dexter.cash</span>
-      </a>
+      {/* Left: Dexter.cash link + Connection Status */}
+      <div className="flex items-center gap-4">
+        <a
+          href="https://dexter.cash"
+          className="flex items-center gap-2 text-xs text-neutral-300 transition hover:text-flux"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <Image
+            src="/assets/logos/logo.svg"
+            alt="Dexter"
+            width={16}
+            height={16}
+            className="h-4 w-4"
+          />
+          <span>dexter.cash</span>
+        </a>
+        {showConnectionStatus && sessionStatus && onToggleConnection && (
+          <ConnectionStatusControl
+            sessionStatus={sessionStatus}
+            onToggleConnection={onToggleConnection}
+            allowReconnect={true}
+          />
+        )}
+      </div>
 
       {/* Center: Voice controls & signals */}
       <div className="flex flex-1 items-center justify-center gap-4">
@@ -50,7 +68,7 @@ export function BottomStatusRail({
           <button
             type="button"
             onClick={voiceControl.onToggleMuted}
-            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 font-display text-[11px] tracking-[0.08em] transition whitespace-nowrap sm:text-[12px] ${
+            className={`inline-flex items-center gap-2 rounded-sm border px-3 py-1 font-display text-[11px] tracking-[0.08em] transition whitespace-nowrap sm:text-[12px] ${
               voiceControl.isMuted
                 ? 'border-red-500/75 bg-red-600/40 text-red-50'
                 : 'border-emerald-400/70 bg-emerald-500/20 text-emerald-100'
@@ -86,7 +104,7 @@ export function BottomStatusRail({
           <button
             type="button"
             onClick={onOpenSignals}
-            className="inline-flex items-center justify-center rounded-full border border-neutral-800/60 bg-neutral-900/40 p-2 text-neutral-300 transition hover:border-flux/40 hover:text-flux"
+            className="inline-flex items-center justify-center rounded-sm border border-neutral-800/60 bg-neutral-900/40 p-2 text-neutral-300 transition hover:border-flux/40 hover:text-flux"
             title="Open signals"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

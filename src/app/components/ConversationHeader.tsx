@@ -37,7 +37,7 @@ export function ConversationHeader({
       <div className="flex min-w-0 flex-shrink gap-2">
         <button
           onClick={handleCopy}
-          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux sm:px-3"
+          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-sm border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux sm:px-3"
           title="Copy transcript"
         >
           <ClipboardCopyIcon />
@@ -45,7 +45,7 @@ export function ConversationHeader({
         </button>
         <button
           onClick={onDownloadAudio}
-          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-iris/50 hover:text-iris sm:px-3"
+          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-sm border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-iris/50 hover:text-iris sm:px-3"
           title="Download audio recording"
         >
           <DownloadIcon />
@@ -54,7 +54,7 @@ export function ConversationHeader({
         </button>
         <button
           onClick={handleSave}
-          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-amber-400/60 hover:text-amber-300 sm:px-3"
+          className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-sm border border-neutral-800/60 bg-surface-glass/60 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-amber-400/60 hover:text-amber-300 sm:px-3"
           title="Save conversation log"
         >
           <span className="text-lg leading-none">⬇</span>

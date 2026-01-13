@@ -180,7 +180,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
         {banner ? (
           <div
             key={banner.id}
-            className={`mb-6 rounded-lg border px-4 py-3 text-sm ${
+            className={`mb-6 rounded-sm border px-4 py-3 text-sm ${
               banner.tone === "error"
                 ? "border-red-600/40 bg-red-900/30 text-red-100"
                 : banner.tone === "success"
@@ -234,7 +234,7 @@ export function SuperAdminDashboard({ accessToken, email }: SuperAdminDashboardP
         </div>
 
         {!hasData && !loading ? (
-          <div className="mt-10 rounded-lg border border-slate-800/70 bg-slate-900/70 p-6 text-sm text-neutral-300">
+          <div className="mt-10 rounded-sm border border-slate-800/70 bg-slate-900/70 p-6 text-sm text-neutral-300">
             <p>Data not available yet. Verify the hedgefund API is reachable and refresh.</p>
           </div>
         ) : null}

@@ -88,10 +88,10 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
       <header className="flex items-center justify-between px-1">
         <SleekLabel>Live Streams</SleekLabel>
         <div className="flex items-center gap-3">
-           <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20">
+           <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-red-500/10 border border-red-500/20">
               <span className="relative flex h-1.5 w-1.5">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-500"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-sm bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-sm h-1.5 w-1.5 bg-red-500"></span>
               </span>
               <span className="text-[9px] font-bold text-red-400 uppercase tracking-wider">Live</span>
            </span>
@@ -131,13 +131,13 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
                   )}
                   
                   {/* Overlays */}
-                  <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded-md border border-white/5">
-                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                  <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded-sm border border-white/5">
+                     <span className="w-1.5 h-1.5 rounded-sm bg-red-500 animate-pulse" />
                      <span className="text-[9px] font-bold text-white uppercase tracking-wider">LIVE</span>
                   </div>
 
                   {viewers && (
-                    <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded-md border border-white/5">
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded-sm border border-white/5">
                        <PersonIcon className="w-3 h-3 text-neutral-400" />
                        <span className="text-[10px] font-bold text-white">{viewers}</span>
                     </div>
@@ -181,14 +181,14 @@ const pumpstreamRenderer: ToolNoteRenderer = ({ item, isExpanded, onToggle, debu
         <button
           type="button"
           onClick={onToggle}
-          className="w-full py-3 rounded-2xl border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="w-full py-3 rounded-sm border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
         >
           {isExpanded ? "Collapse" : `Show ${streams.length - visibleStreams.length} more streams`}
         </button>
       )}
 
       {debug && (
-        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(payload, null, 2)}</pre>
         </details>

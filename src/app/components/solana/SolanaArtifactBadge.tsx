@@ -49,7 +49,7 @@ export function SolanaArtifactBadge({ value, type }: SolanaArtifactBadgeProps) {
   }, [value]);
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-neutral-900/40 px-2 py-1 text-xs text-neutral-100">
+    <span className="inline-flex items-center gap-1.5 rounded-sm bg-neutral-900/40 px-2 py-1 text-xs text-neutral-100">
       <span className="inline-flex items-center gap-1">
         <Image src={ICON_PATH} alt="Solana" width={14} height={14} className="h-3.5 w-3.5" />
         <button

@@ -76,7 +76,7 @@ function Events({ isExpanded }: EventsProps) {
 
                 {log.expanded && log.eventData && (
                   <div className="mt-2 text-left text-[11px] text-neutral-300">
-                    <pre className="whitespace-pre-wrap break-words rounded-md border border-neutral-800/40 bg-surface-glass/40 p-3 text-[11px] text-neutral-200">
+                    <pre className="whitespace-pre-wrap break-words rounded-sm border border-neutral-800/40 bg-surface-glass/40 p-3 text-[11px] text-neutral-200">
                       {JSON.stringify(log.eventData, null, 2)}
                     </pre>
                   </div>

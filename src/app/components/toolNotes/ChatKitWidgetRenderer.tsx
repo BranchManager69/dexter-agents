@@ -333,7 +333,7 @@ function renderBadge(component: Badge) {
   return (
     <span
       key={component.id}
-      className={cx("inline-flex items-center gap-1 rounded-full border border-solid", color, variant, sizeClass, component.pill && "rounded-full")}
+      className={cx("inline-flex items-center gap-1 rounded-sm border border-solid", color, variant, sizeClass, component.pill && "rounded-sm")}
     >
       {component.label}
     </span>
@@ -379,7 +379,7 @@ function renderText(component: TextComponent | Caption | Title) {
 function renderButton(component: Button) {
   const actionHref = linkFromAction(component.onClickAction);
   const baseClass = cx(
-    "inline-flex items-center justify-center gap-2 rounded-full border px-3 py-1 font-display text-xs font-semibold tracking-[0.08em] transition",
+    "inline-flex items-center justify-center gap-2 rounded-sm border px-3 py-1 font-display text-xs font-semibold tracking-[0.08em] transition",
     component.style === "primary"
       ? "border-transparent bg-[#111827] text-white hover:bg-[#0F172A]"
       : "border-[#D1D5DB] bg-white text-[#1F2937] hover:border-[#9CA3AF] hover:text-[#0F172A]",
@@ -431,7 +431,7 @@ function renderImage(component: ImageComponent) {
   return (
     <div
       key={component.id}
-      className="relative overflow-hidden rounded-lg border border-[#E5E7EB] bg-white shadow-sm"
+      className="relative overflow-hidden rounded-sm border border-[#E5E7EB] bg-white shadow-sm"
       style={{ ...style, position: "relative", minHeight: style.height ?? "80px" }}
     >
       {content}

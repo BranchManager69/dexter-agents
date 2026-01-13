@@ -188,7 +188,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
             <button
               type="button"
               onClick={handleCopyAddress}
-              className="inline-flex items-center gap-1 rounded-full border border-neutral-700/60 px-3 py-1 text-xs text-neutral-200 transition hover:border-flux/60 hover:text-flux"
+              className="inline-flex items-center gap-1 rounded-sm border border-neutral-700/60 px-3 py-1 text-xs text-neutral-200 transition hover:border-flux/60 hover:text-flux"
             >
               {copiedAddress ? "Copied" : "Copy"}
             </button>
@@ -246,7 +246,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
 
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
         <div
-          className="flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-neutral-800/60 bg-surface-glass/95 shadow-elevated backdrop-blur-xl"
+          className="flex w-full max-w-3xl flex-col overflow-hidden rounded-sm border border-neutral-800/60 bg-surface-glass/95 shadow-elevated backdrop-blur-xl"
           style={{ maxHeight: "calc(100vh - 4rem)" }}
           onClick={(event) => event.stopPropagation()}
         >
@@ -261,7 +261,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
             </div>
             <button
               onClick={onClose}
-              className="rounded-full p-1.5 text-neutral-500 transition hover:text-neutral-200"
+              className="rounded-sm p-1.5 text-neutral-500 transition hover:text-neutral-200"
               aria-label="Close"
             >
               <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -287,7 +287,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
               <DebugSection
               title="Connection"
               badge={
-                <span className="rounded-full bg-neutral-800/70 px-3 py-0.5 text-xs font-semibold text-neutral-100">
+                <span className="rounded-sm bg-neutral-800/70 px-3 py-0.5 text-xs font-semibold text-neutral-100">
                   {connectionStatus}
                 </span>
               }
@@ -297,7 +297,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
               <DebugSection
               title="Wallet"
               badge={
-                <span className="rounded-full bg-neutral-800/70 px-3 py-0.5 text-xs font-semibold text-neutral-100">
+                <span className="rounded-sm bg-neutral-800/70 px-3 py-0.5 text-xs font-semibold text-neutral-100">
                   {walletInfo.formattedLabel ?? walletStatus}
                 </span>
               }
@@ -310,7 +310,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
                     {walletTokens.map((token, index) => (
                       <li
                         key={`${token.symbol ?? token.label ?? index}`}
-                        className="flex items-center justify-between gap-3 rounded-md border border-neutral-800/50 bg-neutral-900/30 px-3 py-2 text-xs text-neutral-200"
+                        className="flex items-center justify-between gap-3 rounded-sm border border-neutral-800/50 bg-neutral-900/30 px-3 py-2 text-xs text-neutral-200"
                       >
                         <span>{token.symbol || token.label || "Token"}</span>
                         <span className="text-right text-neutral-100">
@@ -358,7 +358,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
                   <select
                     value={codec}
                     onChange={(event) => onCodecChange(event.target.value)}
-                    className="rounded-md border border-neutral-800/80 bg-surface-glass/60 px-3 py-1.5 text-xs text-neutral-200 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30"
+                    className="rounded-sm border border-neutral-800/80 bg-surface-glass/60 px-3 py-1.5 text-xs text-neutral-200 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30"
                   >
                     <option value="opus">Opus (48k)</option>
                     <option value="pcmu">PCMU (8k)</option>
@@ -372,7 +372,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
                     <select
                       value={selectedAgentName}
                       onChange={(event) => onAgentChange(event.target.value)}
-                      className="rounded-md border border-neutral-800/80 bg-surface-glass/60 px-3 py-1.5 text-xs text-neutral-200 outline-none transition focus:border-rose-400/60 focus:ring-2 focus:ring-rose-300/30"
+                      className="rounded-sm border border-neutral-800/80 bg-surface-glass/60 px-3 py-1.5 text-xs text-neutral-200 outline-none transition focus:border-rose-400/60 focus:ring-2 focus:ring-rose-300/30"
                     >
                       {agents.map((agent) => (
                         <option key={agent.name} value={agent.name} className="bg-neutral-900 text-rose-100">
@@ -407,7 +407,7 @@ function DebugSection({
   footer?: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-neutral-800/60 bg-neutral-900/30 px-4 py-4">
+    <section className="flex flex-col gap-3 rounded-sm border border-neutral-800/60 bg-neutral-900/30 px-4 py-4">
       <header className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-display text-xs font-semibold tracking-[0.12em] text-neutral-400 uppercase">
           {title}
@@ -439,7 +439,7 @@ function InfoList({ rows }: { rows: InfoRow[] }) {
 
 function RoleDiffNotice({ diff }: { diff: RoleDiff }) {
   return (
-    <div className="rounded-md border border-amber-400/60 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+    <div className="rounded-sm border border-amber-400/60 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
       <p className="font-semibold text-amber-100">Role mismatch detected</p>
       {diff.missingInMcp.length ? (
         <p className="mt-1">Missing in MCP token: {formatRoles(diff.missingInMcp)}</p>

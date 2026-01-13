@@ -93,8 +93,8 @@ export function Hero({ className, title, subtitle, loading = false }: HeroProps)
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <div className="h-6 w-60 rounded-full bg-white/10 animate-pulse" />
-            <div className="h-4 w-72 rounded-full bg-white/5 animate-pulse" />
+            <div className="h-6 w-60 rounded-sm bg-white/10 animate-pulse" />
+            <div className="h-4 w-72 rounded-sm bg-white/5 animate-pulse" />
           </motion.div>
         ) : (
           <motion.div
@@ -116,7 +116,7 @@ export function Hero({ className, title, subtitle, loading = false }: HeroProps)
                 {title}
               </span>
               <motion.span
-                className="pointer-events-none absolute inset-x-0 -bottom-1 h-2 origin-left rounded-full bg-gradient-to-r from-orange-500 via-amber-500 to-transparent opacity-60 blur-sm"
+                className="pointer-events-none absolute inset-x-0 -bottom-1 h-2 origin-left rounded-sm bg-gradient-to-r from-orange-500 via-amber-500 to-transparent opacity-60 blur-sm"
                 style={{ zIndex: 1 }}
                 variants={accentVariants}
               />

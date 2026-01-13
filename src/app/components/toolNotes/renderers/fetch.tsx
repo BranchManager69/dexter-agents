@@ -100,7 +100,7 @@ const fetchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
                 target="_blank"
                 rel="noreferrer"
                 onClick={(e) => e.stopPropagation()}
-                className="relative aspect-video rounded-xl overflow-hidden bg-neutral-800 border border-white/5 hover:border-white/20 transition-colors"
+                className="relative aspect-video rounded-sm overflow-hidden bg-neutral-800 border border-white/5 hover:border-white/20 transition-colors"
               >
                  <img src={img} alt={`Image ${idx + 1}`} className="w-full h-full object-cover" />
               </a>
@@ -138,7 +138,7 @@ const fetchRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
       )}
 
       {debug && (
-        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono" onClick={(e) => e.stopPropagation()}>
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono" onClick={(e) => e.stopPropagation()}>
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{text || JSON.stringify(normalized, null, 2)}</pre>
         </details>

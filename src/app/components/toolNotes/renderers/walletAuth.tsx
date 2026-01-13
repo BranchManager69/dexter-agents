@@ -48,7 +48,7 @@ const walletAuthRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
       </header>
 
       <div className="flex items-center gap-6">
-        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 shadow-inner">
+        <div className="flex items-center justify-center w-12 h-12 rounded-sm bg-gradient-to-br from-white/10 to-white/5 border border-white/10 shadow-inner">
            <LockClosedIcon className="w-6 h-6 text-neutral-400" />
         </div>
         
@@ -85,13 +85,13 @@ const walletAuthRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
       )}
 
       {diagnostics.detail && (
-        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-xl text-xs text-neutral-400 font-mono break-all">
+        <div className="p-3 bg-white/[0.02] border border-white/5 rounded-sm text-xs text-neutral-400 font-mono break-all">
            {diagnostics.detail}
         </div>
       )}
 
       {debug && (
-        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(normalized, null, 2)}</pre>
         </details>

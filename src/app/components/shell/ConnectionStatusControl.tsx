@@ -45,7 +45,7 @@ export function ConnectionStatusControl({
       : "Connection control";
 
   const containerClassName = [
-    "flex flex-shrink-0 items-center gap-3 overflow-x-auto whitespace-nowrap font-display text-[10px] font-semibold tracking-[0.08em] text-[#FFF3E3]/85 scrollbar-hide",
+    "flex flex-shrink-0 items-center gap-2 rounded-sm border border-white/10 bg-black/60 backdrop-blur-sm px-3 py-1.5 font-display text-[10px] font-semibold tracking-[0.08em] shadow-lg",
     className,
   ]
     .filter(Boolean)
@@ -54,18 +54,24 @@ export function ConnectionStatusControl({
   return (
     <div className={containerClassName}>
       <span className="flex flex-shrink-0 items-center gap-2" title={`Connection status: ${label}`}>
-        <span className={`h-2.5 w-2.5 rounded-full ${dotClass}`} aria-hidden="true" />
-        <span className="sr-only">{label}</span>
+        <span className={`h-2 w-2 rounded-full ${dotClass} ${sessionStatus === "CONNECTING" ? "animate-pulse" : ""}`} aria-hidden="true" />
+        <span className="text-[#FFF3E3]/80">{label}</span>
       </span>
 
-      {onToggleConnection ? (
+      {onToggleConnection && showLabel ? (
         <button
           type="button"
           onClick={onToggleConnection}
-          className={`flex flex-shrink-0 items-center gap-2 underline decoration-[#FEFBF4]/45 underline-offset-[4px] transition hover:decoration-[#FEFBF4] ${showLabel ? textClass : "text-[#FFF3E3]/60"}`}
+          className={`flex flex-shrink-0 items-center gap-1 rounded-sm px-2 py-0.5 transition ${
+            sessionStatus === "CONNECTED" 
+              ? "bg-red-500/20 text-red-300 hover:bg-red-500/30" 
+              : sessionStatus === "CONNECTING"
+                ? "bg-blue-500/20 text-blue-300"
+                : "bg-white/10 text-[#FFF3E3]/80 hover:bg-white/20"
+          }`}
           aria-label={buttonAriaLabel}
         >
-          {showLabel ? buttonLabel : null}
+          {buttonLabel}
         </button>
       ) : null}
     </div>

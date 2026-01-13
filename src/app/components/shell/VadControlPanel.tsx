@@ -101,7 +101,7 @@ export function VadControlPanel({
             aria-modal="true"
           >
             <div
-              className="flex w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950/90 p-5 shadow-2xl backdrop-blur-xl ring-1 ring-white/5"
+              className="flex w-full max-w-xl flex-col overflow-hidden rounded-sm border border-white/10 bg-neutral-950/90 p-5 shadow-2xl backdrop-blur-xl ring-1 ring-white/5"
               style={{ maxHeight: "min(520px, calc(100vh - 4.5rem))" }}
               onClick={(event) => event.stopPropagation()}
             >
@@ -118,7 +118,7 @@ export function VadControlPanel({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="rounded-full border border-neutral-700/60 bg-neutral-900/60 p-2 text-neutral-200 transition hover:border-flux/50 hover:text-flux"
+                  className="rounded-sm border border-neutral-700/60 bg-neutral-900/60 p-2 text-neutral-200 transition hover:border-flux/50 hover:text-flux"
                   aria-label="Close voice controls"
                 >
                   <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -146,7 +146,7 @@ export function VadControlPanel({
                               silenceDurationMs: preset.values.silenceDurationMs,
                             })
                           }
-                          className={`flex flex-col items-start rounded-2xl border px-3 py-2 text-left transition ${
+                          className={`flex flex-col items-start rounded-sm border px-3 py-2 text-left transition ${
                             isActive
                               ? "border-flux/70 bg-flux/10 text-flux"
                               : "border-white/10 bg-white/[0.02] text-neutral-200 hover:border-flux/40 hover:text-flux"
@@ -161,7 +161,7 @@ export function VadControlPanel({
                     })}
                   </div>
                   <span
-                    className={`inline-flex rounded-full border border-dashed px-3 py-1 text-[11px] tracking-[0.12em] ${
+                    className={`inline-flex rounded-sm border border-dashed px-3 py-1 text-[11px] tracking-[0.12em] ${
                       activePreset === "custom" ? "border-flux/40 text-flux" : "border-white/10 text-neutral-500"
                     }`}
                   >
@@ -208,7 +208,7 @@ export function VadControlPanel({
                   />
                 </div>
 
-                <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                <div className="flex items-center justify-between rounded-sm border border-white/10 bg-white/[0.03] px-4 py-3">
                   <div>
                     <h3 className="font-display text-[11px] uppercase tracking-[0.2em] text-neutral-300">
                       Auto-response
@@ -220,7 +220,7 @@ export function VadControlPanel({
                   <button
                     type="button"
                     onClick={() => handleUpdate("autoRespond", !settings.autoRespond)}
-                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition ${
+                    className={`relative inline-flex h-7 w-12 items-center rounded-sm transition ${
                       settings.autoRespond
                         ? "bg-flux/80"
                         : "bg-neutral-700/80"
@@ -229,7 +229,7 @@ export function VadControlPanel({
                     aria-checked={settings.autoRespond}
                   >
                     <span
-                      className={`ml-1 h-5 w-5 transform rounded-full bg-neutral-900 transition ${
+                      className={`ml-1 h-5 w-5 transform rounded-sm bg-neutral-900 transition ${
                         settings.autoRespond ? "translate-x-5" : "translate-x-0"
                       }`}
                     />
@@ -250,14 +250,14 @@ export function VadControlPanel({
                   <button
                     type="button"
                     onClick={onReset}
-                    className="inline-flex items-center justify-center rounded-full border border-neutral-700/70 px-4 py-2 font-medium text-neutral-200 transition hover:border-flux/50 hover:text-flux"
+                    className="inline-flex items-center justify-center rounded-sm border border-neutral-700/70 px-4 py-2 font-medium text-neutral-200 transition hover:border-flux/50 hover:text-flux"
                   >
                     Reset defaults
                   </button>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="inline-flex items-center justify-center rounded-full bg-flux/80 px-4 py-2 font-medium text-neutral-900 transition hover:bg-flux"
+                    className="inline-flex items-center justify-center rounded-sm bg-flux/80 px-4 py-2 font-medium text-neutral-900 transition hover:bg-flux"
                   >
                     Done
                   </button>
@@ -340,7 +340,7 @@ function VSlider({
             step={step}
             value={type === "float" ? value.toFixed(2) : value}
             onChange={handleInputChange}
-            className="w-20 rounded-md border border-neutral-700/70 bg-neutral-900/80 px-2 py-1 text-right text-xs text-neutral-100 focus:border-flux/60 focus:outline-none"
+            className="w-20 rounded-sm border border-neutral-700/70 bg-neutral-900/80 px-2 py-1 text-right text-xs text-neutral-100 focus:border-flux/60 focus:outline-none"
           />
           <span className="text-xs text-neutral-400">{unit}</span>
         </div>
@@ -353,7 +353,7 @@ function VSlider({
         step={step}
         value={value}
         onChange={handleSliderChange}
-        className="h-1 w-full appearance-none rounded-full bg-neutral-800 accent-flux focus:outline-none"
+        className="h-1 w-full appearance-none rounded-sm bg-neutral-800 accent-flux focus:outline-none"
       />
     </div>
   );

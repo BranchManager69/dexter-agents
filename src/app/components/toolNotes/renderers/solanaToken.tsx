@@ -130,7 +130,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
     return (
       <SleekCard className="p-6">
         <div className="flex items-center gap-4">
-          <div className="relative h-12 w-12 overflow-hidden rounded-2xl bg-neutral-800 animate-pulse" />
+          <div className="relative h-12 w-12 overflow-hidden rounded-sm bg-neutral-800 animate-pulse" />
           <div className="flex flex-col gap-2">
             <div className="h-4 w-32 animate-pulse rounded bg-neutral-800" />
             <div className="h-3 w-20 animate-pulse rounded bg-neutral-800" />
@@ -218,7 +218,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
                         {price ?? "—"}
                       </div>
                       {priceChange && (
-                         <div className={`text-xs font-bold px-2 py-1 rounded-full bg-white/5 mt-1 ${isPositive ? 'text-emerald-400 shadow-[0_0_10px_-2px_rgba(52,211,153,0.3)]' : 'text-rose-400 shadow-[0_0_10px_-2px_rgba(251,113,133,0.3)]'}`}>
+                         <div className={`text-xs font-bold px-2 py-1 rounded-sm bg-white/5 mt-1 ${isPositive ? 'text-emerald-400 shadow-[0_0_10px_-2px_rgba(52,211,153,0.3)]' : 'text-rose-400 shadow-[0_0_10px_-2px_rgba(251,113,133,0.3)]'}`}>
                             {priceChange}
                          </div>
                       )}
@@ -262,7 +262,7 @@ const solanaResolveTokenRenderer: ToolNoteRenderer = ({ item, debug = false }) =
       })}
 
       {debug && (
-        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(rawOutput, null, 2)}</pre>
         </details>

@@ -161,7 +161,7 @@ export function HedgefundTradePanel({
   };
 
   return (
-    <section className="rounded-xl border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
+    <section className="rounded-sm border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
       <header className="mb-4 flex items-center justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-wide text-neutral-400">Trades</p>
@@ -187,7 +187,7 @@ export function HedgefundTradePanel({
             value={mint}
             onChange={(event) => setMint(event.target.value)}
             placeholder="Pump.fun mint address"
-            className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="rounded-sm border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground placeholder:text-neutral-500 focus:outline-none focus:ring-1 focus:ring-emerald-400"
           />
         </div>
 
@@ -196,7 +196,7 @@ export function HedgefundTradePanel({
           <select
             value={resolvedWalletAlias}
             onChange={(event) => setWalletAlias(event.target.value)}
-            className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+            className="rounded-sm border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
           >
             {wallets.map((wallet) => (
               <option key={wallet.alias} value={wallet.alias}>
@@ -215,7 +215,7 @@ export function HedgefundTradePanel({
               step="0.01"
               value={amountSol}
               onChange={(event) => setAmountSol(event.target.value)}
-              className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="rounded-sm border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           </div>
 
@@ -227,12 +227,12 @@ export function HedgefundTradePanel({
               step="10"
               value={slippageBps}
               onChange={(event) => setSlippageBps(event.target.value)}
-              className="rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="rounded-sm border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           </div>
         </div>
 
-        <div className="rounded-lg border border-slate-800/60 bg-slate-900/60 p-4">
+        <div className="rounded-sm border border-slate-800/60 bg-slate-900/60 p-4">
           <div className="flex items-center justify-between gap-3">
             <p className="text-xs uppercase tracking-wide text-neutral-400">Sell Amount</p>
             <label className="flex items-center gap-2 text-xs text-neutral-300">
@@ -253,7 +253,7 @@ export function HedgefundTradePanel({
               value={sellAmount}
               onChange={(event) => setSellAmount(event.target.value)}
               placeholder="Token amount to sell"
-              className="mt-3 w-full rounded-md border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
+              className="mt-3 w-full rounded-sm border border-slate-700/70 bg-slate-900/60 px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-emerald-400"
             />
           ) : (
             <p className="mt-3 text-xs text-neutral-400">
@@ -263,7 +263,7 @@ export function HedgefundTradePanel({
         </div>
 
         {error ? (
-          <div className="rounded-md border border-red-600/40 bg-red-900/30 px-3 py-2 text-xs text-red-100">
+          <div className="rounded-sm border border-red-600/40 bg-red-900/30 px-3 py-2 text-xs text-red-100">
             {error}
           </div>
         ) : null}
@@ -273,7 +273,7 @@ export function HedgefundTradePanel({
             type="button"
             onClick={handleBuy}
             disabled={busy === "buy" || wallets.length === 0}
-            className="rounded-md border border-emerald-500/50 bg-emerald-600/30 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-600/50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-sm border border-emerald-500/50 bg-emerald-600/30 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-600/50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy === "buy" ? "Submitting…" : "Buy via Pump.fun"}
           </button>
@@ -281,7 +281,7 @@ export function HedgefundTradePanel({
             type="button"
             onClick={handleSell}
             disabled={busy === "sell" || wallets.length === 0}
-            className="rounded-md border border-pink-500/40 bg-pink-600/20 px-4 py-2 text-sm font-medium text-pink-100 transition hover:bg-pink-600/40 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-sm border border-pink-500/40 bg-pink-600/20 px-4 py-2 text-sm font-medium text-pink-100 transition hover:bg-pink-600/40 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {busy === "sell" ? "Submitting…" : "Sell via Pump.fun"}
           </button>

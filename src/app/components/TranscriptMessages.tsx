@@ -223,12 +223,12 @@ export function TranscriptMessages({
       </AnimatePresence>
 
       {POST_PROMPTS_ENABLED && postPromptsVisible && (
-        <div className="animate-in fade-in slide-in-from-top-2 mb-4 flex flex-wrap items-center justify-center gap-2 self-center rounded-full border border-neutral-800/60 bg-surface-glass/40 px-4 py-2 text-sm text-neutral-300 shadow-sm">
+        <div className="animate-in fade-in slide-in-from-top-2 mb-4 flex flex-wrap items-center justify-center gap-2 self-center rounded-sm border border-neutral-800/60 bg-surface-glass/40 px-4 py-2 text-sm text-neutral-300 shadow-sm">
           {suggestedPrompts.map((prompt, index) => (
             <button
               key={index}
               onClick={() => handleFollowUpPrompt(prompt)}
-              className="rounded-full border border-transparent bg-neutral-900/50 px-3 py-1.5 font-display text-xs font-semibold tracking-[0.08em] transition hover:border-flux/60 hover:text-flux"
+              className="rounded-sm border border-transparent bg-neutral-900/50 px-3 py-1.5 font-display text-xs font-semibold tracking-[0.08em] transition hover:border-flux/60 hover:text-flux"
             >
               {prompt}
             </button>
@@ -267,9 +267,9 @@ export function TranscriptMessages({
             const displayTitle = isBracketedMessage ? title.slice(1, -1) : title;
             const isTranscribingCue =
               isBracketedMessage && displayTitle.toLowerCase() === "transcribing...";
-            const messageStyle = isBracketedMessage && !isTranscribingCue ? "italic text-neutral-600" : "";
+            const messageStyle = isBracketedMessage && !isTranscribingCue ? "italic text-neutral-400" : "";
             const bubbleTone = "bg-transparent";
-            const messageTextClass = isUser ? "text-neutral-900" : "text-neutral-800";
+            const messageTextClass = isUser ? "text-[#FFE6D1]" : "text-[#FFE6D1]";
 
             return (
               <div key={itemId} className={containerClasses}>
@@ -305,26 +305,12 @@ export function TranscriptMessages({
                     : 'inline-flex h-1.5 w-1.5 items-center justify-center'
                 }
               >
-                {!isPending && <span className="h-1.5 w-1.5 rounded-full bg-flux/70" />}
+                {!isPending && <span className="h-1.5 w-1.5 rounded-sm bg-flux/70" />}
               </span>
             );
             if (renderer) {
               return (
-                <div key={itemId} className="flex flex-col items-start text-[11px] text-[#FFE1CC]">
-                  <div
-                    className={`flex items-center gap-2 rounded-full border border-[#F7BE8A]/25 bg-[#220907]/80 px-3 py-1 text-[10px] font-display font-semibold tracking-[0.08em] ${
-                      isPending ? 'border-flux/60 text-flux' : 'text-[#FFD6B2]'
-                    }`}
-                  >
-                    {pendingSpinner}
-                    <span>Tool</span>
-                    <span className="tracking-normal text-[#FFF0D7]">{title}</span>
-                    {isPending && (
-                      <span className="font-display text-[9px] font-semibold tracking-[0.08em] text-flux/80">
-                        Working…
-                      </span>
-                    )}
-                  </div>
+                <div key={itemId} className="flex flex-col items-start w-full">
                   {renderer({
                     item,
                     isExpanded: expanded,
@@ -340,7 +326,7 @@ export function TranscriptMessages({
             return (
               <div key={itemId} className="flex flex-col items-start text-[11px] text-[#FFE1CC]">
                 <div
-                  className={`flex items-center gap-2 rounded-full border border-[#F7BE8A]/25 bg-[#220907]/80 px-3 py-1 font-display font-semibold tracking-[0.08em] text-[10px] ${
+                  className={`flex items-center gap-2 rounded-sm border border-[#F7BE8A]/25 bg-[#220907]/80 px-3 py-1 font-display font-semibold tracking-[0.08em] text-[10px] ${
                     isPending ? 'border-flux/60 text-flux' : 'text-[#FFD6B2]'
                   } ${
                     canToggle ? "cursor-pointer hover:border-flux/60" : ""
@@ -366,13 +352,17 @@ export function TranscriptMessages({
                   )}
                 </div>
                 {showDebugPayloads && expanded && hasDetails && (
-                  <pre className="mt-2 w-full max-w-xl break-words whitespace-pre-wrap rounded-md border border-[#F7BE8A]/18 bg-[#1F0906]/85 px-3 py-2 text-[11px] font-mono text-[#FFEBD7]">
+                  <pre className="mt-2 w-full max-w-xl break-words whitespace-pre-wrap rounded-sm border border-[#F7BE8A]/18 bg-[#1F0906]/85 px-3 py-2 text-[11px] font-mono text-[#FFEBD7]">
                     {JSON.stringify(data, null, 2)}
                   </pre>
                 )}
               </div>
             );
           } else if (type === "BREADCRUMB") {
+            // Hide breadcrumbs unless debug mode is enabled
+            if (!showDebugPayloads) {
+              return null;
+            }
             return (
               <div
                 key={itemId}
@@ -400,7 +390,7 @@ export function TranscriptMessages({
                 </div>
                 {expanded && data && (
                   <div className="text-left text-[#FFE6D1]">
-                    <pre className="ml-1 mt-2 mb-2 break-words whitespace-pre-wrap rounded-md border border-[#F7BE8A]/18 bg-[#1F0906]/85 pl-3 text-[11px] font-mono text-[#FFEBD7]">
+                    <pre className="ml-1 mt-2 mb-2 break-words whitespace-pre-wrap rounded-sm border border-[#F7BE8A]/18 bg-[#1F0906]/85 pl-3 text-[11px] font-mono text-[#FFEBD7]">
                       {JSON.stringify(data, null, 2)}
                     </pre>
                   </div>

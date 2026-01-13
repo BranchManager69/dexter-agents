@@ -17,7 +17,7 @@ function renderRationale(rationale: unknown): string[] {
 
 export function HedgefundSignalsPanel({ signals, loading, onLoad }: HedgefundSignalsPanelProps) {
   return (
-    <section className="flex flex-col rounded-xl border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
+    <section className="flex flex-col rounded-sm border border-slate-800/70 bg-slate-900/70 p-6 shadow-lg shadow-black/30">
       <header className="mb-4 flex items-start justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-wide text-neutral-400">Signals</p>
@@ -27,7 +27,7 @@ export function HedgefundSignalsPanel({ signals, loading, onLoad }: HedgefundSig
           type="button"
           onClick={onLoad}
           disabled={loading}
-          className="rounded-md border border-slate-700/70 bg-slate-950/20 px-3 py-1 text-xs uppercase tracking-wide text-neutral-200 transition hover:bg-slate-800/60 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-sm border border-slate-700/70 bg-slate-950/20 px-3 py-1 text-xs uppercase tracking-wide text-neutral-200 transition hover:bg-slate-800/60 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Loading…" : "Refresh"}
         </button>
@@ -54,7 +54,7 @@ export function HedgefundSignalsPanel({ signals, loading, onLoad }: HedgefundSig
             return (
               <li
                 key={identifier}
-                className="rounded-lg border border-slate-800/60 bg-slate-900/60 p-4 shadow-lg shadow-black/20"
+                className="rounded-sm border border-slate-800/60 bg-slate-900/60 p-4 shadow-lg shadow-black/20"
               >
                 <div className="flex items-baseline justify-between gap-3">
                   <div className="flex flex-col">

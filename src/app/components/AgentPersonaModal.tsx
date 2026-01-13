@@ -233,7 +233,7 @@ export function AgentPersonaModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="relative flex h-[92vh] w-[min(1200px,92vw)] flex-col overflow-hidden rounded-3xl border border-neutral-800/60 bg-surface-base/95 shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
+      <div className="relative flex h-[92vh] w-[min(1200px,92vw)] flex-col overflow-hidden rounded-sm border border-neutral-800/60 bg-surface-base/95 shadow-[0_30px_120px_rgba(0,0,0,0.45)]">
         <header className="flex items-center justify-between border-b border-neutral-800/60 px-6 py-4">
           <div>
             <h2 className="text-lg font-semibold text-neutral-100">Customize your Dexter</h2>
@@ -241,10 +241,10 @@ export function AgentPersonaModal({
             {loading && <p className="mt-1 text-xs text-neutral-500">Loading saved personas…</p>}
           </div>
           <div className="flex items-center gap-2">
-            {error && <span className="rounded-full border border-red-500/40 bg-red-500/10 px-3 py-1 text-xs text-red-200">{error}</span>}
+            {error && <span className="rounded-sm border border-red-500/40 bg-red-500/10 px-3 py-1 text-xs text-red-200">{error}</span>}
             <button
               type="button"
-              className="rounded-full border border-neutral-700 px-4 py-2 text-sm text-neutral-300 hover:border-neutral-500"
+              className="rounded-sm border border-neutral-700 px-4 py-2 text-sm text-neutral-300 hover:border-neutral-500"
               onClick={onClose}
               disabled={saving}
             >
@@ -252,7 +252,7 @@ export function AgentPersonaModal({
             </button>
             <button
               type="button"
-              className="rounded-full bg-primary-600 px-5 py-2 text-sm font-semibold text-black transition hover:bg-primary-500 disabled:opacity-50"
+              className="rounded-sm bg-primary-600 px-5 py-2 text-sm font-semibold text-black transition hover:bg-primary-500 disabled:opacity-50"
               onClick={handleSave}
               disabled={saving || !draftState}
             >
@@ -270,7 +270,7 @@ export function AgentPersonaModal({
               )}
               {availableProfiles.map((profile) => {
                 const active = draftState?.profileId === profile.id;
-                const baseClasses = "w-full rounded-2xl border px-4 py-3 text-left transition";
+                const baseClasses = "w-full rounded-sm border px-4 py-3 text-left transition";
                 const stateClasses = active
                   ? "border-primary-500/70 bg-primary-500/10 text-neutral-100"
                   : "border-neutral-800/70 bg-neutral-900/60 text-neutral-300 hover:border-neutral-700 hover:bg-neutral-900/80";
@@ -298,7 +298,7 @@ export function AgentPersonaModal({
                 <button
                   key={preset.id}
                   type="button"
-                  className="w-full rounded-2xl border border-neutral-800/70 bg-neutral-900/60 px-4 py-3 text-left text-neutral-300 transition hover:border-primary-500/60 hover:bg-primary-500/5"
+                  className="w-full rounded-sm border border-neutral-800/70 bg-neutral-900/60 px-4 py-3 text-left text-neutral-300 transition hover:border-primary-500/60 hover:bg-primary-500/5"
                   onClick={() => handleSelectPreset(preset)}
                 >
                   <div className="text-sm font-medium text-neutral-200">{preset.label}</div>
@@ -312,7 +312,7 @@ export function AgentPersonaModal({
             <div>
               <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Persona name</label>
               <input
-                className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none transition focus:border-primary-500/60"
+                className="mt-2 w-full rounded-sm border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none transition focus:border-primary-500/60"
                 value={draftState?.draft.name ?? ""}
                 onChange={(event) => updateDraft({ name: event.target.value })}
                 placeholder="Name your Dexter"
@@ -323,7 +323,7 @@ export function AgentPersonaModal({
               <div>
                 <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Instruction slug</label>
                 <input
-                  className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
+                  className="mt-2 w-full rounded-sm border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                   value={draftState?.draft.instructionSlug ?? ""}
                   onChange={(event) => updateDraft({ instructionSlug: event.target.value })}
                 />
@@ -331,7 +331,7 @@ export function AgentPersonaModal({
               <div>
                 <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Handoff slug</label>
                 <input
-                  className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
+                  className="mt-2 w-full rounded-sm border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                   value={draftState?.draft.handoffSlug ?? ""}
                   onChange={(event) => updateDraft({ handoffSlug: event.target.value })}
                 />
@@ -341,7 +341,7 @@ export function AgentPersonaModal({
             <div>
               <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Guest slug</label>
               <input
-                className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
+                className="mt-2 w-full rounded-sm border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                 value={draftState?.draft.guestSlug ?? ""}
                 onChange={(event) => updateDraft({ guestSlug: event.target.value })}
               />
@@ -350,7 +350,7 @@ export function AgentPersonaModal({
             <div>
               <label className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Voice preset</label>
               <select
-                className="mt-2 w-full rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
+                className="mt-2 w-full rounded-sm border border-neutral-800/60 bg-neutral-950/60 px-4 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                 value={draftState?.draft.voiceKey ?? ""}
                 onChange={(event) => updateDraft({ voiceKey: event.target.value || undefined })}
               >
@@ -362,14 +362,14 @@ export function AgentPersonaModal({
               </select>
             </div>
 
-              <div className="rounded-3xl border border-neutral-800/60 bg-neutral-950/60 p-4">
+              <div className="rounded-sm border border-neutral-800/60 bg-neutral-950/60 p-4">
               <h4 className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Tool descriptions</h4>
               <div className="mt-3 space-y-3">
                 {Object.entries(draftState?.draft.toolSlugs ?? DEFAULT_TOOL_SLUGS).map(([key, slug]) => (
                   <div key={key} className="grid gap-2 lg:grid-cols-[160px_1fr]">
                     <span className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-500">{key.replace(/_/g, ' ')}</span>
                     <input
-                      className="rounded-2xl border border-neutral-800/60 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
+                      className="rounded-sm border border-neutral-800/60 bg-neutral-950/60 px-3 py-2 text-sm text-neutral-100 outline-none focus:border-primary-500/60"
                       value={slug}
                       onChange={(event) =>
                         updateDraft({
@@ -387,7 +387,7 @@ export function AgentPersonaModal({
             {draftState?.profileId && (
               <button
                 type="button"
-                className="self-start rounded-full border border-red-500/60 px-4 py-2 font-display text-xs font-semibold tracking-[0.08em] text-red-200 transition hover:bg-red-500/10"
+                className="self-start rounded-sm border border-red-500/60 px-4 py-2 font-display text-xs font-semibold tracking-[0.08em] text-red-200 transition hover:bg-red-500/10"
                 onClick={handleDelete}
               >
                 Delete persona
@@ -395,17 +395,17 @@ export function AgentPersonaModal({
             )}
           </section>
 
-          <section className="flex flex-col gap-4 overflow-y-auto rounded-3xl border border-neutral-800/60 bg-neutral-950/50 p-5">
+          <section className="flex flex-col gap-4 overflow-y-auto rounded-sm border border-neutral-800/60 bg-neutral-950/50 p-5">
             <h3 className="font-display text-xs font-semibold tracking-[0.08em] text-neutral-400">Live preview</h3>
             <div className="flex items-center gap-3">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary-500/70 to-cyan-400/60" />
+              <div className="h-12 w-12 rounded-sm bg-gradient-to-br from-primary-500/70 to-cyan-400/60" />
               <div>
                 <p className="text-sm font-semibold text-neutral-100">{preview?.agentName || draftState?.draft.name || "Dexter"}</p>
                 <p className="text-xs text-neutral-500">Voice: {preview?.voiceKey || draftState?.draft.voiceKey || "Default"}</p>
               </div>
             </div>
 
-            <div className="rounded-2xl border border-neutral-800/60 bg-neutral-900/80 p-4 text-sm text-neutral-200">
+            <div className="rounded-sm border border-neutral-800/60 bg-neutral-900/80 p-4 text-sm text-neutral-200">
               {previewLoading ? "Loading preview…" : preview?.instructions || "Preview not available yet."}
             </div>
 
@@ -414,7 +414,7 @@ export function AgentPersonaModal({
               <div className="space-y-2 text-xs text-neutral-400">
                 {preview?.toolDescriptions
                   ? Object.entries(preview.toolDescriptions).map(([key, value]) => (
-                      <div key={key} className="rounded-2xl border border-neutral-800/60 bg-neutral-900/70 p-3">
+                      <div key={key} className="rounded-sm border border-neutral-800/60 bg-neutral-900/70 p-3">
                         <div className="font-display text-[0.6rem] font-semibold tracking-[0.08em] text-neutral-500">{key}</div>
                         <p className="mt-1 text-sm text-neutral-200">{value}</p>
                       </div>

@@ -79,14 +79,14 @@ export default function ToolsPage() {
 
       <div className="mb-4 mt-6 flex items-center gap-3">
         <input
-          className="flex-1 rounded-md border border-border-subtle bg-surface-base/90 px-3 py-2.5 text-sm text-foreground placeholder:text-neutral-500 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className="flex-1 rounded-sm border border-border-subtle bg-surface-base/90 px-3 py-2.5 text-sm text-foreground placeholder:text-neutral-500 transition focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
           placeholder="Filter by name or description"
           value={filter}
           onChange={(event) => setFilter(event.target.value)}
         />
         <button
           onClick={() => setShowRaw((v) => !v)}
-          className="rounded-md border border-border-subtle bg-surface-raised/80 px-4 py-2.5 text-sm font-medium text-foreground transition hover:border-primary hover:text-primary"
+          className="rounded-sm border border-border-subtle bg-surface-raised/80 px-4 py-2.5 text-sm font-medium text-foreground transition hover:border-primary hover:text-primary"
         >
           {showRaw ? 'Hide Raw' : 'Show Raw'}
         </button>
@@ -94,7 +94,7 @@ export default function ToolsPage() {
 
       {loading && <div>Loading tools…</div>}
       {error && (
-        <div className="mb-4 rounded-lg border border-accent-critical/40 bg-accent-critical/10 px-4 py-3 text-sm text-accent-critical">
+        <div className="mb-4 rounded-sm border border-accent-critical/40 bg-accent-critical/10 px-4 py-3 text-sm text-accent-critical">
           <div className="font-semibold uppercase tracking-wide">Error</div>
           <div className="mt-1 whitespace-pre-wrap text-sm">{error}</div>
           <div className="mt-2 text-xs text-accent-critical/80">
@@ -111,7 +111,7 @@ export default function ToolsPage() {
         {filtered.map((tool, index) => (
           <div
             key={`${tool.name || 'tool'}:${index}`}
-            className="rounded-lg border border-border-subtle/80 bg-surface-base/80 p-4 shadow-[0_10px_24px_rgba(0,0,0,0.25)]"
+            className="rounded-sm border border-border-subtle/80 bg-surface-base/80 p-4 shadow-[0_10px_24px_rgba(0,0,0,0.25)]"
           >
             <div className="text-lg font-semibold text-foreground">
               {tool.name || '(unnamed tool)'}
@@ -130,7 +130,7 @@ export default function ToolsPage() {
       {showRaw && (
         <div className="mt-8">
           <div className="mb-2 text-xs uppercase tracking-wide text-neutral-400">Raw response</div>
-          <pre className="whitespace-pre-wrap rounded-lg border border-border-subtle/80 bg-surface-base/80 p-4 text-xs text-neutral-200">
+          <pre className="whitespace-pre-wrap rounded-sm border border-border-subtle/80 bg-surface-base/80 p-4 text-xs text-neutral-200">
             {safeStringify(raw)}
           </pre>
         </div>
@@ -144,7 +144,7 @@ function SchemaBlock({ title, value }: { title: string; value: unknown }) {
   return (
     <div className="mt-3">
       <div className="mb-1 text-xs uppercase tracking-wide text-neutral-400">{title}</div>
-      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-lg border border-border-subtle/70 bg-surface-base/80 p-3 text-xs text-neutral-200">
+      <pre className="max-h-56 overflow-auto whitespace-pre-wrap rounded-sm border border-border-subtle/70 bg-surface-base/80 p-3 text-xs text-neutral-200">
         {safeStringify(value)}
       </pre>
     </div>

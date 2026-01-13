@@ -144,7 +144,7 @@ function Transcript({
           <div className="flex min-w-0 flex-shrink gap-2">
             <button
               onClick={handleCopyTranscript}
-              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-white/5 bg-white/5 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:bg-white/10 hover:text-white sm:px-3"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-sm border border-white/5 bg-white/5 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:bg-white/10 hover:text-white sm:px-3"
               title="Copy transcript"
             >
               <ClipboardCopyIcon />
@@ -152,7 +152,7 @@ function Transcript({
             </button>
             <button
               onClick={downloadRecording}
-              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-white/5 bg-white/5 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:bg-white/10 hover:text-white sm:px-3"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-sm border border-white/5 bg-white/5 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:bg-white/10 hover:text-white sm:px-3"
               title="Download audio recording"
             >
               <DownloadIcon />
@@ -161,7 +161,7 @@ function Transcript({
             </button>
             <button
               onClick={handleSaveLog}
-              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-md border border-white/5 bg-white/5 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:bg-white/10 hover:text-white sm:px-3"
+              className="flex flex-shrink-0 items-center justify-center gap-x-1 rounded-sm border border-white/5 bg-white/5 px-2 py-2 font-display text-xs font-semibold tracking-[0.08em] text-neutral-300 transition hover:bg-white/10 hover:text-white sm:px-3"
               title="Save conversation log"
             >
               <span className="text-lg leading-none">⬇</span>
@@ -206,7 +206,7 @@ function Transcript({
                     <div className="max-w-2xl space-y-1">
                       {/* Message Content */}
                       <div className={`
-                        relative px-6 py-4 rounded-3xl
+                        relative px-6 py-4 rounded-sm
                         ${isUser 
                           ? "bg-white/10 text-white rounded-br-none border border-white/5 shadow-md" 
                           : "bg-transparent text-neutral-200 pl-0 border-l-2 border-emerald-500/30 rounded-none"
@@ -219,7 +219,7 @@ function Transcript({
 
                       {/* Guardrails */}
                       {guardrailResult && (
-                        <div className="rounded-xl border border-rose-500/20 bg-rose-500/5 px-4 py-2 mt-2">
+                        <div className="rounded-sm border border-rose-500/20 bg-rose-500/5 px-4 py-2 mt-2">
                           <GuardrailChip guardrailResult={guardrailResult} />
                         </div>
                       )}
@@ -260,7 +260,7 @@ function Transcript({
               return (
                 <div key={itemId} className="flex flex-col items-start text-[11px] text-neutral-400 max-w-2xl">
                   <div
-                    className={`flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-300 ${
+                    className={`flex items-center gap-2 rounded-sm border border-white/10 bg-white/5 px-3 py-1 font-display text-[10px] font-semibold tracking-[0.08em] text-neutral-300 ${
                       hasDetails ? "cursor-pointer hover:bg-white/10 hover:text-white" : ""
                     }`}
                     onClick={() => hasDetails && toggleTranscriptItemExpand(itemId)}
@@ -275,7 +275,7 @@ function Transcript({
                     )}
                   </div>
                   {expanded && hasDetails && (
-                    <pre className="mt-2 w-full break-words whitespace-pre-wrap rounded-xl border border-white/5 bg-black/40 p-3 text-[10px] font-mono text-neutral-400">
+                    <pre className="mt-2 w-full break-words whitespace-pre-wrap rounded-sm border border-white/5 bg-black/40 p-3 text-[10px] font-mono text-neutral-400">
                       {JSON.stringify(data, null, 2)}
                     </pre>
                   )}
@@ -319,13 +319,13 @@ function Transcript({
               onSendMessage();
             }
           }}
-          className="flex-1 rounded-full border border-white/10 bg-white/5 px-5 py-3 text-sm text-white placeholder-neutral-500 outline-none transition focus:border-white/20 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+          className="flex-1 rounded-sm border border-white/10 bg-white/5 px-5 py-3 text-sm text-white placeholder-neutral-500 outline-none transition focus:border-white/20 focus:bg-white/10 focus:shadow-[0_0_15px_rgba(255,255,255,0.05)]"
           placeholder="Ask Dexter anything..."
         />
         <button
           onClick={onSendMessage}
           disabled={!canSend || !userText.trim()}
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-black transition hover:bg-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed"
+          className="flex h-11 w-11 items-center justify-center rounded-sm bg-white text-black transition hover:bg-neutral-200 disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <span className="text-xl leading-none mb-0.5">↑</span>
         </button>

@@ -72,7 +72,7 @@ export function UserBadge({ variant, size = "sm", className }: UserBadgeProps) {
     .filter(Boolean)
     .join(" ");
 
-  const dotClasses = [sizeStyles.dot, "rounded-full", variantStyles.dot].join(" ");
+  const dotClasses = [sizeStyles.dot, "rounded-sm", variantStyles.dot].join(" ");
 
   return (
     <span className={classes} title={variantStyles.title}>

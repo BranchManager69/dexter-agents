@@ -270,7 +270,7 @@ function TwitterSearchContent({ item, isExpanded, onToggle, debug = false }: Par
                     <div className="flex flex-col min-w-0">
                        <div className="flex items-center gap-1.5">
                           <span className="font-bold text-white text-sm truncate">{authorName}</span>
-                          {isVerified && <div className="w-3 h-3 rounded-full bg-sky-500 text-[8px] flex items-center justify-center text-white">✓</div>}
+                          {isVerified && <div className="w-3 h-3 rounded-sm bg-sky-500 text-[8px] flex items-center justify-center text-white">✓</div>}
                        </div>
                        <div className="flex items-center gap-2 text-[10px] text-neutral-500">
                           {handle && <span>{handle}</span>}
@@ -291,7 +291,7 @@ function TwitterSearchContent({ item, isExpanded, onToggle, debug = false }: Par
 
                  {/* Media */}
                  {imageMedia.length > 0 && (
-                    <div className="relative aspect-video rounded-xl overflow-hidden border border-white/5 bg-neutral-900 mt-1">
+                    <div className="relative aspect-video rounded-sm overflow-hidden border border-white/5 bg-neutral-900 mt-1">
                        <img src={imageMedia[0]} className="w-full h-full object-cover" />
                        {imageMedia.length > 1 && (
                           <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur px-2 py-1 rounded text-[10px] text-white font-bold">
@@ -331,7 +331,7 @@ function TwitterSearchContent({ item, isExpanded, onToggle, debug = false }: Par
                             target="_blank" 
                             rel="noreferrer"
                             onClick={(e) => e.stopPropagation()} // Allow clicking button without toggling card
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold uppercase tracking-wider hover:bg-sky-500/20 transition-colors"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-sm bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-bold uppercase tracking-wider hover:bg-sky-500/20 transition-colors"
                           >
                              Open on X
                              <ExternalLinkIcon className="w-3 h-3" />
@@ -349,14 +349,14 @@ function TwitterSearchContent({ item, isExpanded, onToggle, debug = false }: Par
         <button
           type="button"
           onClick={onToggle}
-          className="w-full py-3 rounded-2xl border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="w-full py-3 rounded-sm border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
         >
           {isExpanded ? "Collapse" : `Show ${tweets.length - visibleTweets.length} more tweets`}
         </button>
       )}
 
       {debug && (
-        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(effectivePayload, null, 2)}</pre>
         </details>

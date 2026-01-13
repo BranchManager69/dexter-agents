@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Component, type ErrorInfo, type ReactNode } from "react";
 import { LayoutGroup } from "framer-motion";
 import type { ToolNoteRenderer } from "./types";
 import { normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
@@ -16,6 +16,31 @@ import {
   formatUsdPrecise,
   formatPercent 
 } from "./sleekVisuals";
+
+// Error boundary to prevent renderer crashes from taking down the whole app
+class BalancesErrorBoundary extends Component<{ children: ReactNode; fallback?: ReactNode }, { hasError: boolean; error?: Error }> {
+  constructor(props: { children: ReactNode; fallback?: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[solanaBalances] Render error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback || (
+        <SleekErrorCard message={`Render error: ${this.state.error?.message || 'Unknown error'}`} />
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // --- Types (Preserved) ---
 
@@ -77,22 +102,51 @@ function formatAmount(amount?: number, decimals?: number) {
   return amount.toLocaleString("en-US", { maximumFractionDigits: maxDigits });
 }
 
-function formatUsdHelper(value?: number | string | null, opts: { precise?: boolean; compact?: boolean } = {}) {
+function formatUsdHelper(value?: number | string | null, opts: { precise?: boolean; compact?: boolean; noCents?: boolean } = {}) {
   const numeric = pickNumber(value);
   if (numeric === undefined) return undefined;
   if (opts.compact) return formatUsdCompact(numeric);
+  // No cents - round to whole dollars
+  if (opts.noCents) {
+    return '$' + Math.round(numeric).toLocaleString('en-US');
+  }
   return formatUsdPrecise(numeric);
+}
+
+// Format USD without cents for display
+function formatUsdNoCents(value?: number) {
+  if (value === undefined || !Number.isFinite(value)) return undefined;
+  return '$' + Math.round(value).toLocaleString('en-US');
 }
 
 function formatPercentHelper(value?: number | string | null) {
   const numeric = pickNumber(value);
   if (numeric === undefined) return undefined;
-  return formatPercent(numeric);
+  // API returns percentage already multiplied by 100 (e.g., -651 instead of -6.51)
+  // Divide by 100 to get the actual percentage value
+  const corrected = numeric / 100;
+  return formatPercent(corrected);
 }
 
 // --- Main Renderer ---
 
-const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpanded, onToggle: toggleList, debug = false }) => {
+// SOL Icon component (Solana logo)
+const SolanaIcon = ({ size = 20 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="sol-grad-1" x1="90%" y1="0%" x2="10%" y2="100%">
+        <stop offset="0%" stopColor="#00FFA3"/>
+        <stop offset="100%" stopColor="#DC1FFF"/>
+      </linearGradient>
+    </defs>
+    <path d="M25.3 93.5c0.9-0.9 2.2-1.5 3.5-1.5h97.1c2.2 0 3.4 2.7 1.8 4.3l-24.2 24.2c-0.9 0.9-2.2 1.5-3.5 1.5H2.9c-2.2 0-3.4-2.7-1.8-4.3L25.3 93.5z" fill="url(#sol-grad-1)"/>
+    <path d="M25.3 2.5c1-1 2.3-1.5 3.5-1.5h97.1c2.2 0 3.4 2.7 1.8 4.3L103.5 29.5c-0.9 0.9-2.2 1.5-3.5 1.5H2.9c-2.2 0-3.4-2.7-1.8-4.3L25.3 2.5z" fill="url(#sol-grad-1)"/>
+    <path d="M102.7 47.3c-0.9-0.9-2.2-1.5-3.5-1.5H2.1c-2.2 0-3.4 2.7-1.8 4.3l24.2 24.2c0.9 0.9 2.2 1.5 3.5 1.5h97.1c2.2 0 3.4-2.7 1.8-4.3L102.7 47.3z" fill="url(#sol-grad-1)"/>
+  </svg>
+);
+
+// Inner component that actually renders - wrapped in error boundary
+function SolanaBalancesInner({ item, isListExpanded, toggleList, debug }: { item: any; isListExpanded: boolean; toggleList: () => void; debug: boolean }) {
   const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
   const payload = unwrapStructured(rawOutput) as BalancesPayload | BalanceEntry[];
   const balances: BalanceEntry[] = Array.isArray((payload as BalancesPayload)?.balances)
@@ -100,7 +154,6 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpa
     : Array.isArray(payload)
       ? (payload as BalanceEntry[])
       : [];
-  const timestamp = formatTimestampDisplay(item.timestamp);
 
   // State for the "Hero" expansion
   const [expandedMint, setExpandedMint] = useState<string | null>(null);
@@ -115,15 +168,58 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpa
     return <SleekErrorCard message="No balances detected for this wallet." />;
   }
 
+  // Calculate total portfolio value
+  let totalUsd = 0;
+  let solPriceUsd = 0;
+  for (const entry of balances) {
+    const tokenMeta = entry.token && typeof entry.token === "object" ? entry.token : undefined;
+    const holdingUsdRaw = pickNumber(
+      (tokenMeta as any)?.holdingUsd, 
+      (tokenMeta as any)?.balanceUsd, 
+      (tokenMeta as any)?.balance_usd
+    );
+    const priceUsdRaw = pickNumber((tokenMeta as any)?.priceUsd, (tokenMeta as any)?.price_usd);
+    const amountUi = pickNumber(entry.amountUi, entry.amount_ui);
+    
+    // Get SOL price for conversion
+    const symbol = pickString((tokenMeta as any)?.symbol);
+    if (symbol === 'SOL' && priceUsdRaw) {
+      solPriceUsd = priceUsdRaw;
+    }
+    
+    const value = holdingUsdRaw ?? (priceUsdRaw && amountUi ? priceUsdRaw * amountUi : 0);
+    if (value && Number.isFinite(value)) {
+      totalUsd += value;
+    }
+  }
+  
+  const totalSol = solPriceUsd > 0 ? totalUsd / solPriceUsd : undefined;
+
   const visibleBalances = isListExpanded ? balances : balances.slice(0, 6);
   const hasMore = balances.length > visibleBalances.length;
 
   return (
     <div className="w-full max-w-3xl space-y-4">
-      <header className="flex items-center justify-between px-1">
-         <SleekLabel>Wallet Assets</SleekLabel>
-         {timestamp && <span className="text-[10px] text-neutral-600 font-mono">{timestamp}</span>}
-      </header>
+      {/* Total Portfolio Value - Full Width */}
+      <div className="w-full p-5 rounded-sm border border-white/5 bg-gradient-to-r from-[#0A0A0A] to-[#111] relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 via-transparent to-purple-500/5 pointer-events-none" />
+        <div className="relative z-10">
+          <div className="flex items-baseline gap-3 flex-wrap">
+            <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-500 font-bold">Total Portfolio</span>
+            <span className="text-3xl font-bold text-white tracking-tight tabular-nums">
+              {formatUsdNoCents(totalUsd)}
+            </span>
+            {totalSol !== undefined && (
+              <span className="flex items-center gap-1.5 text-neutral-400">
+                <SolanaIcon size={14} />
+                <span className="text-base font-medium tabular-nums">
+                  {totalSol.toLocaleString('en-US', { maximumFractionDigits: 0 })}
+                </span>
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
 
       {/* 
          LayoutGroup ensures that when one card expands (changes size), 
@@ -142,10 +238,13 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpa
             const name = pickString((tokenMeta as any)?.name) ?? symbol;
             const iconUrl = pickString(
               (tokenMeta as any)?.imageUrl,
-              (tokenMeta as any)?.openGraphImageUrl,
-              (tokenMeta as any)?.headerImageUrl,
               entry.icon,
               entry.logo,
+            );
+            // DexScreener banner (1500x500) - used as subtle card backdrop
+            const bannerUrl = pickString(
+              (tokenMeta as any)?.headerImageUrl,
+              (tokenMeta as any)?.openGraphImageUrl,
             );
 
             // Logic
@@ -173,7 +272,7 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpa
             const holdingUsdRaw =
               pickNumber((tokenMeta as any)?.holdingUsd, (tokenMeta as any)?.balanceUsd, (tokenMeta as any)?.balance_usd) ??
               (priceUsdRaw !== undefined && amountUi !== undefined ? priceUsdRaw * amountUi : undefined);
-            const holdingUsd = formatUsdHelper(holdingUsdRaw, { precise: false });
+            const holdingUsd = formatUsdHelper(holdingUsdRaw, { noCents: true });
 
             // Derived Data
             const volumeRaw = pickNumber((tokenMeta as any)?.volume24hUsd, (tokenMeta as any)?.volume24h);
@@ -181,8 +280,9 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpa
             const liquidityRaw = pickNumber((tokenMeta as any)?.liquidityUsd, (tokenMeta as any)?.liquidity_usd);
             const liquidity = formatUsdHelper(liquidityRaw, { compact: true });
 
-            // Layout Logic
-            const uniqueKey = mint ?? ata ?? `balance-${index}`;
+            // Layout Logic - use stable key that won't change between renders
+            // Prefer index-based key to avoid key changes when mint/ata arrive async
+            const uniqueKey = `balance-${index}-${mint || ata || 'unknown'}`;
             const isExpanded = expandedMint === uniqueKey;
 
             return (
@@ -192,6 +292,20 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpa
                 onClick={() => setExpandedMint(isExpanded ? null : uniqueKey)}
                 className={`relative group overflow-hidden flex flex-col p-4 gap-3 cursor-pointer transition-all hover:bg-[#0A0A0A] ${isExpanded ? 'col-span-1 sm:col-span-2 ring-1 ring-white/10 bg-black' : ''}`}
               >
+                 {/* DexScreener Banner Backdrop */}
+                 {bannerUrl && (
+                   <div 
+                     className="absolute inset-0 pointer-events-none"
+                     style={{
+                       backgroundImage: `url(${bannerUrl})`,
+                       backgroundSize: 'cover',
+                       backgroundPosition: 'center top',
+                       opacity: 0.08,
+                       maskImage: 'linear-gradient(to bottom, black 0%, transparent 70%)',
+                       WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 70%)',
+                     }}
+                   />
+                 )}
                  {/* Glow Effect */}
                  <div 
                     className={`absolute -right-20 -top-20 h-64 w-64 rounded-full opacity-20 blur-3xl transition-colors duration-700 pointer-events-none ${
@@ -220,17 +334,18 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpa
 
                     {/* Compact Footer (Visible when collapsed) */}
                     {!isExpanded && (
-                      <div className="grid grid-cols-2 gap-2">
-                          <div className="flex flex-col">
-                              <SleekLabel>PRICE</SleekLabel>
-                              <span className="text-xs font-semibold text-neutral-200 tracking-wide mt-0.5">{priceUsd ?? "—"}</span>
-                          </div>
-                          <div className="flex flex-col items-end">
-                              <SleekLabel>24H</SleekLabel>
-                              <span className={`text-xs font-bold tracking-wide mt-0.5 ${isPositive ? 'text-emerald-400' : priceChange ? 'text-rose-400' : 'text-neutral-200'}`}>
+                      <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                              <span className="text-xs font-semibold text-neutral-200 tabular-nums">{priceUsd ?? "—"}</span>
+                              <span className={`text-xs font-bold tabular-nums ${isPositive ? 'text-emerald-400' : priceChange ? 'text-rose-400' : 'text-neutral-500'}`}>
                                   {priceChange ?? "—"}
                               </span>
                           </div>
+                          {volume && (
+                            <span className="text-[10px] text-neutral-500 tabular-nums">
+                              VOL {volume}
+                            </span>
+                          )}
                       </div>
                     )}
 
@@ -239,11 +354,11 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpa
                       <div className="flex flex-col gap-5 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
                           {/* Full Stats Grid */}
                           <div className="grid grid-cols-3 gap-3">
-                             <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.02]">
+                             <div className="flex flex-col gap-1.5 p-3 rounded-sm bg-white/[0.02] border border-white/[0.02]">
                                   <SleekLabel>PRICE</SleekLabel>
                                   <span className="text-sm font-semibold text-neutral-200 tracking-wide">{priceUsd ?? "—"}</span>
                              </div>
-                             <div className="flex flex-col gap-1.5 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.02]">
+                             <div className="flex flex-col gap-1.5 p-3 rounded-sm bg-white/[0.02] border border-white/[0.02]">
                                   <SleekLabel>24H CHANGE</SleekLabel>
                                   <span className={`text-sm font-bold tracking-wide ${isPositive ? 'text-emerald-400' : priceChange ? 'text-rose-400' : 'text-neutral-200'}`}>
                                       {priceChange ?? "—"}
@@ -290,19 +405,33 @@ const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpa
         <button
           type="button"
           onClick={toggleList}
-          className="w-full py-3 rounded-2xl border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
+          className="w-full py-3 rounded-sm border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
         >
           {isListExpanded ? "Collapse List" : `Show ${balances.length - visibleBalances.length} more assets`}
         </button>
       )}
 
       {debug && (
-        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-4 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(rawOutput, null, 2)}</pre>
         </details>
       )}
     </div>
+  );
+}
+
+// Main renderer wrapped in error boundary
+const solanaBalancesRenderer: ToolNoteRenderer = ({ item, isExpanded: isListExpanded, onToggle: toggleList, debug = false }) => {
+  return (
+    <BalancesErrorBoundary>
+      <SolanaBalancesInner 
+        item={item} 
+        isListExpanded={isListExpanded} 
+        toggleList={toggleList} 
+        debug={debug} 
+      />
+    </BalancesErrorBoundary>
   );
 };
 

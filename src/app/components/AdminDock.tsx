@@ -117,7 +117,7 @@ const CrownGlyph = ({ className }: { className?: string }) => (
 );
 
 const panelContainerBase =
-  "rounded-2xl border border-neutral-800/70 bg-surface-raised/95 shadow-elevated backdrop-blur-xl";
+  "rounded-sm border border-neutral-800/70 bg-surface-raised/95 shadow-elevated backdrop-blur-xl";
 
 export default function AdminDock({
   canUseAdminTools,
@@ -875,7 +875,7 @@ export default function AdminDock({
         <div className="relative flex flex-col items-center">
           <button
             type="button"
-            className={`group flex h-12 w-12 touch-none items-center justify-center rounded-full border border-[#EF4444]/55 bg-gradient-to-br from-[#F87171] via-[#EF4444] to-[#B91C1C] shadow-[0_18px_38px_rgba(220,38,38,0.45)] transition focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]/70 focus:ring-offset-2 focus:ring-offset-[#2C0A00] ${isDockExpanded ? 'ring-2 ring-[#FEE2E2]/45' : ''}`}
+            className={`group flex h-12 w-12 touch-none items-center justify-center rounded-sm border border-[#EF4444]/55 bg-gradient-to-br from-[#F87171] via-[#EF4444] to-[#B91C1C] shadow-[0_18px_38px_rgba(220,38,38,0.45)] transition focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]/70 focus:ring-offset-2 focus:ring-offset-[#2C0A00] ${isDockExpanded ? 'ring-2 ring-[#FEE2E2]/45' : ''}`}
             aria-expanded={isDockExpanded}
             aria-controls="admin-dock-panel"
             onClick={handleDockToggle}
@@ -920,7 +920,7 @@ export default function AdminDock({
                     <ReaderIcon className="h-3 w-3" />
                     <span className="text-[10px]">Memories</span>
                     {!isLoadingMemories && badgeCount > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#F87171]/70 px-1 text-[9px] font-semibold leading-none tracking-[0.08em] text-[#FDFEF9]">
+                      <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-sm bg-[#F87171]/70 px-1 text-[9px] font-semibold leading-none tracking-[0.08em] text-[#FDFEF9]">
                         {badgeLabel}
                       </span>
                     )}
@@ -1012,7 +1012,7 @@ export default function AdminDock({
                       <MixerHorizontalIcon className="h-3 w-3" />
                       <span className="text-[10px]">Console</span>
                       {typeof adminConsoleMetadata?.toolCount === 'number' && (
-                        <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-full bg-[#F87171]/70 px-1 text-[9px] font-semibold leading-none tracking-[0.08em] text-[#FDFEF9]">
+                        <span className="absolute -top-1.5 -right-1.5 flex min-h-[15px] min-w-[15px] items-center justify-center rounded-sm bg-[#F87171]/70 px-1 text-[9px] font-semibold leading-none tracking-[0.08em] text-[#FDFEF9]">
                           {adminConsoleMetadata.toolCount}
                         </span>
                       )}
@@ -1066,7 +1066,7 @@ export default function AdminDock({
               >
                 <div
                   ref={consolePanelRef}
-                  className="rounded-2xl border border-neutral-800/70 bg-surface-raised/95 shadow-elevated backdrop-blur-xl"
+                  className="rounded-sm border border-neutral-800/70 bg-surface-raised/95 shadow-elevated backdrop-blur-xl"
                   style={{ maxHeight: consolePlacement?.maxHeight ?? 520 }}
                 >
                   <div className="flex items-center justify-between gap-3 border-b border-neutral-800/60 px-5 py-4">
@@ -1083,7 +1083,7 @@ export default function AdminDock({
                     <button
                       type="button"
                       onClick={() => setIsAdminConsoleOpen(false)}
-                      className="rounded-md border border-neutral-800/60 px-2 py-1 text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
+                      className="rounded-sm border border-neutral-800/60 px-2 py-1 text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
                     >
                       Close
                     </button>
@@ -1118,7 +1118,7 @@ export default function AdminDock({
               >
                 <div
                   ref={memoriesPanelRef}
-                  className="rounded-2xl border border-neutral-800/70 bg-surface-raised/95 shadow-elevated backdrop-blur-xl"
+                  className="rounded-sm border border-neutral-800/70 bg-surface-raised/95 shadow-elevated backdrop-blur-xl"
                   style={{ maxHeight: memoriesPlacement?.maxHeight ?? 520 }}
                 >
                   <div className="flex items-center justify-between gap-3 border-b border-neutral-800/60 px-5 py-4">
@@ -1133,7 +1133,7 @@ export default function AdminDock({
                     <button
                       type="button"
                       onClick={() => setIsMemoriesOpen(false)}
-                      className="rounded-md border border-neutral-800/60 px-2 py-1 text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
+                      className="rounded-sm border border-neutral-800/60 px-2 py-1 text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-300 transition hover:border-flux/50 hover:text-flux"
                     >
                       Close
                     </button>
@@ -1154,7 +1154,7 @@ export default function AdminDock({
                           const isExpanded = expandedMemoryId === entry.id;
                           const isSkipped = entry.status === 'skipped';
                           const cardClassNames = [
-                            'rounded-2xl border bg-surface-base/70',
+                            'rounded-sm border bg-surface-base/70',
                             isSkipped ? 'border-rose-500/50 bg-rose-500/10' : 'border-neutral-800/60',
                           ].join(' ');
                           const buttonHoverClass = isSkipped
@@ -1186,7 +1186,7 @@ export default function AdminDock({
                               {isExpanded && (
                                 <div className="space-y-4 border-t border-neutral-800/60 px-4 py-4 text-sm text-neutral-200">
                                   {entry.status === 'skipped' && (
-                                    <div className="rounded-md border border-rose-500/50 bg-rose-500/10 px-3 py-2 text-[13px] leading-relaxed text-rose-100">
+                                    <div className="rounded-sm border border-rose-500/50 bg-rose-500/10 px-3 py-2 text-[13px] leading-relaxed text-rose-100">
                                       This session ended before anything memorable, so it was skipped automatically.
                                     </div>
                                   )}
@@ -1231,7 +1231,7 @@ export default function AdminDock({
                                       <ul className="mt-2 space-y-1.5 text-[13px] leading-relaxed">
                                         {entry.facts.map((fact, index) => (
                                           <li key={`${entry.id}-fact-${index}`} className="flex items-start gap-2">
-                                            <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-neutral-500" />
+                                            <span className="mt-1 inline-block h-1.5 w-1.5 rounded-sm bg-neutral-500" />
                                             <span>{fact}</span>
                                           </li>
                                         ))}
@@ -1246,7 +1246,7 @@ export default function AdminDock({
                                       <ul className="mt-2 space-y-1.5 text-[13px] leading-relaxed">
                                         {entry.followUps.map((followUp, index) => (
                                           <li key={`${entry.id}-follow-${index}`} className="flex items-start gap-2">
-                                            <span className="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-neutral-500" />
+                                            <span className="mt-1 inline-block h-1.5 w-1.5 rounded-sm bg-neutral-500" />
                                             <span>{followUp}</span>
                                           </li>
                                         ))}
@@ -1306,7 +1306,7 @@ export default function AdminDock({
                     <button
                       type="button"
                       onClick={() => setIsDossierOpen(false)}
-                      className="rounded-md border border-rose-500/40 px-2 py-1 text-[11px] font-display font-semibold tracking-[0.08em] text-rose-100 transition hover:border-rose-300/70 hover:text-rose-50"
+                      className="rounded-sm border border-rose-500/40 px-2 py-1 text-[11px] font-display font-semibold tracking-[0.08em] text-rose-100 transition hover:border-rose-300/70 hover:text-rose-50"
                     >
                       Close
                     </button>
@@ -1315,7 +1315,7 @@ export default function AdminDock({
                     {isDossierLoading ? (
                       <div className="text-neutral-300">Loading dossier…</div>
                     ) : dossierError ? (
-                      <div className="rounded-md border border-rose-500/50 bg-rose-500/10 px-3 py-2 text-rose-100">
+                      <div className="rounded-sm border border-rose-500/50 bg-rose-500/10 px-3 py-2 text-rose-100">
                         {dossierError}
                       </div>
                     ) : dossierData ? (
@@ -1345,7 +1345,7 @@ export default function AdminDock({
                             <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">Holdings</div>
                             <ul className="mt-2 space-y-3">
                               {dossierHoldings.map((holding, index) => (
-                                <li key={index} className="rounded-md border border-neutral-800/60 bg-surface-glass/20 p-3">
+                                <li key={index} className="rounded-sm border border-neutral-800/60 bg-surface-glass/20 p-3">
                                   <div className="text-sm font-medium text-neutral-100">
                                     {holding.symbol || 'Unknown asset'}
                                   </div>
@@ -1373,7 +1373,7 @@ export default function AdminDock({
 
                         <section>
                           <div className="text-[11px] font-display font-semibold tracking-[0.08em] text-neutral-500">Raw JSON</div>
-                          <pre className="mt-2 max-h-48 overflow-auto rounded-md border border-neutral-800/60 bg-black/40 p-3 text-[12px] leading-snug text-neutral-200">
+                          <pre className="mt-2 max-h-48 overflow-auto rounded-sm border border-neutral-800/60 bg-black/40 p-3 text-[12px] leading-snug text-neutral-200">
                             {JSON.stringify(dossierData.dossier ?? {}, null, 2)}
                           </pre>
                         </section>

@@ -41,7 +41,7 @@ const walletOverrideRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
 
       <div className="flex items-center gap-6">
         {/* Status Icon */}
-        <div className={`flex items-center justify-center w-12 h-12 rounded-full border shadow-inner ${
+        <div className={`flex items-center justify-center w-12 h-12 rounded-sm border shadow-inner ${
             cleared ? 'bg-neutral-800 border-neutral-700 text-neutral-400' :
             ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' :
             'bg-rose-500/10 border-rose-500/20 text-rose-500'
@@ -83,7 +83,7 @@ const walletOverrideRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
       )}
 
       {debug && (
-        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-xl text-xs text-neutral-500 font-mono">
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
           <summary className="cursor-pointer hover:text-white transition-colors">Raw Payload</summary>
           <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(normalized, null, 2)}</pre>
         </details>

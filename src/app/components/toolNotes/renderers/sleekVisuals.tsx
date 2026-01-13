@@ -21,7 +21,7 @@ export const SleekCard = ({ children, className, ...props }: HTMLMotionProps<"di
     initial={{ opacity: 0, y: 10, scale: 0.98 }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
     transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-    className={`w-full max-w-lg overflow-hidden rounded-3xl border border-white/5 bg-[#0A0A0A]/90 backdrop-blur-2xl shadow-[0_0_40px_-10px_rgba(0,0,0,0.5)] ${className}`}
+    className={`w-full max-w-lg overflow-hidden rounded-sm border border-white/5 bg-[#0A0A0A]/90 backdrop-blur-2xl shadow-[0_0_40px_-10px_rgba(0,0,0,0.5)] ${className}`}
     {...props}
   >
     {children}
@@ -31,7 +31,7 @@ export const SleekCard = ({ children, className, ...props }: HTMLMotionProps<"di
 export const SleekLoadingCard = () => (
   <SleekCard className="p-6">
     <div className="flex items-center gap-4">
-      <div className="relative h-12 w-12 overflow-hidden rounded-2xl bg-neutral-800 animate-pulse" />
+      <div className="relative h-12 w-12 overflow-hidden rounded-sm bg-neutral-800 animate-pulse" />
       <div className="flex flex-col gap-2">
         <div className="h-4 w-32 animate-pulse rounded bg-neutral-800" />
         <div className="h-3 w-20 animate-pulse rounded bg-neutral-800" />
@@ -54,7 +54,7 @@ export const TokenIconSleek = ({ symbol, imageUrl, size = 56 }: { symbol: string
 
   return (
     <div
-      className="relative flex items-center justify-center overflow-hidden rounded-2xl bg-neutral-800 shadow-inner ring-1 ring-white/10"
+      className="relative flex items-center justify-center overflow-hidden rounded-sm bg-neutral-800 shadow-inner ring-1 ring-white/10"
       style={{ width: size, height: size }}
     >
       {showImage ? (
@@ -103,7 +103,7 @@ export const SleekHash = ({ value, href, label, truncate = true }: { value: stri
 };
 
 export const MetricItem = ({ label, value, className }: { label: string; value: string; className?: string }) => (
-  <div className={`flex flex-col gap-1.5 p-3 rounded-2xl bg-white/[0.02] border border-white/[0.02] ${className}`}>
+  <div className={`flex flex-col gap-1.5 p-3 rounded-sm bg-white/[0.02] border border-white/[0.02] ${className}`}>
     <SleekLabel>{label}</SleekLabel>
     <div className="flex items-baseline gap-2">
       <span className="text-sm font-semibold text-neutral-200 tracking-wide">
