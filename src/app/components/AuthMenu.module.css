@@ -145,7 +145,7 @@
 .walletKey {
   color: #fff;
   font-family: "JetBrains Mono", monospace;
-  font-size: 0.72rem; /* Reduced to fit full address */
+  font-size: 0.5rem;
   letter-spacing: -0.02em;
   width: 100%;
 }
@@ -154,8 +154,8 @@
   color: #fff;
   text-align: left;
   width: 100%;
-  white-space: nowrap;
-  overflow: visible; /* Prevent cut-off */
+  word-break: break-all;
+  white-space: normal;
 }
 
 .walletStatus {
@@ -259,4 +259,114 @@
 .section {
   display: grid;
   gap: 12px;
+}
+
+/* Export Confirmation */
+.exportConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exportWarning {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  overflow: hidden;
+}
+
+.exportWarningIcon {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.exportWarningText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.exportWarningText strong {
+  font-size: 0.8rem;
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.exportWarningText p {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+/* Export Revealed */
+.exportRevealed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formatToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.formatLabel {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 600;
+}
+
+.formatOption {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.formatOption:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #fff;
+}
+
+.formatOptionActive {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+
+.keyDisplay {
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.keyValue {
+  display: block;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 0.55rem;
+  color: #22c55e;
+  word-break: break-all;
+  white-space: normal;
+  line-height: 1.5;
+  user-select: all;
 }

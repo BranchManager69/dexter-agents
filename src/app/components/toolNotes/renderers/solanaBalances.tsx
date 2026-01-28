@@ -195,8 +195,35 @@ function SolanaBalancesInner({ item, isListExpanded, toggleList, debug }: { item
   
   const totalSol = solPriceUsd > 0 ? totalUsd / solPriceUsd : undefined;
 
-  const visibleBalances = isListExpanded ? balances : balances.slice(0, 6);
-  const hasMore = balances.length > visibleBalances.length;
+  // Helper to get USD value of a balance entry
+  const getEntryValueUsd = (entry: any): number => {
+    const tokenMeta = entry.token && typeof entry.token === "object" ? entry.token : undefined;
+    const holdingUsdRaw = pickNumber(
+      (tokenMeta as any)?.holdingUsd, 
+      (tokenMeta as any)?.balanceUsd, 
+      (tokenMeta as any)?.balance_usd
+    );
+    const priceUsdRaw = pickNumber((tokenMeta as any)?.priceUsd, (tokenMeta as any)?.price_usd);
+    const amountUi = pickNumber(entry.amountUi, entry.amount_ui);
+    return holdingUsdRaw ?? (priceUsdRaw && amountUi ? priceUsdRaw * amountUi : 0) ?? 0;
+  };
+
+  // Separate balances: those with USD value vs those without
+  const valuedBalances = balances
+    .filter(entry => getEntryValueUsd(entry) > 0)
+    .sort((a, b) => getEntryValueUsd(b) - getEntryValueUsd(a)); // Sort by value descending
+  
+  const unvaluedBalances = balances.filter(entry => getEntryValueUsd(entry) <= 0);
+
+  // Show valued balances by default, unvalued only when expanded
+  const visibleBalances = isListExpanded 
+    ? [...valuedBalances, ...unvaluedBalances] 
+    : valuedBalances.slice(0, 6);
+  
+  const hiddenCount = isListExpanded 
+    ? 0 
+    : (valuedBalances.length - 6) + unvaluedBalances.length;
+  const hasMore = hiddenCount > 0;
 
   return (
     <div className="w-full max-w-3xl space-y-4">
@@ -300,9 +327,9 @@ function SolanaBalancesInner({ item, isListExpanded, toggleList, debug }: { item
                        backgroundImage: `url(${bannerUrl})`,
                        backgroundSize: 'cover',
                        backgroundPosition: 'center top',
-                       opacity: 0.08,
-                       maskImage: 'linear-gradient(to bottom, black 0%, transparent 70%)',
-                       WebkitMaskImage: 'linear-gradient(to bottom, black 0%, transparent 70%)',
+                       opacity: 0.35,
+                       maskImage: 'linear-gradient(to bottom, black 0%, black 20%, transparent 85%)',
+                       WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 20%, transparent 85%)',
                      }}
                    />
                  )}
@@ -407,7 +434,7 @@ function SolanaBalancesInner({ item, isListExpanded, toggleList, debug }: { item
           onClick={toggleList}
           className="w-full py-3 rounded-sm border border-white/5 bg-white/5 text-[10px] uppercase font-bold tracking-[0.2em] text-neutral-400 hover:text-white hover:bg-white/10 transition-colors"
         >
-          {isListExpanded ? "Collapse List" : `Show ${balances.length - visibleBalances.length} more assets`}
+          {isListExpanded ? "Collapse List" : `Show ${hiddenCount} more assets`}
         </button>
       )}
 

@@ -66,6 +66,9 @@ export function AuthMenu({
   const [turnstileReady, setTurnstileReady] = useState(false);
   const [walletFeedback, setWalletFeedback] = useState("");
   const [exportBusy, setExportBusy] = useState(false);
+  const [exportStep, setExportStep] = useState<"idle" | "confirm" | "revealed">("idle");
+  const [exportedKey, setExportedKey] = useState<string | null>(null);
+  const [keyFormat, setKeyFormat] = useState<"base58" | "json">("base58");
   const feedbackTimeoutRef = useRef<number | null>(null);
 
   const providerInfo = resolveEmailProvider(email);
@@ -180,9 +183,51 @@ export function AuthMenu({
     }
   };
 
-  const handleExportWallet = useCallback(async () => {
+  const base58ToJsonArray = useCallback((base58Key: string): string => {
+    // Decode base58 to byte array using a simple decoder
+    const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+    const bytes: number[] = [];
+    for (const char of base58Key) {
+      let carry = ALPHABET.indexOf(char);
+      if (carry < 0) continue;
+      for (let i = 0; i < bytes.length; i++) {
+        carry += bytes[i] * 58;
+        bytes[i] = carry & 0xff;
+        carry >>= 8;
+      }
+      while (carry > 0) {
+        bytes.push(carry & 0xff);
+        carry >>= 8;
+      }
+    }
+    // Handle leading zeros in base58
+    for (const char of base58Key) {
+      if (char !== "1") break;
+      bytes.push(0);
+    }
+    bytes.reverse();
+    return JSON.stringify(bytes);
+  }, []);
+
+  const getFormattedKey = useCallback((base58Key: string, format: "base58" | "json"): string => {
+    if (format === "base58") return base58Key;
+    return base58ToJsonArray(base58Key);
+  }, [base58ToJsonArray]);
+
+  const handleCopyKey = useCallback(async () => {
+    if (!exportedKey) return;
+    const formatted = getFormattedKey(exportedKey, keyFormat);
+    try {
+      await navigator.clipboard.writeText(formatted);
+      setFeedbackWithTimeout("Copied to clipboard!", 3000);
+    } catch {
+      setFeedbackWithTimeout("Failed to copy. Select and copy manually.", 4000);
+    }
+  }, [exportedKey, keyFormat, getFormattedKey, setFeedbackWithTimeout]);
+
+  const handleRevealKey = useCallback(async () => {
     if (exportBusy) return;
-    setFeedbackWithTimeout("Preparing export…", 0);
+    setFeedbackWithTimeout("Fetching key…", 0);
     setExportBusy(true);
 
     try {
@@ -202,6 +247,7 @@ export function AuthMenu({
           // ignore parse errors
         }
         setFeedbackWithTimeout(errorMessage, 6000);
+        setExportStep("idle");
         return;
       }
 
@@ -209,30 +255,33 @@ export function AuthMenu({
       const secretKey = typeof payload?.secret_key === "string" ? payload.secret_key.trim() : null;
       if (!secretKey) {
         setFeedbackWithTimeout("Wallet export response missing key.", 6000);
+        setExportStep("idle");
         return;
       }
 
-      const blob = new Blob([secretKey], { type: "text/plain" });
-      const url = URL.createObjectURL(blob);
-      try {
-        const filenameSuffix = secretKey.slice(0, 8) || "wallet";
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = `dexter-wallet-${filenameSuffix}.txt`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        setFeedbackWithTimeout("Wallet export downloaded.", 6000);
-      } finally {
-        URL.revokeObjectURL(url);
-      }
+      setExportedKey(secretKey);
+      setExportStep("revealed");
+      setWalletFeedback("");
     } catch (error) {
       console.error("Wallet export failed", error);
       setFeedbackWithTimeout("Unexpected error exporting wallet.", 6000);
+      setExportStep("idle");
     } finally {
       setExportBusy(false);
     }
   }, [exportBusy, setFeedbackWithTimeout]);
+
+  const handleExportWallet = useCallback(() => {
+    setExportStep("confirm");
+    setExportedKey(null);
+    setWalletFeedback("");
+  }, []);
+
+  const handleCancelExport = useCallback(() => {
+    setExportStep("idle");
+    setExportedKey(null);
+    setWalletFeedback("");
+  }, []);
 
   const renderGuestContent = () => (
     <>
@@ -367,28 +416,99 @@ export function AuthMenu({
               )
             ) : null}
 
-            <div className={styles.ctaRow}>
-              <button
-                type="button"
-                className={`${styles.actionButton} ${styles.actionPrimary}`}
-                onClick={handleExportWallet}
-                disabled={exportBusy}
-              >
-                {exportBusy ? "Exporting…" : "Export wallet"}
-              </button>
-              <button
-                type="button"
-                className={`${styles.actionButton} ${styles.actionDanger}`}
-                onClick={handleSignOut}
-              >
-                Sign out
-              </button>
-            </div>
+            {exportStep === "idle" && (
+              <div className={styles.ctaRow}>
+                <button
+                  type="button"
+                  className={`${styles.actionButton} ${styles.actionPrimary}`}
+                  onClick={handleExportWallet}
+                >
+                  Export wallet
+                </button>
+                <button
+                  type="button"
+                  className={`${styles.actionButton} ${styles.actionDanger}`}
+                  onClick={handleSignOut}
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
+
+            {exportStep === "confirm" && (
+              <div className={styles.exportConfirm}>
+                <div className={styles.exportWarning}>
+                  <span className={styles.exportWarningIcon} aria-hidden="true">⚠️</span>
+                  <div className={styles.exportWarningText}>
+                    <strong>Reveal private key?</strong>
+                    <p>Your private key grants full control of this wallet. Never share it with anyone. Make sure no one is watching your screen.</p>
+                  </div>
+                </div>
+                <div className={styles.ctaRow}>
+                  <button
+                    type="button"
+                    className={`${styles.actionButton} ${styles.actionDanger}`}
+                    onClick={handleRevealKey}
+                    disabled={exportBusy}
+                  >
+                    {exportBusy ? "Loading…" : "Yes, reveal key"}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.actionButton}`}
+                    onClick={handleCancelExport}
+                    disabled={exportBusy}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {exportStep === "revealed" && exportedKey && (
+              <div className={styles.exportRevealed}>
+                <div className={styles.formatToggle}>
+                  <span className={styles.formatLabel}>Format:</span>
+                  <button
+                    type="button"
+                    className={`${styles.formatOption} ${keyFormat === "base58" ? styles.formatOptionActive : ""}`}
+                    onClick={() => setKeyFormat("base58")}
+                  >
+                    Base58
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.formatOption} ${keyFormat === "json" ? styles.formatOptionActive : ""}`}
+                    onClick={() => setKeyFormat("json")}
+                  >
+                    JSON Array
+                  </button>
+                </div>
+                <div className={styles.keyDisplay}>
+                  <code className={styles.keyValue}>
+                    {getFormattedKey(exportedKey, keyFormat)}
+                  </code>
+                </div>
+                <div className={styles.ctaRow}>
+                  <button
+                    type="button"
+                    className={`${styles.actionButton} ${styles.actionPrimary}`}
+                    onClick={handleCopyKey}
+                  >
+                    Copy to clipboard
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.actionButton}`}
+                    onClick={handleCancelExport}
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            )}
 
             {walletFeedback ? <div className={styles.feedbackBar}>{walletFeedback}</div> : null}
-            <p className={styles.walletDisclaimer}>
-              We&apos;re working to improve wallet export and import. For now you&apos;ve been provided with a wallet you can export at any time.
-            </p>
           </div>
         ) : (
           <div className={styles.ctaRowSolo}>
