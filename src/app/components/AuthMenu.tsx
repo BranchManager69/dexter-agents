@@ -4,6 +4,7 @@ import { resolveEmailProvider } from "@/app/lib/emailProviders";
 import { TurnstileWidget } from "./TurnstileWidget";
 import { HashBadge } from "@/app/components/toolNotes/renderers/helpers";
 import { UserBadge } from "./UserBadge";
+import { WalletExportSection } from "./wallet/WalletExportSection";
 import { useAuth } from "@/app/auth-context";
 import type { DexterUserBadge } from "@/app/types";
 
@@ -65,13 +66,7 @@ export function AuthMenu({
   const [turnstileKey, setTurnstileKey] = useState(0);
   const [turnstileVisible, setTurnstileVisible] = useState(() => Boolean(turnstileSiteKey));
   const [turnstileReady, setTurnstileReady] = useState(false);
-  const [walletFeedback, setWalletFeedback] = useState("");
-  const [exportBusy, setExportBusy] = useState(false);
-  const [exportStep, setExportStep] = useState<"idle" | "confirm" | "revealed">("idle");
-  const [exportedKey, setExportedKey] = useState<string | null>(null);
-  const [keyFormat, setKeyFormat] = useState<"base58" | "json">("base58");
   const [xAvatarUrl, setXAvatarUrl] = useState<string | null>(null);
-  const feedbackTimeoutRef = useRef<number | null>(null);
 
   const { session } = useAuth();
   const accessToken = session?.access_token ?? null;
@@ -104,15 +99,6 @@ export function AuthMenu({
     window.addEventListener("mousedown", handleClick);
     return () => window.removeEventListener("mousedown", handleClick);
   }, [accountOpen]);
-
-  useEffect(() => {
-    return () => {
-      if (feedbackTimeoutRef.current) {
-        window.clearTimeout(feedbackTimeoutRef.current);
-        feedbackTimeoutRef.current = null;
-      }
-    };
-  }, []);
 
   // Fetch X/Twitter avatar when authenticated
   useEffect(() => {
@@ -171,20 +157,6 @@ export function AuthMenu({
   const initialsSource = authenticatedEmail ?? "Dexter";
   const initials = initialsSource[0]?.toUpperCase() ?? "D";
 
-  const setFeedbackWithTimeout = useCallback((message: string, duration = 5000) => {
-    if (feedbackTimeoutRef.current) {
-      window.clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = null;
-    }
-    setWalletFeedback(message);
-    if (duration > 0) {
-      feedbackTimeoutRef.current = window.setTimeout(() => {
-        setWalletFeedback("");
-        feedbackTimeoutRef.current = null;
-      }, duration);
-    }
-  }, []);
-
   const handleSendMagicLink = async () => {
     if (!email.trim()) {
       setAuthMessage("Enter your email.");
@@ -220,11 +192,6 @@ export function AuthMenu({
     setAuthMessage("");
     setMagicLinkSent(false);
     setXAvatarUrl(null);
-    if (feedbackTimeoutRef.current) {
-      window.clearTimeout(feedbackTimeoutRef.current);
-      feedbackTimeoutRef.current = null;
-    }
-    setWalletFeedback("");
     if (turnstileSiteKey) {
       setCaptchaToken(null);
       setTurnstileVisible(Boolean(turnstileSiteKey));
@@ -232,106 +199,6 @@ export function AuthMenu({
       setTurnstileKey((key) => key + 1);
     }
   };
-
-  const base58ToJsonArray = useCallback((base58Key: string): string => {
-    // Decode base58 to byte array using a simple decoder
-    const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-    const bytes: number[] = [];
-    for (const char of base58Key) {
-      let carry = ALPHABET.indexOf(char);
-      if (carry < 0) continue;
-      for (let i = 0; i < bytes.length; i++) {
-        carry += bytes[i] * 58;
-        bytes[i] = carry & 0xff;
-        carry >>= 8;
-      }
-      while (carry > 0) {
-        bytes.push(carry & 0xff);
-        carry >>= 8;
-      }
-    }
-    // Handle leading zeros in base58
-    for (const char of base58Key) {
-      if (char !== "1") break;
-      bytes.push(0);
-    }
-    bytes.reverse();
-    return JSON.stringify(bytes);
-  }, []);
-
-  const getFormattedKey = useCallback((base58Key: string, format: "base58" | "json"): string => {
-    if (format === "base58") return base58Key;
-    return base58ToJsonArray(base58Key);
-  }, [base58ToJsonArray]);
-
-  const handleCopyKey = useCallback(async () => {
-    if (!exportedKey) return;
-    const formatted = getFormattedKey(exportedKey, keyFormat);
-    try {
-      await navigator.clipboard.writeText(formatted);
-      setFeedbackWithTimeout("Copied to clipboard!", 3000);
-    } catch {
-      setFeedbackWithTimeout("Failed to copy. Select and copy manually.", 4000);
-    }
-  }, [exportedKey, keyFormat, getFormattedKey, setFeedbackWithTimeout]);
-
-  const handleRevealKey = useCallback(async () => {
-    if (exportBusy) return;
-    setFeedbackWithTimeout("Fetching key…", 0);
-    setExportBusy(true);
-
-    try {
-      const response = await fetch("/api/wallet/export", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        let errorMessage = "Unable to export wallet.";
-        try {
-          const errorData = await response.json();
-          if (typeof errorData?.error === "string") {
-            errorMessage = errorData.error.replace(/_/g, " ");
-          }
-        } catch {
-          // ignore parse errors
-        }
-        setFeedbackWithTimeout(errorMessage, 6000);
-        setExportStep("idle");
-        return;
-      }
-
-      const payload = await response.json();
-      const secretKey = typeof payload?.secret_key === "string" ? payload.secret_key.trim() : null;
-      if (!secretKey) {
-        setFeedbackWithTimeout("Wallet export response missing key.", 6000);
-        setExportStep("idle");
-        return;
-      }
-
-      setExportedKey(secretKey);
-      setExportStep("revealed");
-      setWalletFeedback("");
-    } catch (error) {
-      console.error("Wallet export failed", error);
-      setFeedbackWithTimeout("Unexpected error exporting wallet.", 6000);
-      setExportStep("idle");
-    } finally {
-      setExportBusy(false);
-    }
-  }, [exportBusy, setFeedbackWithTimeout]);
-
-  const handleExportWallet = useCallback(() => {
-    setExportStep("confirm");
-    setExportedKey(null);
-    setWalletFeedback("");
-  }, []);
-
-  const handleCancelExport = useCallback(() => {
-    setExportStep("idle");
-    setExportedKey(null);
-    setWalletFeedback("");
-  }, []);
 
   const renderGuestContent = () => (
     <>
@@ -470,99 +337,7 @@ export function AuthMenu({
               )
             ) : null}
 
-            {exportStep === "idle" && (
-              <div className={styles.ctaRow}>
-                <button
-                  type="button"
-                  className={`${styles.actionButton} ${styles.actionPrimary}`}
-                  onClick={handleExportWallet}
-                >
-                  Export wallet
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.actionButton} ${styles.actionDanger}`}
-                  onClick={handleSignOut}
-                >
-                  Sign out
-                </button>
-              </div>
-            )}
-
-            {exportStep === "confirm" && (
-              <div className={styles.exportConfirm}>
-                <div className={styles.exportWarning}>
-                  <span className={styles.exportWarningIcon} aria-hidden="true">⚠️</span>
-                  <div className={styles.exportWarningText}>
-                    <strong>Reveal private key?</strong>
-                    <p>Your private key grants full control of this wallet. Never share it with anyone. Make sure no one is watching your screen.</p>
-                  </div>
-                </div>
-                <div className={styles.ctaRow}>
-                  <button
-                    type="button"
-                    className={`${styles.actionButton} ${styles.actionDanger}`}
-                    onClick={handleRevealKey}
-                    disabled={exportBusy}
-                  >
-                    {exportBusy ? "Loading…" : "Yes, reveal key"}
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.actionButton}`}
-                    onClick={handleCancelExport}
-                    disabled={exportBusy}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {exportStep === "revealed" && exportedKey && (
-              <div className={styles.exportRevealed}>
-                <div className={styles.formatToggle}>
-                  <span className={styles.formatLabel}>Format:</span>
-                  <button
-                    type="button"
-                    className={`${styles.formatOption} ${keyFormat === "base58" ? styles.formatOptionActive : ""}`}
-                    onClick={() => setKeyFormat("base58")}
-                  >
-                    Base58
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.formatOption} ${keyFormat === "json" ? styles.formatOptionActive : ""}`}
-                    onClick={() => setKeyFormat("json")}
-                  >
-                    JSON Array
-                  </button>
-                </div>
-                <div className={styles.keyDisplay}>
-                  <code className={styles.keyValue}>
-                    {getFormattedKey(exportedKey, keyFormat)}
-                  </code>
-                </div>
-                <div className={styles.ctaRow}>
-                  <button
-                    type="button"
-                    className={`${styles.actionButton} ${styles.actionPrimary}`}
-                    onClick={handleCopyKey}
-                  >
-                    Copy to clipboard
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.actionButton}`}
-                    onClick={handleCancelExport}
-                  >
-                    Done
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {walletFeedback ? <div className={styles.feedbackBar}>{walletFeedback}</div> : null}
+            <WalletExportSection onSignOut={handleSignOut} />
           </div>
         ) : (
           <div className={styles.ctaRowSolo}>
