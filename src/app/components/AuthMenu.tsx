@@ -4,6 +4,7 @@ import { resolveEmailProvider } from "@/app/lib/emailProviders";
 import { TurnstileWidget } from "./TurnstileWidget";
 import { HashBadge } from "@/app/components/toolNotes/renderers/helpers";
 import { UserBadge } from "./UserBadge";
+import { useAuth } from "@/app/auth-context";
 import type { DexterUserBadge } from "@/app/types";
 
 interface WalletPortfolioSummary {
@@ -69,7 +70,11 @@ export function AuthMenu({
   const [exportStep, setExportStep] = useState<"idle" | "confirm" | "revealed">("idle");
   const [exportedKey, setExportedKey] = useState<string | null>(null);
   const [keyFormat, setKeyFormat] = useState<"base58" | "json">("base58");
+  const [xAvatarUrl, setXAvatarUrl] = useState<string | null>(null);
   const feedbackTimeoutRef = useRef<number | null>(null);
+
+  const { session } = useAuth();
+  const accessToken = session?.access_token ?? null;
 
   const providerInfo = resolveEmailProvider(email);
   const inboxUrl = providerInfo?.inboxUrl ?? "";
@@ -108,6 +113,50 @@ export function AuthMenu({
       }
     };
   }, []);
+
+  // Fetch X/Twitter avatar when authenticated
+  useEffect(() => {
+    if (!accessToken) {
+      setXAvatarUrl(null);
+      return;
+    }
+    let cancelled = false;
+
+    const normalizeAvatarUrl = (value: unknown): string | null => {
+      if (typeof value !== "string") return null;
+      const trimmed = value.trim();
+      if (!trimmed || trimmed.toLowerCase() === "null") return null;
+      if (!/^https?:\/\//i.test(trimmed)) return null;
+      return trimmed;
+    };
+
+    async function fetchAvatar() {
+      try {
+        const response = await fetch("/api/twitter/accounts", {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          if (!cancelled) setXAvatarUrl(null);
+          return;
+        }
+        const data = await response.json().catch(() => null);
+        const records = Array.isArray(data?.accounts) ? data.accounts : data?.data ?? [];
+        const primary = records[0] as { metadata?: { profileImageUrl?: string | null }; profileImageUrl?: string | null } | undefined;
+        const derived = primary?.metadata?.profileImageUrl ?? primary?.profileImageUrl ?? null;
+        if (!cancelled) {
+          setXAvatarUrl(normalizeAvatarUrl(derived));
+        }
+      } catch {
+        if (!cancelled) setXAvatarUrl(null);
+      }
+    }
+
+    fetchAvatar();
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken]);
 
   const deriveAccountLabel = () => {
     if (loading) return "Checking…";
@@ -170,6 +219,7 @@ export function AuthMenu({
     setEmail("");
     setAuthMessage("");
     setMagicLinkSent(false);
+    setXAvatarUrl(null);
     if (feedbackTimeoutRef.current) {
       window.clearTimeout(feedbackTimeoutRef.current);
       feedbackTimeoutRef.current = null;
@@ -371,9 +421,13 @@ export function AuthMenu({
     return (
       <>
         <div className={styles.profileCard}>
-          <span className={styles.profileAvatar} aria-hidden="true">
-            {initials}
-          </span>
+          {xAvatarUrl ? (
+            <img src={xAvatarUrl} alt="Profile" className={styles.profileAvatarImage} />
+          ) : (
+            <span className={styles.profileAvatar} aria-hidden="true">
+              {initials}
+            </span>
+          )}
           <div className={styles.profileSummary}>
             <div className={styles.profileHeaderRow}>
               <span className={styles.profileEmail}>{displayEmail}</span>
@@ -534,7 +588,13 @@ export function AuthMenu({
         aria-expanded={accountOpen}
         title={buttonTitle}
       >
-        {!isGuest && <span className={styles.avatar} aria-hidden="true">{initials}</span>}
+        {!isGuest && (
+          xAvatarUrl ? (
+            <img src={xAvatarUrl} alt="" className={styles.avatarImage} />
+          ) : (
+            <span className={styles.avatar} aria-hidden="true">{initials}</span>
+          )
+        )}
         <span className={`${styles.label}${isGuest ? ` ${styles.triggerGuestLabel}` : ""}`}>{accountLabel}</span>
       </button>
 
