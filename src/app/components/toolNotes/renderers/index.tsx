@@ -6,11 +6,41 @@ import walletOverrideRenderer from "./walletOverride";
 import walletAuthRenderer from "./walletAuth";
 import solanaBalancesRenderer from "./solanaBalances";
 import solanaResolveTokenRenderer from "./solanaToken";
+import solanaSendRenderer from "./solanaSend";
 import searchRenderer from "./search";
 import fetchRenderer from "./fetch";
 import { codexStartRenderer, codexReplyRenderer, codexExecRenderer } from "./codex";
-import { streamGetSceneRenderer, streamSetSceneRenderer } from "./streamScene";
 import { solanaSwapPreviewRenderer, solanaSwapExecuteRenderer } from "./solanaSwap";
+import { onchainActivityRenderer, onchainEntityRenderer } from "./onchain";
+import {
+  pokedexterListChallengesRenderer,
+  pokedexterGetBattleStateRenderer,
+  pokedexterMakeMoveRenderer,
+  pokedexterGetActiveWagerRenderer,
+  pokedexterGetWagerStatusRenderer,
+  pokedexterCreateChallengeRenderer,
+  pokedexterAcceptChallengeRenderer,
+  pokedexterJoinQueueRenderer,
+  pokedexterQueueStatusRenderer,
+} from "./pokedexter";
+import {
+  studioCreateRenderer,
+  studioStatusRenderer,
+  studioCancelRenderer,
+  studioListRenderer,
+  studioInspectRenderer,
+  studioBreakingNewsRenderer,
+  studioNewsStatusRenderer,
+} from "./studio";
+import { soraVideoJobRenderer, memeGeneratorJobRenderer } from "./mediaJobs";
+import { slippageSentinelRenderer, marketsOhlcvRenderer } from "./trading";
+import {
+  hyperliquidMarketsRenderer,
+  hyperliquidOptInRenderer,
+  hyperliquidFundRenderer,
+  hyperliquidDepositRenderer,
+  hyperliquidPerpTradeRenderer,
+} from "./hyperliquid";
 import twitterSearchRenderer from "./twitterSearch";
 import { BASE_CARD_CLASS, formatTimestampDisplay, normalizeOutput } from "./helpers";
 
@@ -101,15 +131,46 @@ const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   auth_info: walletAuthRenderer,
   solana_list_balances: solanaBalancesRenderer,
   solana_resolve_token: solanaResolveTokenRenderer,
+  solana_send: solanaSendRenderer,
   search: searchRenderer,
   fetch: fetchRenderer,
   codex_start: codexStartRenderer,
   codex_reply: codexReplyRenderer,
   codex_exec: codexExecRenderer,
-  stream_get_scene: streamGetSceneRenderer,
-  stream_set_scene: streamSetSceneRenderer,
   solana_swap_preview: solanaSwapPreviewRenderer,
   solana_swap_execute: solanaSwapExecuteRenderer,
+  onchain_activity_overview: onchainActivityRenderer,
+  onchain_entity_insight: onchainEntityRenderer,
+  // Pokedexter tools
+  pokedexter_list_challenges: pokedexterListChallengesRenderer,
+  pokedexter_get_battle_state: pokedexterGetBattleStateRenderer,
+  pokedexter_make_move: pokedexterMakeMoveRenderer,
+  pokedexter_get_active_wager: pokedexterGetActiveWagerRenderer,
+  pokedexter_get_wager_status: pokedexterGetWagerStatusRenderer,
+  pokedexter_create_challenge: pokedexterCreateChallengeRenderer,
+  pokedexter_accept_challenge: pokedexterAcceptChallengeRenderer,
+  pokedexter_join_queue: pokedexterJoinQueueRenderer,
+  pokedexter_queue_status: pokedexterQueueStatusRenderer,
+  // Studio tools
+  studio_create: studioCreateRenderer,
+  studio_status: studioStatusRenderer,
+  studio_cancel: studioCancelRenderer,
+  studio_list: studioListRenderer,
+  studio_inspect: studioInspectRenderer,
+  studio_breaking_news: studioBreakingNewsRenderer,
+  studio_news_status: studioNewsStatusRenderer,
+  // Media generation tools
+  sora_video_job: soraVideoJobRenderer,
+  meme_generator_job: memeGeneratorJobRenderer,
+  // Trading/market analysis tools
+  slippage_sentinel: slippageSentinelRenderer,
+  markets_fetch_ohlcv: marketsOhlcvRenderer,
+  // Hyperliquid tools
+  hyperliquid_markets: hyperliquidMarketsRenderer,
+  hyperliquid_opt_in: hyperliquidOptInRenderer,
+  hyperliquid_fund: hyperliquidFundRenderer,
+  hyperliquid_bridge_deposit: hyperliquidDepositRenderer,
+  hyperliquid_perp_trade: hyperliquidPerpTradeRenderer,
   twitter_topic_analysis: twitterSearchRenderer,
   stream_public_shout: streamPublicShoutRenderer,
   stream_shout_feed: streamPublicShoutRenderer,

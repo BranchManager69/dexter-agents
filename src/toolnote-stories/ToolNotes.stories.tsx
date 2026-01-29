@@ -10,7 +10,6 @@ import solanaTokenRenderer from "../app/components/toolNotes/renderers/solanaTok
 import searchRenderer from "../app/components/toolNotes/renderers/search";
 import fetchRenderer from "../app/components/toolNotes/renderers/fetch";
 import { codexStartRenderer, codexReplyRenderer, codexExecRenderer } from "../app/components/toolNotes/renderers/codex";
-import { streamGetSceneRenderer, streamSetSceneRenderer } from "../app/components/toolNotes/renderers/streamScene";
 import { solanaSwapPreviewRenderer, solanaSwapExecuteRenderer } from "../app/components/toolNotes/renderers/solanaSwap";
 import twitterSearchRenderer from "../app/components/toolNotes/renderers/twitterSearch";
 
@@ -108,18 +107,6 @@ const stories: StoryConfig[] = [
     renderer: codexExecRenderer,
   },
   {
-    exportName: "StreamGetScene",
-    storyName: "Stream – Current Scene",
-    toolName: "stream_get_scene",
-    renderer: streamGetSceneRenderer,
-  },
-  {
-    exportName: "StreamSetScene",
-    storyName: "Stream – Set Scene",
-    toolName: "stream_set_scene",
-    renderer: streamSetSceneRenderer,
-  },
-  {
     exportName: "SolanaSwapPreview",
     storyName: "Solana – Swap Preview",
     toolName: "solana_swap_preview",
@@ -172,7 +159,5 @@ export const TwitterSearch = storyExports.TwitterSearch;
 export const CodexStart = storyExports.CodexStart;
 export const CodexReply = storyExports.CodexReply;
 export const CodexExec = storyExports.CodexExec;
-export const StreamGetScene = storyExports.StreamGetScene;
-export const StreamSetScene = storyExports.StreamSetScene;
 export const SolanaSwapPreview = storyExports.SolanaSwapPreview;
 export const SolanaSwapExecute = storyExports.SolanaSwapExecute;
