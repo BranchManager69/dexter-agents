@@ -24,6 +24,9 @@ export function useHandleSessionHistory() {
   const toolLogSetRef = useRef(new Set<string>());
   const toolNoteIdMapRef = useRef(new Map<string, string>());
   const transcriptionLogSetRef = useRef(new Set<string>());
+  // Track created message IDs synchronously to avoid duplicate creation
+  // (transcriptItemsRef update via useEffect is async and can miss rapid deltas)
+  const createdMessageIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     transcriptItemsRef.current = transcriptItems;
@@ -132,6 +135,13 @@ export function useHandleSessionHistory() {
     role: "user" | "assistant",
     initialText = "",
   ) => {
+    // Use synchronous ref to track what we've created
+    // (transcriptItemsRef can be stale when multiple deltas arrive before re-render)
+    const messageKey = `${itemId}:${role}`;
+    if (createdMessageIdsRef.current.has(messageKey)) {
+      return; // Already created
+    }
+
     const existing = transcriptItemsRef.current.find(
       (item) =>
         item.itemId === itemId &&
@@ -140,6 +150,7 @@ export function useHandleSessionHistory() {
     );
 
     if (!existing) {
+      createdMessageIdsRef.current.add(messageKey);
       addTranscriptMessage(itemId, role, initialText);
     }
   };
