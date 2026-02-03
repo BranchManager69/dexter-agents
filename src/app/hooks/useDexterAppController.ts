@@ -2515,8 +2515,7 @@ export function useDexterAppController(): DexterAppController {
     }
 
     if (sessionIdentity.type !== 'user') {
-      // return 'You are currently using the Dexter demo wallet shared by all guests. You can check the live balance and place real trades as if it were your own. Log in to get your own Dexter wallet.';
-      return 'Dexter Voice is temporarily limited while we perform upgrades. Please check back later.';
+      return 'Sign in to get your own Dexter wallet and start trading.';
     }
 
     if (nextConversationPrompt && nextConversationPrompt.length) {
