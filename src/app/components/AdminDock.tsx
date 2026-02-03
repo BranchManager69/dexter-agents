@@ -875,7 +875,7 @@ export default function AdminDock({
         <div className="relative flex flex-col items-center">
           <button
             type="button"
-            className={`group flex h-12 w-12 touch-none items-center justify-center rounded-sm border border-[#EF4444]/55 bg-gradient-to-br from-[#F87171] via-[#EF4444] to-[#B91C1C] shadow-[0_18px_38px_rgba(220,38,38,0.45)] transition focus:outline-none focus:ring-2 focus:ring-[#FEE2E2]/70 focus:ring-offset-2 focus:ring-offset-[#2C0A00] ${isDockExpanded ? 'ring-2 ring-[#FEE2E2]/45' : ''}`}
+            className={`group flex h-12 w-12 touch-none items-center justify-center rounded-full border-2 border-[#EF4444]/40 bg-gradient-to-br from-[#F87171] via-[#EF4444] to-[#B91C1C] shadow-[0_8px_24px_rgba(220,38,38,0.5)] transition-all duration-200 hover:scale-105 hover:shadow-[0_12px_32px_rgba(220,38,38,0.6)] active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FEE2E2]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0A0A] ${isDockExpanded ? 'ring-2 ring-[#FEE2E2]/50 rotate-180' : ''}`}
             aria-expanded={isDockExpanded}
             aria-controls="admin-dock-panel"
             onClick={handleDockToggle}
@@ -885,9 +885,9 @@ export default function AdminDock({
             onPointerCancel={handleDragPointerUp}
           >
             {isDockExpanded ? (
-              <Cross2Icon className="h-4 w-4 text-[#FDFEF9]" />
+              <Cross2Icon className="h-5 w-5 text-white" />
             ) : (
-              <CrownGlyph className="h-3.5 w-3.5 text-[#FDFEF9]" />
+              <CrownGlyph className="h-5 w-5 text-white drop-shadow-sm" />
             )}
             <span className="sr-only">{isDockExpanded ? 'Hide admin tools' : 'Show admin tools'}</span>
           </button>

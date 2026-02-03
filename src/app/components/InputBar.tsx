@@ -31,18 +31,31 @@ const trayVariants: Variants = {
   },
 };
 
-const MediaGlyph = ({ className }: { className?: string }) => (
+const ImageIcon = ({ className }: { className?: string }) => (
   <svg
-    viewBox="0 0 20 20"
+    viewBox="0 0 24 24"
+    fill="none"
     aria-hidden="true"
     focusable="false"
     className={className}
   >
-    <path
-      d="M4 3h12a1 1 0 0 1 1 1v12l-3.6-3.6a1 1 0 0 0-1.4 0L9 15l-2.6-2.6a1 1 0 0 0-1.4 0L3 13V4a1 1 0 0 1 1-1Z"
-      fill="currentColor"
+    <rect
+      x="3"
+      y="5"
+      width="18"
+      height="14"
+      rx="2"
+      stroke="currentColor"
+      strokeWidth="2"
     />
-    <circle cx="7.5" cy="7.5" r="1.8" fill="currentColor" />
+    <circle cx="8.5" cy="10.5" r="1.5" fill="currentColor" />
+    <path
+      d="M21 15l-5-5-4 4-2-2-7 7"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
@@ -145,10 +158,11 @@ export function InputBar({
             type="button"
             onClick={handleAttachmentButton}
             disabled={!onAddAttachments}
-            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-neutral-400 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:cursor-not-allowed disabled:opacity-40"
-            aria-label="Add attachments"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full text-neutral-500 transition-all duration-200 hover:bg-white/10 hover:text-neutral-200 hover:scale-105 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/20 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:scale-100"
+            aria-label="Add image"
+            title="Add image"
           >
-            <MediaGlyph className="h-4 w-4" />
+            <ImageIcon className="h-5 w-5" />
           </button>
 
           <TextInput

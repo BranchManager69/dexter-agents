@@ -244,34 +244,34 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
         aria-hidden="true"
       />
 
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6">
+      <div className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-6">
         <div
-          className="flex w-full max-w-3xl flex-col overflow-hidden rounded-sm border border-neutral-800/60 bg-surface-glass/95 shadow-elevated backdrop-blur-xl"
-          style={{ maxHeight: "calc(100vh - 4rem)" }}
+          className="flex w-full max-w-3xl flex-col overflow-hidden rounded-t-xl sm:rounded-xl border border-neutral-800/60 bg-surface-glass/95 shadow-elevated backdrop-blur-xl"
+          style={{ maxHeight: "min(calc(100dvh - 2rem), calc(100vh - 2rem))" }}
           onClick={(event) => event.stopPropagation()}
         >
-          <header className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-neutral-800/60 bg-surface-glass/95/95 px-4 py-3 sm:px-6 sm:py-4">
-            <div>
-              <h2 className="font-display text-sm font-semibold uppercase tracking-[0.18em] text-neutral-200 sm:text-base sm:tracking-[0.12em]">
+          <header className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-neutral-800/60 bg-surface-glass/95 px-4 py-3 sm:px-6 sm:py-4">
+            <div className="min-w-0 flex-1">
+              <h2 className="font-display text-xs font-semibold uppercase tracking-[0.18em] text-neutral-200 sm:text-base sm:tracking-[0.12em]">
                 Debug Control Room
               </h2>
-              <p className="mt-1 text-[11px] text-neutral-500 sm:text-xs">
-                Inspect live session state, wallet telemetry, role alignment, and audio controls.
+              <p className="mt-0.5 text-[10px] text-neutral-500 sm:mt-1 sm:text-xs truncate">
+                Session state, wallet, roles, and audio controls
               </p>
             </div>
             <button
               onClick={onClose}
-              className="rounded-sm p-1.5 text-neutral-500 transition hover:text-neutral-200"
+              className="flex-shrink-0 rounded-full p-2 text-neutral-500 transition hover:bg-white/10 hover:text-neutral-200"
               aria-label="Close"
             >
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M15 5L5 15M5 5L15 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
           </header>
 
-          <div className="flex-1 overflow-y-auto px-4 pb-4 pt-4 sm:px-6 sm:pb-6 sm:pt-5">
-            <div className="grid gap-4 md:grid-cols-2 md:gap-5">
+          <div className="flex-1 overflow-y-auto px-3 pb-4 pt-3 sm:px-6 sm:pb-6 sm:pt-5">
+            <div className="grid gap-3 sm:gap-4 md:grid-cols-2 md:gap-5">
               <DebugSection
               title="Session"
               badge={
@@ -304,19 +304,19 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
               rows={walletRows}
             >
               {walletTokens.length > 0 ? (
-                <div className="mt-3 space-y-2">
-                  <p className="text-xs uppercase tracking-[0.16em] text-neutral-500">Top balances</p>
-                  <ul className="space-y-2">
+                <div className="mt-2 sm:mt-3 space-y-1.5 sm:space-y-2">
+                  <p className="text-[10px] sm:text-xs uppercase tracking-[0.16em] text-neutral-500">Top balances</p>
+                  <ul className="space-y-1.5 sm:space-y-2">
                     {walletTokens.map((token, index) => (
                       <li
                         key={`${token.symbol ?? token.label ?? index}`}
-                        className="flex items-center justify-between gap-3 rounded-sm border border-neutral-800/50 bg-neutral-900/30 px-3 py-2 text-xs text-neutral-200"
+                        className="flex items-center justify-between gap-2 rounded-md border border-neutral-800/50 bg-neutral-900/30 px-2 py-1.5 sm:px-3 sm:py-2 text-[10px] sm:text-xs text-neutral-200"
                       >
-                        <span>{token.symbol || token.label || "Token"}</span>
-                        <span className="text-right text-neutral-100">
+                        <span className="truncate">{token.symbol || token.label || "Token"}</span>
+                        <span className="text-right text-neutral-100 flex-shrink-0">
                           {formatNumber(token.amountUi) ?? "—"}
                           {formatNumber(token.usdValue, { style: "currency", currency: "USD", maximumFractionDigits: 2 }) ? (
-                            <span className="ml-2 text-neutral-500">
+                            <span className="ml-1.5 sm:ml-2 text-neutral-500">
                               {formatNumber(token.usdValue, { style: "currency", currency: "USD", maximumFractionDigits: 2 })}
                             </span>
                           ) : null}
@@ -324,7 +324,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
                       </li>
                     ))}
                     {walletBalances.length > walletTokens.length ? (
-                      <li className="text-xs text-neutral-500">+ {walletBalances.length - walletTokens.length} more</li>
+                      <li className="text-[10px] sm:text-xs text-neutral-500">+ {walletBalances.length - walletTokens.length} more</li>
                     ) : null}
                   </ul>
                 </div>
@@ -332,7 +332,7 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
             </DebugSection>
 
               <DebugSection title="Controls" rows={[]}>
-              <div className="space-y-4 text-sm text-neutral-300">
+              <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-neutral-300">
                 <label className="flex items-center justify-between cursor-pointer">
                   <span className="text-neutral-400">Audio playback</span>
                   <input
@@ -353,12 +353,12 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
                   />
                 </label>
 
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-neutral-400">Audio codec</span>
+                <div className="flex items-center justify-between gap-2 sm:gap-3">
+                  <span className="text-neutral-400">Codec</span>
                   <select
                     value={codec}
                     onChange={(event) => onCodecChange(event.target.value)}
-                    className="rounded-sm border border-neutral-800/80 bg-surface-glass/60 px-3 py-1.5 text-xs text-neutral-200 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30"
+                    className="rounded-md border border-neutral-800/80 bg-surface-glass/60 px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs text-neutral-200 outline-none transition focus:border-flux/60 focus:ring-2 focus:ring-flux/30"
                   >
                     <option value="opus">Opus (48k)</option>
                     <option value="pcmu">PCMU (8k)</option>
@@ -367,12 +367,12 @@ export function DebugInfoModal(props: DebugInfoModalProps) {
                 </div>
 
                 {shouldShowAgentSelector ? (
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
                     <span className="text-neutral-400">Agent</span>
                     <select
                       value={selectedAgentName}
                       onChange={(event) => onAgentChange(event.target.value)}
-                      className="rounded-sm border border-neutral-800/80 bg-surface-glass/60 px-3 py-1.5 text-xs text-neutral-200 outline-none transition focus:border-rose-400/60 focus:ring-2 focus:ring-rose-300/30"
+                      className="rounded-md border border-neutral-800/80 bg-surface-glass/60 px-2 py-1 sm:px-3 sm:py-1.5 text-[10px] sm:text-xs text-neutral-200 outline-none transition focus:border-rose-400/60 focus:ring-2 focus:ring-rose-300/30"
                     >
                       {agents.map((agent) => (
                         <option key={agent.name} value={agent.name} className="bg-neutral-900 text-rose-100">
@@ -407,12 +407,12 @@ function DebugSection({
   footer?: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-3 rounded-sm border border-neutral-800/60 bg-neutral-900/30 px-4 py-4">
+    <section className="flex flex-col gap-2 sm:gap-3 rounded-lg border border-neutral-800/60 bg-neutral-900/30 px-3 py-3 sm:px-4 sm:py-4">
       <header className="flex flex-wrap items-center justify-between gap-2">
-        <span className="font-display text-xs font-semibold tracking-[0.12em] text-neutral-400 uppercase">
+        <span className="font-display text-[10px] sm:text-xs font-semibold tracking-[0.12em] text-neutral-400 uppercase">
           {title}
         </span>
-        {badge ? <div className="text-xs text-neutral-100">{badge}</div> : null}
+        {badge ? <div className="text-[10px] sm:text-xs text-neutral-100">{badge}</div> : null}
       </header>
       {rows.length ? <InfoList rows={rows} /> : null}
       {children}
@@ -423,14 +423,14 @@ function DebugSection({
 
 function InfoList({ rows }: { rows: InfoRow[] }) {
   return (
-    <dl className="space-y-2 text-sm text-neutral-300">
+    <dl className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-neutral-300">
       {rows.map((row) => (
         <div
           key={row.label}
-          className={`flex items-start justify-between gap-3 ${row.alignTop ? "" : "items-center"}`}
+          className={`flex items-start justify-between gap-2 sm:gap-3 ${row.alignTop ? "" : "items-center"}`}
         >
-          <dt className="text-neutral-400">{row.label}</dt>
-          <dd className="max-w-[65%] text-right text-neutral-100">{row.value}</dd>
+          <dt className="text-neutral-400 flex-shrink-0">{row.label}</dt>
+          <dd className="max-w-[60%] sm:max-w-[65%] text-right text-neutral-100 truncate">{row.value}</dd>
         </div>
       ))}
     </dl>
