@@ -387,3 +387,43 @@
   line-height: 1.5;
   user-select: all;
 }
+
+/* Auth Message (magic link sent confirmation) */
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.5;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+.messageProviders {
+  display: block;
+  margin-top: 4px;
+}
+
+.messageLink {
+  color: #22c55e;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.messageLink:hover {
+  color: #4ade80;
+  text-decoration: underline;
+}
+
+.messageHint {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.75rem;
+}

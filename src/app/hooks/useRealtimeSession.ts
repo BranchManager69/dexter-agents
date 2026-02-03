@@ -131,11 +131,13 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       }
       case "session.updated": {
         // session.updated confirms our config was applied
-        const transcription = event.session?.audio?.input?.transcription;
+        // Check both SDK format (audio.input.transcription) and API format (input_audio_transcription)
+        const transcription = event.session?.audio?.input?.transcription 
+          ?? event.session?.input_audio_transcription;
         if (transcription) {
           console.log('[session.updated] transcription ENABLED:', transcription);
         } else {
-          console.error('[session.updated] transcription still NOT configured - this is a problem!');
+          console.warn('[session.updated] transcription config not in response (may still work)');
         }
         break;
       }

@@ -263,16 +263,10 @@ export function AuthMenu({
       {(authMessage || magicLinkSent) && (
         <div className={styles.message}>
           <span>{authMessage}</span>
-          {magicLinkSent && (
-            <span className={styles.messageProviders}>
-              {inboxUrl ? (
-                <a href={inboxUrl} target="_blank" rel="noreferrer" className={styles.messageLink}>
-                  Open {providerInfo?.label ?? "inbox"} ↗
-                </a>
-              ) : (
-                <span className={styles.messageHint}>Check Spam?</span>
-              )}
-            </span>
+          {magicLinkSent && inboxUrl && (
+            <a href={inboxUrl} target="_blank" rel="noreferrer" className={styles.messageLink}>
+              Open {providerInfo?.label ?? "inbox"} ↗
+            </a>
           )}
         </div>
       )}
