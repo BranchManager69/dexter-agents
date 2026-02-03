@@ -32,7 +32,6 @@ import type { RealtimeAgent } from '@openai/agents/realtime';
 import { useTranscript } from "@/app/contexts/TranscriptContext";
 import { useEvent } from "@/app/contexts/EventContext";
 import { useRealtimeSession } from "./useRealtimeSession";
-import { createModerationGuardrail } from "@/app/agentConfigs/guardrails";
 import { useSignalData } from "./useSignalData";
 import { useAuth } from "../auth-context";
 
@@ -1610,15 +1609,15 @@ export function useDexterAppController(): DexterAppController {
         reorderedAgents.unshift(agent);
       }
 
-      const guardrail = createModerationGuardrail(
-        dexterTradingCompanyName,
-      );
+      // NOTE: Guardrails disabled - the createModerationGuardrail returns a config
+      // object but the SDK expects guardrail instances with a run() method.
+      // TODO: Implement proper guardrails using the SDK's guardrail interface.
 
       await connect({
         getEphemeralKey: async () => EPHEMERAL_KEY,
         initialAgents: reorderedAgents,
         audioElement: sdkAudioElement,
-        outputGuardrails: [guardrail],
+        outputGuardrails: [],
       });
 
       // Prime session configuration before the first user turn.
@@ -1722,39 +1721,20 @@ export function useDexterAppController(): DexterAppController {
       turn_detection: turnDetection,
     };
 
-    const includeKeys = ['item.input_audio_transcription.logprobs'];
-
-    updateTranscriptionSession({
-      audioFormat: 'pcm16',
-      transcriptionModel: MODEL_IDS.transcription,
-      turnDetection: {
-        threshold: activeVadSettings.threshold,
-        prefixPaddingMs: activeVadSettings.prefixPaddingMs,
-        silenceDurationMs: activeVadSettings.silenceDurationMs,
-      },
-    });
-
+    // Update SDK session config
     updateSessionConfig({
-      inputAudioFormat: 'pcm16',
-      inputAudioTranscription: {
-        model: MODEL_IDS.transcription,
-      },
-      include: includeKeys,
       audio: {
         input: inputAudioUpdate,
       },
     } as any);
+    
+    // Send raw session.update with transcription config
     sendEvent({
       type: 'session.update',
       session: {
         audio: {
           input: inputAudioUpdate,
         },
-        input_audio_format: 'pcm16',
-        input_audio_transcription: {
-          model: MODEL_IDS.transcription,
-        },
-        include: includeKeys,
       },
     });
 

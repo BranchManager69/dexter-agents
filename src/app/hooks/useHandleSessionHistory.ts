@@ -400,30 +400,9 @@ export function useHandleSessionHistory() {
     if (!targetItemId) {
       const fallback = findLatestUserTranscriptItem(['IN_PROGRESS']);
       targetItemId = fallback?.itemId ?? null;
-      if (transcriptionDebugEnabled) {
-        logServerEvent(
-          {
-            type: 'transcription.delta_unmatched_item',
-            role: roleHint,
-            receivedKeys: Object.keys(item || {}),
-            fallbackItemId: targetItemId,
-          },
-          '(voice streaming)'
-        );
-      }
-      emitTranscriptionDebug('delta_unmatched_item', {
-        role: roleHint,
-        keys: Object.keys(item || {}),
-        item,
-        fallbackItemId: targetItemId,
-      });
     }
 
     if (!targetItemId) {
-      emitTranscriptionDebug('delta_no_target', {
-        role: roleHint,
-        item,
-      });
       return;
     }
 
@@ -445,20 +424,10 @@ export function useHandleSessionHistory() {
     }
 
     if (!deltaText) {
-      emitTranscriptionDebug('delta_empty', {
-        role: resolvedRole,
-        itemId: targetItemId,
-        item,
-      });
       return;
     }
 
     updateTranscriptMessage(targetItemId, deltaText, true);
-    emitTranscriptionDebug('delta_update', {
-      role: resolvedRole,
-      itemId: targetItemId,
-      deltaText,
-    });
 
     const logKey = `${resolvedRole}:${targetItemId}`;
     if (transcriptionDebugEnabled && !transcriptionLogSetRef.current.has(logKey)) {

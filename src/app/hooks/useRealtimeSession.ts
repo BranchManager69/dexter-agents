@@ -86,53 +86,57 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
 
   function handleTransportEvent(event: any) {
     logDebug(event);
-    if (transcriptionDebugEnabled) {
-      console.log('[transport_event]', event);
+    
+    // Log all session and transcription related events for debugging
+    if (event.type?.includes('session') || event.type?.includes('transcription') || event.type === 'error') {
+      console.log(`[EVENT] ${event.type}`, event);
     }
-    if (
-      event &&
-      typeof event.type === 'string' &&
-      (event.type.includes('input_audio') || event.type.startsWith('conversation.item'))
-    ) {
-      emitTranscriptionDebug('transport_event', {
-        type: event.type,
-        keys: Object.keys(event),
-        event,
-      });
-    }
-    // Handle additional server events that aren't managed by the session
+    
     switch (event.type) {
-      case "conversation.item.input_audio_transcription.delta": {
+      // Error events
+      case "error": {
+        console.error('[API ERROR]', event.error || event);
+        break;
+      }
+      // User input transcription events
+      case "conversation.item.input_audio_transcription.delta":
+      case "input_audio_transcription.delta": {
+        console.log('[USER TRANSCRIPTION DELTA]', event.delta || event.transcript);
         historyHandlersRef.current.handleTranscriptionDelta(event, 'user');
         break;
       }
-      case "conversation.item.input_audio_transcription.completed": {
+      case "conversation.item.input_audio_transcription.completed":
+      case "conversation.item.input_audio_transcription.done":
+      case "input_audio_transcription.completed":
+      case "input_audio_transcription.done": {
+        console.log('[USER TRANSCRIPTION COMPLETE]', event.transcript);
         historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
+        break;
+      }
+      // Assistant output transcription events
+      case "response.audio_transcript.delta": {
+        historyHandlersRef.current.handleTranscriptionDelta(event, 'auto');
         break;
       }
       case "response.audio_transcript.done": {
         historyHandlersRef.current.handleTranscriptionCompleted(event, 'auto');
         break;
       }
-      case "response.audio_transcript.delta": {
-        historyHandlersRef.current.handleTranscriptionDelta(event, 'auto');
+      // Session events - log transcription config
+      case "session.created": {
+        // session.created is the INITIAL state before any session.update
+        const transcription = event.session?.audio?.input?.transcription;
+        console.log('[session.created] initial state -', transcription ? 'transcription pre-configured' : 'awaiting session.update for transcription config');
         break;
       }
-      // Some runtimes emit user ASR without the conversation.item.* prefix
-      case "input_audio_transcription.delta": {
-        historyHandlersRef.current.handleTranscriptionDelta(event, 'user');
-        break;
-      }
-      case "input_audio_transcription.completed": {
-        historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
-        break;
-      }
-      case "conversation.item.input_audio_transcription.done": {
-        historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
-        break;
-      }
-      case "input_audio_transcription.done": {
-        historyHandlersRef.current.handleTranscriptionCompleted(event, 'user');
+      case "session.updated": {
+        // session.updated confirms our config was applied
+        const transcription = event.session?.audio?.input?.transcription;
+        if (transcription) {
+          console.log('[session.updated] transcription ENABLED:', transcription);
+        } else {
+          console.error('[session.updated] transcription still NOT configured - this is a problem!');
+        }
         break;
       }
       case "input_audio_buffer.speech_started": {
@@ -437,19 +441,7 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
       const ek = await getEphemeralKey();
       const rootAgent = initialAgents[0];
 
-      // This lets you use the codec selector in the UI to force narrow-band (8 kHz) codecs to
-      //  simulate how the voice agent sounds over a PSTN/SIP phone call.
-      const codecParam = codecParamRef.current;
-      const audioFormat = audioFormatForCodec(codecParam);
       const transcriptionModelId = MODEL_IDS.transcription;
-
-      const includeKeys = [
-        'input_audio_transcription',
-        'conversation.item.input_audio_transcription',
-        'item.input_audio_transcription',
-        'item.input_audio_transcription.logprobs',
-        'response.audio_transcript',
-      ];
 
       sessionRef.current = new RealtimeSession(rootAgent, {
         transport: new OpenAIRealtimeWebRTC({
@@ -458,68 +450,47 @@ export function useRealtimeSession(callbacks: RealtimeSessionCallbacks = {}) {
             typeof window === 'undefined'
               ? `${process.env.NEXT_PUBLIC_SITE_URL || 'https://beta.dexter.cash'}/api/realtime/calls`
               : `${window.location.origin}/api/realtime/calls`,
-          // Set preferred codec before offer creation
           changePeerConnection: async (pc: RTCPeerConnection) => {
             applyCodec(pc);
             return pc;
           },
         }),
         model: MODEL_IDS.realtime,
+        // Use the NEW SDK config format (not deprecated inputAudioTranscription)
         config: {
-          include: includeKeys,
-          inputAudioFormat: audioFormat,
-          input_audio_format: audioFormat,
-          inputAudioTranscription: {
-            model: transcriptionModelId,
+          audio: {
+            input: {
+              format: { type: 'audio/pcm', rate: 24000 },
+              transcription: { model: transcriptionModelId },
+              turnDetection: {
+                type: 'server_vad',
+                threshold: 0.5,
+                prefixPaddingMs: 300,
+                silenceDurationMs: 500,
+              },
+            },
           },
-          input_audio_transcription: {
-            model: transcriptionModelId,
-          },
-        } as any,
+        },
         outputGuardrails: outputGuardrails ?? [],
-        // The OpenAI Realtime API no longer accepts an arbitrary `context` payload,
-        // so we avoid attaching it to prevent 400 Unknown parameter errors.
         automaticallyTriggerResponseForMcpToolCalls: true,
       });
 
       await sessionRef.current.connect({ apiKey: ek });
 
-      try {
-        const sessionUpdatePayload: Record<string, any> = {
-          type: 'session.update',
-          session: {
-            input_audio_transcription: {
-              model: transcriptionModelId,
-            },
-            input_audio_format:
-              audioFormat === 'pcm16'
-                ? 'pcm16'
-                : audioFormat === 'g711_ulaw'
-                  ? 'g711_ulaw'
-                  : 'g711_alaw',
-            turn_detection: {
-              type: 'server_vad',
-              threshold: 0.5,
-              prefix_padding_ms: 300,
-              silence_duration_ms: 500,
-            },
-            modalities: ['text', 'audio'],
-            response: {
-              modalities: ['text'],
-            },
+      // Small delay to ensure WebRTC data channel is fully ready
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Force transcription config via raw event using CORRECT API format
+      // The raw API uses input_audio_transcription at top level, NOT audio.input.transcription
+      console.log('[TRANSCRIPTION] Sending session.update with input_audio_transcription...');
+      sessionRef.current.transport.sendEvent({
+        type: 'session.update',
+        session: {
+          input_audio_transcription: {
+            model: transcriptionModelId,
           },
-        };
-        sessionRef.current?.transport.sendEvent(sessionUpdatePayload as any);
-        emitTranscriptionDebug('session_update_bootstrap', sessionUpdatePayload);
-      } catch (err) {
-        logClientEvent(
-          {
-            type: 'client.session_update_failed',
-            error: err instanceof Error ? err.message : String(err),
-          },
-          '(initial session.update)'
-        );
-      }
+        },
+      });
 
       updateStatus('CONNECTED');
     },
