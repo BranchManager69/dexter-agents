@@ -43,6 +43,9 @@ function createArtifactNode(value: string, artifactType: SolanaArtifactType): Md
   return {
     type: "solanaArtifact",
     value,
+    // Include children for react-markdown compatibility
+    // (some versions pass children instead of node.value)
+    children: [{ type: "text", value }],
     data: {
       artifactType,
       hProperties: {
@@ -54,12 +57,16 @@ function createArtifactNode(value: string, artifactType: SolanaArtifactType): Md
 }
 
 export const solanaArtifactsRemarkPlugin: Plugin<[], MdastParent> = () => (tree) => {
+  console.error('[REMARK-SOLANA] ====== PLUGIN CALLED ======');
   visit(tree, "text", (node: MdastNode, index: number | null, parent: MdastParent | null) => {
     if (!parent || typeof node.value !== "string" || index === null) {
       return;
     }
 
     const matches = [...node.value.matchAll(BASE58_PATTERN)];
+    if (matches.length > 0) {
+      console.error('[REMARK-SOLANA] FOUND MATCHES:', matches.length, 'in text:', node.value?.slice(0, 80));
+    }
     if (matches.length === 0) {
       return;
     }
@@ -76,8 +83,11 @@ export const solanaArtifactsRemarkPlugin: Plugin<[], MdastParent> = () => (tree)
       }
 
       const artifactType = classifyCandidate(candidate);
+      console.log('[solanaArtifactsPlugin] Candidate:', candidate, '| classified as:', artifactType);
       if (artifactType) {
-        replacement.push(createArtifactNode(candidate, artifactType));
+        const artifactNode = createArtifactNode(candidate, artifactType);
+        console.log('[solanaArtifactsPlugin] Created artifact node:', artifactNode);
+        replacement.push(artifactNode);
       } else {
         replacement.push({ type: "text", value: candidate });
       }

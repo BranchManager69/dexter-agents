@@ -68,6 +68,9 @@ type MessageMarkdownProps = PropsWithChildren<{
 
 export function MessageMarkdown({ children, className }: MessageMarkdownProps) {
   const content = typeof children === "string" ? children : "";
+  
+  // FORCE LOG - this MUST appear
+  console.error('[MessageMarkdown] RENDERING content:', content?.slice(0, 100));
   const componentsMap = useMemo(
     () =>
       ({
@@ -76,32 +79,72 @@ export function MessageMarkdown({ children, className }: MessageMarkdownProps) {
          * Custom artifact nodes are passed through from remark (see passThrough above).
          * When introducing new artifact node types, register them here so they render.
          */
-        solanaArtifact: ({ node }: { node: any }) => {
+        solanaArtifact: (props: any) => {
+          // FORCE ERROR LOG - MUST APPEAR
+          console.error('[SOLANA-ARTIFACT] ====== COMPONENT CALLED ======');
+          console.error('[SOLANA-ARTIFACT] props:', props);
+          console.error('[SOLANA-ARTIFACT] keys:', Object.keys(props));
+          
+          const { node, value, artifactType: propArtifactType, children, ...rest } = props;
+          console.error('[SOLANA-ARTIFACT] destructured:', { node, value, propArtifactType, children, restKeys: Object.keys(rest) });
           const artifactData = node?.data ?? {};
           const hProperties = artifactData?.hProperties ?? {};
           const artifactProps = node?.properties ?? hProperties;
 
+          // Helper to extract text from React children
+          const extractTextFromChildren = (c: any): string | undefined => {
+            if (typeof c === "string") return c;
+            if (Array.isArray(c)) {
+              for (const item of c) {
+                const text = extractTextFromChildren(item);
+                if (text) return text;
+              }
+            }
+            // React element with props.children
+            if (c && typeof c === "object" && c.props?.children) {
+              return extractTextFromChildren(c.props.children);
+            }
+            return undefined;
+          };
+
+          // Try multiple sources for the value
           const artifactValue =
-            typeof node?.value === "string"
-              ? node.value
-              : typeof artifactProps?.value === "string"
-                ? artifactProps.value
-                : typeof artifactData?.value === "string"
-                  ? artifactData.value
-                  : Array.isArray(node?.children) && typeof node.children[0]?.value === "string"
-                    ? node.children[0].value
-                    : typeof hProperties?.value === "string"
-                      ? hProperties.value
-                      : undefined;
+            // Direct prop (react-markdown may pass it directly)
+            typeof value === "string"
+              ? value
+              // From node.value
+              : typeof node?.value === "string"
+                ? node.value
+                // From node.properties
+                : typeof artifactProps?.value === "string"
+                  ? artifactProps.value
+                  // From node.data
+                  : typeof artifactData?.value === "string"
+                    ? artifactData.value
+                    // From node.children array (mdast)
+                    : Array.isArray(node?.children) && typeof node.children[0]?.value === "string"
+                      ? node.children[0].value
+                      // From hProperties
+                      : typeof hProperties?.value === "string"
+                        ? hProperties.value
+                        // From children prop (React elements or strings)
+                        : extractTextFromChildren(children);
 
           const artifactType =
-            artifactProps?.artifactType ?? artifactData?.artifactType ?? hProperties?.artifactType;
+            propArtifactType ?? artifactProps?.artifactType ?? artifactData?.artifactType ?? hProperties?.artifactType;
 
           if (!artifactValue) {
+            // Last resort: return children as-is if they exist
+            if (children) {
+              console.warn('[solanaArtifact] Falling back to raw children render');
+              return <>{children}</>;
+            }
+            console.warn('[solanaArtifact] Could not extract value, returning null');
             return null;
           }
 
           if (!artifactType) {
+            // No type means we couldn't classify it, just show as text
             return <>{artifactValue}</>;
           }
 
