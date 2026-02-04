@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   RocketIcon,
   BarChartIcon,
@@ -12,7 +12,9 @@ import {
   MagnifyingGlassIcon,
   StarFilledIcon,
   ReaderIcon,
+  ReloadIcon,
 } from "@radix-ui/react-icons";
+import { motion, AnimatePresence } from "framer-motion";
 import type { ToolNoteRenderer } from "./types";
 import { normalizeOutput, unwrapStructured, formatTimestampDisplay } from "./helpers";
 import { 
@@ -25,6 +27,7 @@ import {
   TokenIconSleek,
   formatUsdCompact,
 } from "./sleekVisuals";
+import { useJobPolling, usePollCountdown, isJobProcessing } from "./useJobPolling";
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -571,13 +574,106 @@ const shieldRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Async Job Polling Indicator
+// ═══════════════════════════════════════════════════════════════════════════════
+
+function AsyncPollingIndicator({ 
+  isPolling, 
+  nextPollIn, 
+  pollCount,
+  onPoll,
+}: { 
+  isPolling: boolean; 
+  nextPollIn: number | null;
+  pollCount: number;
+  onPoll: () => void;
+}) {
+  const countdown = usePollCountdown(nextPollIn);
+  
+  if (!isPolling) return null;
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="flex items-center justify-between px-3 py-2 rounded-sm bg-cyan-500/5 border border-cyan-500/20"
+    >
+      <div className="flex items-center gap-2">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          <ReloadIcon className="w-3 h-3 text-cyan-400" />
+        </motion.div>
+        <span className="text-[10px] text-cyan-400">
+          Auto-refreshing
+          {countdown !== null && countdown > 0 && (
+            <span className="text-neutral-500"> · next in {Math.ceil(countdown / 1000)}s</span>
+          )}
+        </span>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-[9px] text-neutral-600">{pollCount} updates</span>
+        <button
+          onClick={onPoll}
+          className="text-[9px] text-cyan-400 hover:text-cyan-300 transition-colors"
+        >
+          Refresh now
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Async Job Renderer (Spaces, Code-Interpreter, Deep-Research)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const asyncJobRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
-  const payload = unwrapStructured(rawOutput) as AsyncJobPayload;
+  const initialPayload = unwrapStructured(rawOutput) as AsyncJobPayload;
   const timestamp = formatTimestampDisplay(item.timestamp);
+
+  // Detect job type for tool name mapping
+  const initialSpaceName = initialPayload.spaceName || initialPayload.space_name;
+  const initialJobType = initialPayload.type || 
+    (initialSpaceName ? "spaces" : initialPayload.code ? "code-interpreter" : initialPayload.query ? "deep-research" : "async");
+  
+  // Map job type to tool name for polling
+  const toolNameMap: Record<string, string> = {
+    spaces: "tools_spaces_jobs",
+    "code-interpreter": "tools_code-interpreter_jobs",
+    "deep-research": "tools_deep-research_jobs",
+    async: "tools_spaces_jobs", // fallback
+  };
+
+  const initialJobId = initialPayload.jobId || initialPayload.job_id || initialPayload.id;
+  const initialStatus = initialPayload.status;
+
+  // Set up polling for running jobs
+  const { 
+    data: polledData, 
+    isPolling, 
+    pollCount, 
+    nextPollIn, 
+    poll 
+  } = useJobPolling<AsyncJobPayload>({
+    jobId: initialJobId,
+    status: initialStatus,
+    toolName: toolNameMap[initialJobType],
+    toolArgs: { job_id: initialJobId },
+    initialInterval: 2000,
+    maxInterval: 10000,
+  });
+
+  // Merge initial data with polled data
+  const payload = useMemo(() => {
+    if (polledData) {
+      return polledData;
+    }
+    return initialPayload;
+  }, [polledData, initialPayload]);
 
   if (item.status === "IN_PROGRESS") return <SleekLoadingCard />;
   
@@ -628,13 +724,27 @@ const asyncJobRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
         )}
       </header>
 
+      {/* Polling Indicator */}
+      <AnimatePresence>
+        {isPolling && (
+          <AsyncPollingIndicator 
+            isPolling={isPolling} 
+            nextPollIn={nextPollIn} 
+            pollCount={pollCount}
+            onPoll={poll}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Progress */}
       {payload.status === "running" && payload.progress != null && (
         <div className="flex items-center gap-3">
           <div className="flex-1 h-1.5 rounded-full bg-white/10 overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400 transition-all"
-              style={{ width: `${Math.min(payload.progress, 100)}%` }}
+            <motion.div 
+              className="h-full bg-gradient-to-r from-cyan-400 to-emerald-400"
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min(payload.progress, 100)}%` }}
+              transition={{ duration: 0.5 }}
             />
           </div>
           <span className="text-xs font-bold text-cyan-400">{payload.progress}%</span>
@@ -663,12 +773,16 @@ const asyncJobRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
 
       {/* Result */}
       {result && payload.status === "completed" && (
-        <div className="p-3 rounded-sm bg-emerald-500/5 border border-emerald-500/15">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-3 rounded-sm bg-emerald-500/5 border border-emerald-500/15"
+        >
           <SleekLabel>Result</SleekLabel>
           <div className="mt-2 text-sm text-neutral-300">
             {typeof result === "string" ? result : JSON.stringify(result, null, 2).slice(0, 300)}
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Sources (deep-research) */}

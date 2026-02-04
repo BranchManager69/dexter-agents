@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
   VideoIcon, 
   ImageIcon,
@@ -27,6 +27,7 @@ import {
   SleekErrorCard,
   formatUsdPrecise,
 } from "./sleekVisuals";
+import { useJobPolling, usePollCountdown, isJobProcessing } from "./useJobPolling";
 
 // --- Types ---
 
@@ -562,13 +563,94 @@ function TokenPills({ tokens }: { tokens?: Array<{ symbol?: string; mint?: strin
   );
 }
 
+// --- Polling Indicator ---
+
+function PollingIndicator({ 
+  isPolling, 
+  nextPollIn, 
+  pollCount,
+  onPoll,
+}: { 
+  isPolling: boolean; 
+  nextPollIn: number | null;
+  pollCount: number;
+  onPoll: () => void;
+}) {
+  const countdown = usePollCountdown(nextPollIn);
+  
+  if (!isPolling) return null;
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="flex items-center justify-between px-3 py-2 rounded-sm bg-cyan-500/5 border border-cyan-500/20"
+    >
+      <div className="flex items-center gap-2">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          <ReloadIcon className="w-3 h-3 text-cyan-400" />
+        </motion.div>
+        <span className="text-[10px] text-cyan-400">
+          Auto-refreshing
+          {countdown !== null && countdown > 0 && (
+            <span className="text-neutral-500"> · next in {Math.ceil(countdown / 1000)}s</span>
+          )}
+        </span>
+      </div>
+      <div className="flex items-center gap-3">
+        <span className="text-[9px] text-neutral-600">{pollCount} updates</span>
+        <button
+          onClick={onPoll}
+          className="text-[9px] text-cyan-400 hover:text-cyan-300 transition-colors"
+        >
+          Refresh now
+        </button>
+      </div>
+    </motion.div>
+  );
+}
+
 // --- Create Renderer ---
 
 function createMediaJobRenderer(type: "video" | "image"): ToolNoteRenderer {
   return ({ item, debug = false }) => {
     const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
-    const payload = unwrapStructured(rawOutput) as MediaJobResponse;
+    const initialPayload = unwrapStructured(rawOutput) as MediaJobResponse;
     const timestamp = formatTimestampDisplay(item.timestamp);
+
+    // Get the tool name for polling
+    const toolName = type === "video" ? "sora_video_job" : "meme_generator_job";
+    
+    // Set up polling for processing jobs
+    const jobId = initialPayload.job?.id;
+    const initialStatus = initialPayload.job?.status;
+    
+    const { 
+      data: polledData, 
+      isPolling, 
+      pollCount, 
+      nextPollIn, 
+      poll 
+    } = useJobPolling<MediaJobResponse>({
+      jobId,
+      status: initialStatus,
+      toolName,
+      toolArgs: { job_id: jobId },
+      initialInterval: 3000,
+      maxInterval: 15000,
+    });
+
+    // Merge initial data with polled data
+    const payload = useMemo(() => {
+      if (polledData?.job) {
+        return polledData;
+      }
+      return initialPayload;
+    }, [polledData, initialPayload]);
 
     if (item.status === "IN_PROGRESS" && !payload.job) return <SleekLoadingCard />;
     
@@ -614,6 +696,18 @@ function createMediaJobRenderer(type: "video" | "image"): ToolNoteRenderer {
             {timestamp && <span className="text-[10px] text-neutral-600 font-mono">{timestamp}</span>}
           </div>
         </header>
+
+        {/* Polling Indicator */}
+        <AnimatePresence>
+          {isPolling && (
+            <PollingIndicator 
+              isPolling={isPolling} 
+              nextPollIn={nextPollIn} 
+              pollCount={pollCount}
+              onPoll={poll}
+            />
+          )}
+        </AnimatePresence>
 
         {/* Generation Pipeline */}
         {!isComplete && (
