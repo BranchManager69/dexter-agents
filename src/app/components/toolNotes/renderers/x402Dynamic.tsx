@@ -795,6 +795,52 @@ const gameStateRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
   );
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// Test Endpoint Renderer
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const testEndpointRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
+  const rawOutput = normalizeOutput(item.data as Record<string, unknown> | undefined) || {};
+  const payload = unwrapStructured(rawOutput) as Record<string, unknown>;
+
+  if (item.status === "IN_PROGRESS") return <SleekLoadingCard />;
+  
+  if (payload.error) {
+    return <SleekErrorCard message={String(payload.error)} />;
+  }
+
+  const isSuccess = payload.ok === true || payload.status === "ok" || payload.status === "success";
+  const statusText = String(payload.status || (isSuccess ? "OK" : "Unknown"));
+  const message = String(payload.message || "Test endpoint response");
+
+  return (
+    <SleekCard className="p-5 flex flex-col gap-3">
+      <header className="flex items-center justify-between">
+        <SleekLabel>Test Endpoint</SleekLabel>
+        <span className={`px-2 py-0.5 rounded-sm text-[9px] uppercase font-bold border ${
+          isSuccess 
+            ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" 
+            : "text-neutral-400 bg-neutral-500/10 border-neutral-500/20"
+        }`}>
+          {statusText}
+        </span>
+      </header>
+
+      <div className="text-sm text-white">{message}</div>
+
+      {payload.version && <MetricItem label="VERSION" value={String(payload.version)} />}
+      {payload.timestamp && <MetricItem label="TIMESTAMP" value={String(payload.timestamp)} />}
+
+      {debug && (
+        <details className="mt-2 border border-white/5 bg-black/50 p-4 rounded-sm text-xs text-neutral-500 font-mono">
+          <summary className="cursor-pointer hover:text-white">Raw Payload</summary>
+          <pre className="mt-2 overflow-x-auto whitespace-pre-wrap">{JSON.stringify(rawOutput, null, 2)}</pre>
+        </details>
+      )}
+    </SleekCard>
+  );
+};
+
 export {
   solscanTrendingRenderer,
   jupiterQuoteRenderer,
@@ -802,4 +848,5 @@ export {
   shieldRenderer,
   asyncJobRenderer,
   gameStateRenderer,
+  testEndpointRenderer,
 };

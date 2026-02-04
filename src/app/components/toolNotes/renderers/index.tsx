@@ -61,6 +61,7 @@ import {
   shieldRenderer,
   asyncJobRenderer,
   gameStateRenderer,
+  testEndpointRenderer,
 } from "./x402Dynamic";
 import { BASE_CARD_CLASS, formatTimestampDisplay, normalizeOutput } from "./helpers";
 
@@ -225,6 +226,7 @@ const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   "tools_deep-research_jobs": asyncJobRenderer,
   games_king_state: gameStateRenderer,
   games_story_read: gameStateRenderer,
+  "v2-test": testEndpointRenderer,
 };
 
 export function getToolNoteRenderer(toolName?: string | null): ToolNoteRenderer | undefined {
