@@ -42,6 +42,18 @@ import {
   hyperliquidPerpTradeRenderer,
 } from "./hyperliquid";
 import twitterSearchRenderer from "./twitterSearch";
+import {
+  identityStatusRenderer,
+  reputationRenderer,
+  feedbackRenderer,
+} from "./identity";
+import {
+  bundleListRenderer,
+  bundleDetailRenderer,
+  bundleItemRenderer,
+  bundleAccessRenderer,
+  purchasesRenderer,
+} from "./bundles";
 import { BASE_CARD_CLASS, formatTimestampDisplay, normalizeOutput } from "./helpers";
 
 const streamPublicShoutRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
@@ -174,6 +186,25 @@ const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   twitter_topic_analysis: twitterSearchRenderer,
   stream_public_shout: streamPublicShoutRenderer,
   stream_shout_feed: streamPublicShoutRenderer,
+  // Identity tools
+  check_identity: identityStatusRenderer,
+  get_my_identity: identityStatusRenderer,
+  mint_identity: identityStatusRenderer,
+  get_identity_stats: identityStatusRenderer,
+  get_agent_reputation: reputationRenderer,
+  get_reputation_leaderboard: reputationRenderer,
+  submit_feedback: feedbackRenderer,
+  // Bundle tools
+  list_bundles: bundleListRenderer,
+  get_bundle: bundleDetailRenderer,
+  get_my_bundles: bundleListRenderer,
+  create_bundle: bundleDetailRenderer,
+  update_bundle: bundleDetailRenderer,
+  publish_bundle: bundleDetailRenderer,
+  add_bundle_item: bundleItemRenderer,
+  remove_bundle_item: bundleItemRenderer,
+  check_bundle_access: bundleAccessRenderer,
+  get_my_purchases: purchasesRenderer,
 };
 
 export function getToolNoteRenderer(toolName?: string | null): ToolNoteRenderer | undefined {
