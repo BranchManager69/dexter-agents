@@ -54,6 +54,14 @@ import {
   bundleAccessRenderer,
   purchasesRenderer,
 } from "./bundles";
+import {
+  solscanTrendingRenderer,
+  jupiterQuoteRenderer,
+  x402StatsRenderer,
+  shieldRenderer,
+  asyncJobRenderer,
+  gameStateRenderer,
+} from "./x402Dynamic";
 import { BASE_CARD_CLASS, formatTimestampDisplay, normalizeOutput } from "./helpers";
 
 const streamPublicShoutRenderer: ToolNoteRenderer = ({ item, debug = false }) => {
@@ -205,6 +213,18 @@ const TOOL_NOTE_RENDERERS: Record<string, ToolNoteRenderer> = {
   remove_bundle_item: bundleItemRenderer,
   check_bundle_access: bundleAccessRenderer,
   get_my_purchases: purchasesRenderer,
+  // x402 Dynamic tools
+  solscan_trending_tokens: solscanTrendingRenderer,
+  tools_solscan_trending_pro: solscanTrendingRenderer,
+  jupiter_quote_preview: jupiterQuoteRenderer,
+  jupiter_quote_pro: jupiterQuoteRenderer,
+  x402_scan_stats: x402StatsRenderer,
+  shield_create: shieldRenderer,
+  tools_spaces_jobs: asyncJobRenderer,
+  "tools_code-interpreter_jobs": asyncJobRenderer,
+  "tools_deep-research_jobs": asyncJobRenderer,
+  games_king_state: gameStateRenderer,
+  games_story_read: gameStateRenderer,
 };
 
 export function getToolNoteRenderer(toolName?: string | null): ToolNoteRenderer | undefined {
